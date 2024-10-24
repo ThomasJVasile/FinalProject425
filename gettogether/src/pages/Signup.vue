@@ -1,0 +1,8 @@
+<templete>
+	<div>
+		<div>Signup Page</div>
+	</div>
+</template>
+<script>
+export default {};
+</script>
