@@ -1,21 +1,43 @@
 <template>
   <div>
-    <h1>Log In</h1>
-    <form>
-      <label for="username">Username:</label>
-      <input type="text" id="username" name="username" />
-      <br />
+    <h1>Login</h1>
+    <form @submit.prevent="login">
+      <label for="email">Email:</label>
+      <input v-model="email" type="email" id="email" required />
+      <br>
       <label for="password">Password:</label>
-      <input type="password" id="password" name="password" />
-      <br />
-      <button type="submit">Log In</button>
+      <input v-model="password" type="password" id="password" required />
+      <br>
+      <button type="submit">Login</button>
+      <p>{{ message }}</p>
     </form>
   </div>
 </template>
 
 <script>
+import { ref } from 'vue';
+
 export default {
   name: 'LoginPage',
+  setup() {
+    const email = ref('');
+    const password = ref('');
+    const message = ref('');
+
+    // Hardcoded credentials for testing
+    const hardcodedEmail = 'test@example.com';
+    const hardcodedPassword = 'password123';
+
+    const login = () => {
+      if (email.value === hardcodedEmail && password.value === hardcodedPassword) {
+        message.value = 'Login successful!';
+      } else {
+        message.value = 'Login failed: Invalid email or password';
+      }
+    };
+
+    return { email, password, login, message };
+  }
 };
 </script>
 
