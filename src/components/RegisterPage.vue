@@ -17,7 +17,7 @@
         <br>
         <button type="submit">Register Now</button>
     </form>
-</template>
+</template> 
 
 
 <script>
