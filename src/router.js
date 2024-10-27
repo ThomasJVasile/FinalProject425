@@ -6,6 +6,7 @@ import CreateEvent from "./components/CreateEvent.vue";
 const routes = [
   { path: "/homepage", name: "HomePage", component: HomePage },
   { path: "/log-in", name: "LoginPage", component: LoginPage },
+ // {path: ""}
   { path: "/create-event", name: "CreateEvent", component: CreateEvent },  // Add CreateEvent route
   { path: "/", redirect: "/homepage" }  
 ];
