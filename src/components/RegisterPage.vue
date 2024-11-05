@@ -13,7 +13,7 @@
         <input v-model="password" type="text" id="password" name="password"/>
         <br>
         <label for="confirmpassword">Confirm Password:</label>
-        <input v-modle= "confirmpassword" type="text" id="confirmpassword" name="confirmpassword"/>
+        <input v-model= "confirmpassword" type="text" id="confirmpassword" name="confirmpassword"/>
         <br>
         <button type="submit">Register Now</button>
     </form>
@@ -22,18 +22,18 @@
 <script>
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { ref } from "vue";
-import { UseRouter } from "vue-router";
+import { useRouter } from "vue-router";
 
 export default {
   setup() {
-    const router = UseRouter();
+    const router = useRouter();
     const email = ref("");
     const username = ref("");
     const password = ref(""); 
-    const confirmPassword = ref(""); 
+    const confirmpassword = ref(""); 
 
     const register = async () => {
-      if (password.value != confirmPassword.value) {
+      if (password.value != confirmpassword.value) {
         alert("Passwords do not match.");
         return;
       }
@@ -48,7 +48,7 @@ export default {
       }
 
     };
-    return {email, username, password, confirmPassword, register};
+    return {email, username, password, confirmpassword, register};
   }
 };
 </script>
