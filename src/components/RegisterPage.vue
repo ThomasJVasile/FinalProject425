@@ -1,7 +1,6 @@
 <template>
     <div>
         <h1> Register now </h1>
-    </div>
     <form @submit.prevent="register">
         <label for="email">Email:</label>
         <input v-model="email" type="text" id="email" name="email"/>
@@ -17,13 +16,23 @@
         <br>
         <button type="submit">Register Now</button>
     </form>
-
+    <div class="user-list">
+      <h2>Registered Users</h2>
+      <ul>
+        <li v-for="user in users" :key="user.id">
+          {{ user.username }} - {{ user.email }}
+        </li>
+      </ul>
+    </div>
+  </div>
 </template> 
 
 <script>
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { ref } from "vue";
+import { db } from "@/firebase";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 
 export default {
   setup() {
@@ -32,6 +41,7 @@ export default {
     const username = ref("");
     const password = ref(""); 
     const confirmpassword = ref(""); 
+    const users = ref([]); 
 
     const register = async () => {
       if (!email.value || !username.value || !password.value || !confirmpassword.value) {
@@ -46,19 +56,47 @@ export default {
 
       try {
         const auth = getAuth();
-        await createUserWithEmailAndPassword(auth, email.value, password.value);
+        const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+        const { user } = userCredential;
+        await setDoc(doc(db, "users", user.uid), {
+          username: username.value,
+          email: email.value,
+        });
         alert("Registration successful.");
         router.push("/homepage");
       }
       catch (error) {
         alert("Registration failed: " + error.message);
-        error.
       }
 
     };
-    return {email, username, password, confirmpassword, register};
-  }
+    const fetchUsers = async () => {            // get all the users in the database: "users"
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        users.value = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    onMounted(() => {
+      fetchUsers();
+    });
+
+    return {
+      email,
+      username,
+      password,
+      confirmpassword,
+      users,
+      register,
+    };
+  },
 };
+
 </script>
 
 <style scoped>
