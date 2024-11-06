@@ -17,6 +17,7 @@
         <br>
         <button type="submit">Register Now</button>
     </form>
+
 </template> 
 
 <script>
@@ -33,10 +34,16 @@ export default {
     const confirmpassword = ref(""); 
 
     const register = async () => {
+      if (!email.value || !username.value || !password.value || !confirmpassword.value) {
+        alert("Please fill out all fields.");
+        return;
+      }
+      
       if (password.value != confirmpassword.value) {
         alert("Passwords do not match.");
         return;
       }
+
       try {
         const auth = getAuth();
         await createUserWithEmailAndPassword(auth, email.value, password.value);
@@ -45,6 +52,7 @@ export default {
       }
       catch (error) {
         alert("Registration failed: " + error.message);
+        error.
       }
 
     };
