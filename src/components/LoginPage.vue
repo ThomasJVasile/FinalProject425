@@ -16,6 +16,7 @@
 
 <script>
 import { ref } from 'vue';
+import { getAuth, signInWithEmailAndPassword} from 'firebase/auth';
 
 export default {
   name: 'LoginPage',
@@ -24,15 +25,14 @@ export default {
     const password = ref('');
     const message = ref('');
 
-    // Hardcoded credentials for testing
-    const hardcodedEmail = 'test@example.com';
-    const hardcodedPassword = 'password123';
-
-    const login = () => {
-      if (email.value === hardcodedEmail && password.value === hardcodedPassword) {
-        message.value = 'Login successful!';
-      } else {
-        message.value = 'Login failed: Invalid email or password';
+    const login = async () => {
+      const authentication = getAuth();
+      try {
+        await signInWithEmailAndPassword(authentication, email.value, password.value);
+        message.value = 'Login successful';
+      }
+      catch (error) {
+        message.value = 'Login failed' + error.message;
       }
     };
 
