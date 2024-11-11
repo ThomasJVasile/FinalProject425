@@ -75,6 +75,9 @@ router-link {
 <template>
   <div id="app">
     <nav>
+      <div class="title"> 
+        Get Together
+      </div>
       <div class="navigation">
         <router-link to="/homepage">Home</router-link> |
         <router-link to="/log-in">Log In</router-link> |
@@ -126,17 +129,33 @@ export default {
 
 <style>
 nav {
+  display: flex;
   text-align: center;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+  background-color: rgba(61, 226, 194, 0.53);
+  padding: 1.25rem 20px;
 }
-router-link {
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+.navigation a {
   margin: 0 10px;
 }
 .user_icon {
-  position: absolute;
+  margin-top: -7px;
   right: 20px;
   font-size: 2.6rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 .user_icon span {
   margin-left: 10px;
