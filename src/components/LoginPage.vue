@@ -4,10 +4,10 @@
     <form @submit.prevent="login">
       <label for="email">Email:</label>
       <input v-model="email" type="email" id="email" required />
-      <br>
+      <br />
       <label for="password">Password:</label>
       <input v-model="password" type="password" id="password" required />
-      <br>
+      <br />
       <button type="submit">Login</button>
       <p>{{ message }}</p>
     </form>
@@ -15,29 +15,37 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { getAuth, signInWithEmailAndPassword} from 'firebase/auth';
+import { ref } from "vue";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "vue-router";
 
 export default {
-  name: 'LoginPage',
+  name: "LoginPage",
   setup() {
-    const email = ref('');
-    const password = ref('');
-    const message = ref('');
+    const email = ref("");
+    const password = ref("");
+    const message = ref("");
+    const router = useRouter();
 
     const login = async () => {
       const authentication = getAuth();
       try {
-        await signInWithEmailAndPassword(authentication, email.value, password.value);
-        message.value = 'Login successful';
-      }
-      catch (error) {
-        message.value = 'Login failed' + error.message;
+        const userCredential = await signInWithEmailAndPassword(
+          authentication,
+          email.value,
+          password.value
+        );
+        const user = userCredential.user;
+        message.value = "Login successful";
+        localStorage.setItem("userName", user.displayName || "Anonymous");
+        router.push("/homepage");
+      } catch (error) {
+        message.value = "Login failed: " + error.message;
       }
     };
 
     return { email, password, login, message };
-  }
+  },
 };
 </script>
 
