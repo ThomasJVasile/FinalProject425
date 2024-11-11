@@ -1,12 +1,12 @@
    <template>
     <div v-if="event">
       <h1>{{ event.eventName }}</h1>
-      <p><strong>Owner:</strong> {{ event.createdBy }}</p>
+      <p><strong>Owner:</strong> {{ ownerName }}</p>
       <p><strong>Date:</strong> {{ event.eventDate }}</p>
       <p><strong>Description:</strong> {{ event.eventDescription }}</p>
     </div>
     <div v-else>
-      <h1>Loading... PLZ w8 a sec</h1> 
+      <h1>Loading... Please wait a moment</h1>
     </div>
   </template>
   
@@ -17,26 +17,37 @@
   export default {
     data() {
       return {
-        event: null,  
+        event: null,
+        ownerName: "Loading...", 
       };
     },
     async created() {
-      const eventId = this.$route.params.id;  // here i get id
+      const eventId = this.$route.params.id; 
       try {
+        // event details
         const eventDoc = await getDoc(doc(db, "events", eventId));
         if (eventDoc.exists()) {
           this.event = eventDoc.data();
+          //owner details
+          const ownerDoc = await getDoc(doc(db, "users", this.event.createdBy));
+          if (ownerDoc.exists()) {
+            const ownerData = ownerDoc.data();
+            this.ownerName = `${ownerData.firstName} ${ownerData.lastName}`;
+          } else {
+            console.log("Owner details not found.");
+            this.ownerName = "Unknown User";
+          }
         } else {
           console.log("No such event!");
         }
       } catch (error) {
         console.error("Error fetching event:", error);
       }
-    }
+    },
   };
   </script>
   
   <style scoped>
-  /* later */
+  /* CHANGE THIS BEFORE DEMO!!!!!!!!! */
   </style>
   
