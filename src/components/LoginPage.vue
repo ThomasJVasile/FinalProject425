@@ -16,6 +16,7 @@
 
 <script>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'LoginPage',
@@ -23,14 +24,16 @@ export default {
     const email = ref('');
     const password = ref('');
     const message = ref('');
+    const router = useRouter(); //lg
 
     // Hardcoded credentials for testing
-    const hardcodedEmail = 'test@example.com';
-    const hardcodedPassword = 'password123';
+    const hardcodedEmail = 'test@e.com';
+    const hardcodedPassword = 'pass';
 
     const login = () => {
       if (email.value === hardcodedEmail && password.value === hardcodedPassword) {
         message.value = 'Login successful!';
+        router.push({ name: 'ProfilePage' });
       } else {
         message.value = 'Login failed: Invalid email or password';
       }
