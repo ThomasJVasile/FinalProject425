@@ -84,9 +84,12 @@ router-link {
         <router-link to="/RegisterPage">Register</router-link> |
         <router-link v-if="userName !== 'Anonymous'" to="/create-event">Create Event</router-link>
       </div>
-      <div class="user_icon">
+      <div class="user_icon" @click="ToggleDropdown">
         <i class="fas fa-user-circle"></i>
         <span v-if="userName">{{ userName }}</span>
+        <div v-if="IsDropdownVisible" class="dropdown-menu">
+          <button @click="signOut">Sign Out</button>
+        </div>
       </div>
     </nav>
     <router-view />
@@ -94,7 +97,7 @@ router-link {
 </template>
 
 <script>
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
@@ -104,8 +107,25 @@ export default {
   data() {
     return {
       userName: "Anonymous",
+      IsDropdownVisible: false,     // make drop down invisible
     };
   },
+  methods: {
+    ToggleDropdown() {
+      this.IsDropdownVisible = !this.IsDropdownVisible;
+    },
+    async signOut() {
+      try {
+        const auth = getAuth();
+        await signOut(auth);
+        this.userName = "Anonymous";
+        this.IsDropdownVisible = false;
+      } catch (error) {
+        console.error("Sign out error: ", error);
+        }
+      },
+    },
+  
   mounted() {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -136,7 +156,7 @@ nav {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  background-color: rgba(61, 226, 194, 0.53);
+  background-color: rgba(126, 231, 173, 0.53);
   padding: 1.25rem 20px;
 }
 
@@ -156,7 +176,34 @@ nav {
   cursor: pointer;
   display: flex;
   align-items: center;
+  position: relative;
 }
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  background-color: rgb(182, 243, 230);
+  border: 1px solid #000000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 0;
+  z-index: 10;
+}
+
+.dropdown-menu button {
+  background: none;
+  border: none;
+
+  padding: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  display: block;
+}
+
+
 .user_icon span {
   margin-left: 10px;
   font-size: 1rem;
