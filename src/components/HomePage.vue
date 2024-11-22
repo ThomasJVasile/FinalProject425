@@ -1,6 +1,65 @@
 <template>
-  <div>
+  <div class="events-page">
     <h1>Events</h1>
+    <div class = "events-container">
+      <aside class="filters">
+      <h3>Filters</h3>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Cars
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Sports
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Writing
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Learning
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Games
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Jobs
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Parties
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Crafts
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox"/>
+            Dogs
+          </label>
+        </div>
+    </aside>
+    
     <div class="event-list">
       <div 
         v-for="event in events" 
@@ -16,6 +75,8 @@
         </div>
       </div>
     </div>
+    </div>
+    
   </div>
 </template>
 
@@ -45,10 +106,45 @@ export default {
 </script>
 
 <style scoped>
+
+.events-page {
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  align-items: center; 
+  min-height: 100vh; 
+  padding: 20px;
+  box-sizing: border-box; 
+  background-color: #f3f3f3; 
+}
+
+
 .event-list {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  padding: 10px;
+  transition: box-shadow 0.2s ease;
   gap: 20px;
+  max-height: 63vh;
+  overflow-y: auto;
+}
+
+.events-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  left: 20%;
+}
+
+.filters {
+  width: 200px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
 
 .event-card {
