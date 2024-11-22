@@ -60,9 +60,24 @@
         </div>
     </aside>
     
-    <div class="event-list">
+    <div class="main-content">
+
+    </div>
+
+    <div class="main-content">
+      
+    </div>
+
+    <div class="event-container">
+      <input 
+        type="text"
+        v-model="searchQuery"
+        placeholder="Search for event"
+        class="search-bar"/>
+
+      <div class="event-list">
       <div 
-        v-for="event in events" 
+        v-for="event in filteredEvents" 
         :key="event.id" 
         class="event-card"
         @click="goToEventDetail(event.id)"
@@ -76,6 +91,8 @@
       </div>
     </div>
     </div>
+
+    </div>
     
   </div>
 </template>
@@ -88,8 +105,19 @@ export default {
   data() {
     return {
       events: [],
+      searchQuery: "",
     };
   },
+  computed: {
+    filteredEvents() {
+      const query = this.searchQuery.toLowerCase();
+      return this.events.filter((event) =>
+        (event.eventName || "").toLowerCase().includes(query) ||
+        (event.ownerName || "").toLowerCase().includes(query)
+    );
+    },
+  },
+
   async created() {
     const querySnapshot = await getDocs(collection(db, "events"));
     querySnapshot.forEach((doc) => {
