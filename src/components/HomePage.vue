@@ -21,12 +21,12 @@ export default {
     };
   },
   async created() {
-    // HardCode
-   // const testEvent = {
-    //  eventName: "Hardcoded Test Event",
-     // eventDate: "2024-10-26",
-    //  eventDescription: "This is a hardcoded test event.",
-    //  createdBy: "Thomas"
+     HardCode
+    const testEvent = {
+      eventName: "Hardcoded Test Event",
+      eventDate: "2024-10-26",
+      eventDescription: "This is a hardcoded test event.",
+      createdBy: "Thomas"
     };
 
     // Add the hardcoded event to Firestore
@@ -75,10 +75,10 @@ export default {
   async created() {
     // HardCode
     const testEvent = {
-   //   eventName: "Hardcoded Test Event",
-    //  eventDate: "2024-10-26",
-    //  eventDescription: "This is a hardcoded test event.",
-    //  createdBy: "Thomas"
+      eventName: "Hardcoded Test Event",
+      eventDate: "2024-10-26",
+      eventDescription: "This is a hardcoded test event.",
+      createdBy: "Thomas"
     };
 
     // Add the hardcoded event to Firestore
