@@ -1,12 +1,15 @@
    <template>
-    <div v-if="event">
-      <h1>{{ event.eventName }}</h1>
-      <p><strong>Owner:</strong> {{ ownerName }}</p>
-      <p><strong>Date:</strong> {{ event.eventDate }}</p>
-      <p><strong>Description:</strong> {{ event.eventDescription }}</p>
-    </div>
-    <div v-else>
-      <h1>Loading... Please wait a moment</h1>
+    <div class="container">
+      <div v-if="event" class="box">
+        <h1>{{ event.eventName }}</h1>
+        <p><strong>Owner:</strong> {{ ownerName }}</p>
+        <p><strong>Date:</strong> {{ event.eventDate }}</p>
+        <p><strong>Description:</strong> {{ event.eventDescription }}</p>
+        <button class="join-button" @click="joinEvent">Join</button>
+      </div>
+      <div v-else>
+        <h1>Loading... Please wait a moment</h1>
+      </div>
     </div>
   </template>
   
@@ -47,7 +50,30 @@
   };
   </script>
   
-  <style scoped>
-  /* CHANGE THIS BEFORE DEMO!!!!!!!!! */
+<style scoped>
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f5f5;
+}
+.box {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 80%;
+  max-width: 500px;
+}
+h1 {
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+p {
+  margin: 5px 0;
+  font-size: 18px;
+}
   </style>
   
