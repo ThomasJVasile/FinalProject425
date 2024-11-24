@@ -21,7 +21,7 @@ export default {
     return {
       // Hardcoded user data for demonstration, you can replace this with dynamic data later
       user: {
-        name: 'Jane Doe'
+        name: 'Nameof User'
       }
     };
   }

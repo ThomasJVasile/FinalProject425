@@ -4,6 +4,7 @@ import LoginPage from "./components/LoginPage.vue";
 import CreateEvent from "./components/CreateEvent.vue";  
 import RegisterPage from "./components/RegisterPage.vue";
 import ProfilePage from "./components/ProfilePage.vue";
+import EventCreatedPage from "./components/EventCreatedPage.vue";
 
 const routes = [
   { path: "/homepage", name: "HomePage", component: HomePage },
@@ -13,6 +14,7 @@ const routes = [
   { path: "/RegisterPage", name: "RegisterPage", component: RegisterPage},
   { path: "/", redirect: "/homepage" }, 
   { path: "/profile", name: "ProfilePage", component: ProfilePage },//lg
+  { path: "/event-created", name: "EventCreatedPage", component: EventCreatedPage },//lg
   { path: "/", redirect: "/homepage" } //Lg
 ];
 

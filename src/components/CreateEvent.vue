@@ -1,135 +1,73 @@
-<!-- <template>
-    <div>
-      <h1>Create an Event</h1>
-      <form @submit.prevent="createEvent">
-        <label for="event-name">Event Name:</label>
-        <input type="text" v-model="eventName" id="event-name" required />
-  
-        <label for="event-date">Event Date:</label>
-        <input type="date" v-model="eventDate" id="event-date" required />
-  
-        <label for="event-description">Event Description:</label>
-        <textarea v-model="eventDescription" id="event-description"></textarea>
-  
-        <button type="submit">Create Event</button>
-      </form>
-    </div>
-  </template>
-  
-  <script>
-  import { db } from "@/firebase";  
-  import { collection, addDoc } from "firebase/firestore";
-  
-  export default {
-    data() {
-      return {
-        eventName: '',
-        eventDate: '',
-        eventDescription: '',
-      };
-    },
-    methods: {
-      async createEvent() {
-        try {
-          const event = {
-            eventName: this.eventName,
-            eventDate: this.eventDate,
-            eventDescription: this.eventDescription,
-            createdBy: "Thomas",  // Hardcoded for now, THIS MUST GO THRUGH AUTH
-          };
-  
-          // Add the event to Firestore
-          await addDoc(collection(db, "events"), event);
-  
-          // Reset form after event creation
-          this.eventName = '';
-          this.eventDate = '';
-          this.eventDescription = '';
-          alert("Event created successfully!");
-  
-        } catch (error) {
-          console.error("Error adding document: ", error);
-        }
-      }
-    }
-  };
-  </script>
-  
-  <style scoped>
-  /* i have to change this late  */
-  </style>
-   -->
+<template>
+  <div>
+    <h1>Create a New Event</h1>
+    <form @submit.prevent="createEvent">
+      <label for="title">Event Title:</label>
+      <input type="text" v-model="eventTitle" id="title" required />
 
-   <template>
-    <div>
-      <h1>Create a New Event</h1>
-      <form @submit.prevent="createEvent">
-        <label for="title">Event Title:</label>
-        <input type="text" v-model="eventTitle" id="title" required />
-  
-        <label for="date">Event Date:</label>
-        <input type="date" v-model="eventDate" id="date" required />
-  
-        <label for="description">Event Description:</label>
-        <textarea v-model="eventDescription" id="description" required></textarea>
-  
-        <button type="submit">Create Event</button>
-      </form>
-  
-      <p v-if="message">{{ message }}</p>
-    </div>
-  </template>
-  
-  <script>
-  import { db } from "@/firebase";  
-  import { collection, addDoc } from "firebase/firestore";
-  
-  export default {
-    data() {
-      return {
-        eventTitle: "",
-        eventDate: "",
-        eventDescription: "",
-        message: ""
+      <label for="date">Event Date:</label>
+      <input type="date" v-model="eventDate" id="date" required />
+
+      <label for="description">Event Description:</label>
+      <textarea v-model="eventDescription" id="description" required></textarea>
+
+      <button type="submit">Create Event</button>
+    </form>
+
+    <p v-if="message">{{ message }}</p>
+  </div>
+</template>
+
+<script>
+import { db } from "@/firebase";  
+import { collection, addDoc } from "firebase/firestore";
+
+export default {
+  data() {
+    return {
+      eventTitle: "",
+      eventDate: "",
+      eventDescription: "",
+      message: ""
+    };
+  },
+  methods: {
+    async createEvent() {
+      const newEvent = {
+        eventName: this.eventTitle,
+        eventDate: this.eventDate,
+        eventDescription: this.eventDescription,
+        createdBy: "User"  // Placeholder for user authentication
       };
-    },
-    methods: {
-      async createEvent() {
-        // Event object to store in Firestore
-        const newEvent = {
-          eventName: this.eventTitle,
-          eventDate: this.eventDate,
-          eventDescription: this.eventDescription,
-          createdBy: "User"  //auth need
-        };
-  
-        try {
-          // Add event to Firestore
-          await addDoc(collection(db, "events"), newEvent);
-          this.message = "Event created successfully!";
-          
-          this.eventTitle = "";
-          this.eventDate = "";
-          this.eventDescription = "";
-        } catch (error) {
-          this.message = "Failed to create event. Try again.";
-          console.error("Error creating event:", error);
-        }
+
+      try {
+        // Add event to Firestore
+        await addDoc(collection(db, "events"), newEvent);
+
+        // Reset form fields
+        this.eventTitle = "";
+        this.eventDate = "";
+        this.eventDescription = "";
+
+        // Redirect to Event Created Page
+        this.$router.push({ name: "EventCreatedPage" });
+      } catch (error) {
+        this.message = "Failed to create event. Try again.";
+        console.error("Error creating event:", error);
       }
     }
-  };
-  </script>
-  
-  <style scoped>
-  /*later */
-  form {
-    display: flex;
-    flex-direction: column;
-    width: 300px;
   }
-  
-  input, textarea {
-    margin-bottom: 10px;
-  }
-  </style>
-  
+};
+</script>
+
+<style scoped>
+form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+input, textarea {
+  margin-bottom: 10px;
+}
+</style>
