@@ -5,7 +5,8 @@
         <p><strong>Owner:</strong> {{ ownerName }}</p>
         <p><strong>Date:</strong> {{ event.eventDate }}</p>
         <p><strong>Description:</strong> {{ event.eventDescription }}</p>
-        <button class="join-button" @click="joinEvent">Join</button>
+        <button class="join-button" @click="JoinEvent">Join</button>
+        <p v-if="message" class="message">{{ message }}</p>
       </div>
       <div v-else>
         <h1>Loading... Please wait a moment</h1>
@@ -15,13 +16,15 @@
   
   <script>
   import { db } from "@/firebase";
-  import { doc, getDoc } from "firebase/firestore";
+  import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
+  import { getAuth } from "firebase/auth";
   
   export default {
     data() {
       return {
         event: null,
-        ownerName: "Loading...", 
+        ownerName: "Loading...",
+        message: "",
       };
     },
     async created() {
@@ -46,6 +49,61 @@
       } catch (error) {
         console.error("Error fetching event:", error);
       }
+    },
+    methods: {
+      hideMessageAfterDelay() {
+        setTimeout(() => {
+        this.message = ""; // make message go away
+        }, 2000); // delay in milliseconds
+      },
+
+
+      async JoinEvent() {
+        const auth = getAuth();
+        const CurrentUser = auth.currentUser;
+        if (!CurrentUser) { // if user not logged in
+          this.message = "You must be logged in to join an event."
+          this.hideMessageAfterDelay();
+          return;
+        }
+        try {
+          const userDoc = await getDoc(doc(db, "users", CurrentUser.uid));
+          if (!userDoc.exists()) {
+            this.message = "User information not found.";
+            this.hideMessageAfterDelay();
+            return;
+          }
+          const userData = userDoc.data();
+          const username = userData.username;
+          const eventId = this.$route.params.id;
+          const eventRef = doc(db, "events", eventId);
+
+          const eventDoc = await getDoc(eventRef);
+          if (!eventDoc.exists()) {
+            this.message = "Event not found.";
+            this.hideMessageAfterDelay();
+            return;
+          }
+
+          const eventData = eventDoc.data();
+          if (eventData.participants && eventData.participants.includes(username)) {
+            this.message = "You have already joined this event";
+            this.hideMessageAfterDelay();
+            return;
+          }
+
+          await updateDoc(eventRef, {
+            participants: arrayUnion(username),
+          });
+
+          this.message = "You have joined the event";
+          
+        } catch (error) {
+          this.message = "Failed to join event.";
+          console.error("Error joining event", error);
+        }
+        this.hideMessageAfterDelay();
+      },
     },
   };
   </script>
@@ -75,5 +133,12 @@ p {
   margin: 5px 0;
   font-size: 18px;
 }
-  </style>
+
+.message {
+  margin-top: 15px;
+  color: green;
+  font-size: 16px;
+}
+
+</style>
   

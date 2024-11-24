@@ -102,8 +102,6 @@ textarea {
 </style> -->
 
 
-
-
 <template>
   <div>
     <h1>Create a New Event</h1>
@@ -193,6 +191,7 @@ export default {
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
           imageUrl, // Save the image URL
+          eventParticipants: [],
         };
 
         await addDoc(collection(db, "events"), newEvent);

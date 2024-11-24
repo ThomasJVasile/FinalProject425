@@ -87,6 +87,7 @@
           <h2>{{ event.eventName }}</h2>
           <p>Owner: {{ event.ownerName || 'Unknown Owner' }}</p>
           <p>{{ event.eventDescription }}</p>
+          <p>People attending: {{ event.AttendanceCount }}</p>
         </div>
       </div>
     </div>
@@ -122,7 +123,8 @@ export default {
     const querySnapshot = await getDocs(collection(db, "events"));
     querySnapshot.forEach((doc) => {
       const eventData = doc.data();
-      this.events.push({ id: doc.id, ...eventData });
+      const AttendanceCount = eventData.participants ? eventData.participants.length: 0;
+      this.events.push({ id: doc.id, AttendanceCount, ...eventData });
     });
   },
   methods: {
@@ -209,4 +211,10 @@ export default {
   margin: 5px 0;
   color: #555;
 }
+
+.event-info p:last-child {
+  font-weight: bold;
+  color: #333;
+}
+
 </style>
