@@ -1,100 +1,97 @@
 <template>
   <div class="events-page">
     <h1>Events</h1>
-    <div class = "events-container">
+    <div class="events-container">
       <aside class="filters">
-      <h3>Filters</h3>
+        <h3>Filters</h3>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Cars
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Sports
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Writing
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Learning
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Games
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Jobs
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Parties
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Crafts
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Dogs
           </label>
         </div>
-    </aside>
-    
-    <div class="main-content">
+      </aside>
 
-    </div>
+      <div class="event-container">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search for event"
+          class="search-bar"
+        />
 
-    <div class="main-content">
-      
-    </div>
-
-    <div class="event-container">
-      <input 
-        type="text"
-        v-model="searchQuery"
-        placeholder="Search for event"
-        class="search-bar"/>
-
-      <div class="event-list">
-      <div 
-        v-for="event in filteredEvents" 
-        :key="event.id" 
-        class="event-card"
-        @click="goToEventDetail(event.id)"
-      >
-        <img class="event-img" src="https://via.placeholder.com/100" alt="Event image" />
-        <div class="event-info">
-          <h2>{{ event.eventName }}</h2>
-          <p>Owner: {{ event.ownerName || 'Unknown Owner' }}</p>
-          <p>{{ event.eventDescription }}</p>
-          <p>People attending: {{ event.AttendanceCount }}</p>
+        <div class="event-list">
+          <div
+            v-for="event in filteredEvents"
+            :key="event.id"
+            class="event-card"
+            @click="goToEventDetail(event.id)"
+          >
+            <img
+              v-if="event.imageUrl"
+              :src="event.imageUrl"
+              class="event-img"
+              alt="Event image"
+            />
+            <div v-else class="event-img-placeholder">No Image</div>
+            <div class="event-info">
+              <h2>{{ event.eventName }}</h2>
+              <p>Owner: {{ event.ownerName || "Unknown Owner" }}</p>
+              <p>{{ event.eventDescription }}</p>
+              <p>People attending: {{ event.AttendanceCount }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    </div>
-
-    </div>
-    
   </div>
 </template>
 
@@ -112,20 +109,38 @@ export default {
   computed: {
     filteredEvents() {
       const query = this.searchQuery.toLowerCase();
-      return this.events.filter((event) =>
-        (event.eventName || "").toLowerCase().includes(query) ||
-        (event.ownerName || "").toLowerCase().includes(query)
-    );
+      return this.events.filter(
+        (event) =>
+          (event.eventName || "").toLowerCase().includes(query) ||
+          (event.ownerName || "").toLowerCase().includes(query)
+      );
     },
   },
 
   async created() {
-    const querySnapshot = await getDocs(collection(db, "events"));
-    querySnapshot.forEach((doc) => {
-      const eventData = doc.data();
-      const AttendanceCount = eventData.participants ? eventData.participants.length: 0;
-      this.events.push({ id: doc.id, AttendanceCount, ...eventData });
-    });
+    try {
+      const querySnapshot = await getDocs(collection(db, "events"));
+      for (const doc of querySnapshot.docs) {
+        const eventData = doc.data();
+        const AttendanceCount = eventData.participants
+          ? eventData.participants.length
+          : 0;
+
+        if (eventData.imageUrl) {
+          console.log(`Fetching image for event ${eventData.eventName}`);
+        } else {
+          console.log(`No image URL for event: ${eventData.eventName}`);
+        }
+
+        this.events.push({
+          id: doc.id,
+          AttendanceCount,
+          ...eventData,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
   },
   methods: {
     goToEventDetail(id) {
@@ -136,18 +151,16 @@ export default {
 </script>
 
 <style scoped>
-
 .events-page {
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  align-items: center; 
-  min-height: 100vh; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   padding: 20px;
-  box-sizing: border-box; 
-  background-color: #f3f3f3; 
+  box-sizing: border-box;
+  background-color: #f3f3f3;
 }
-
 
 .event-list {
   display: flex;
@@ -198,6 +211,18 @@ export default {
   border-radius: 50%;
 }
 
+.event-img-placeholder {
+  width: 100px;
+  height: 100px;
+  background-color: #ddd;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: #888;
+}
+
 .event-info {
   margin-left: 20px;
 }
@@ -216,5 +241,4 @@ export default {
   font-weight: bold;
   color: #333;
 }
-
 </style>
