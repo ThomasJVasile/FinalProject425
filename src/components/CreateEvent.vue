@@ -157,6 +157,32 @@ export default {
     onFileChange(event) {
       this.eventImage = event.target.files[0]; // Capture the selected file
     },
+
+    async GeoLocationAddress(address) {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            address
+          )}&key=AIzaSyDc9ouuqPa6pc_M1-8LC83LaIOq1AQBbok`
+        );
+        const data = await response.json();
+        if (data.status === "OK") {
+          const location = data.results[0].geometry.location;
+          return {
+            latitude: location.lat,
+            longitude: location.lng,
+          };
+        } 
+        else {
+          throw new Error("Geocoding failed: " + data.status);
+        }
+
+        } catch (error) {
+          console.error("error during geo location: ", error);
+          throw error;
+        }
+      },
+
     async createEvent() {
       if (!this.isAuthenticated) {
         this.message = "You must be logged in to create an event.";
@@ -182,12 +208,17 @@ export default {
           imageUrl = await getDownloadURL(snapshot.ref); // Get the image URL
         }
 
+
+        const getLocation = await this.GeoLocationAddress(this.eventLocation);
+
         // Create the event object
         const newEvent = {
           eventName: this.eventTitle,
           eventDate: this.eventDate,
           eventLocation: this.eventLocation,
           eventDescription: this.eventDescription,
+          latitude: getLocation.latitude,
+          longitude: getLocation.longitude,
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
           imageUrl, // Save the image URL

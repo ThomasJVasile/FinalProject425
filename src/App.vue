@@ -84,13 +84,19 @@ router-link {
         <router-link to="/RegisterPage">Register</router-link> |
         <router-link v-if="userName !== 'Anonymous'" to="/create-event">Create Event</router-link>
       </div>
-      <div class="user_icon" @click="ToggleDropdown">
-        <i class="fas fa-user-circle"></i>
-        <span v-if="userName">{{ userName }}</span>
-        <div v-if="IsDropdownVisible" class="dropdown-menu">
-          <button @click="signOut">Sign Out</button>
+      <div class="icons">
+        <div class="inbox_icon" @click="GoToInbox">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div class="user_icon" @click="ToggleDropdown">
+          <i class="fas fa-user-circle"></i>
+          <span v-if="userName">{{ userName }}</span>
+          <div v-if="IsDropdownVisible" class="dropdown-menu">
+            <button @click="signOut">Sign Out</button>
+          </div>
         </div>
       </div>
+
     </nav>
     <router-view />
   </div>
@@ -158,6 +164,22 @@ nav {
   margin-bottom: 20px;
   background-color: rgba(126, 231, 173, 0.53);
   padding: 1.25rem 20px;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+}
+
+.inbox_icon {
+  margin-bottom: 6px;
+  margin-right: 34px;
+  font-size: 1.75rem;
+  cursor: pointer;
+}
+
+.inbox_icon i {
+  color: rgb(0, 0, 0)0;
 }
 
 .title {

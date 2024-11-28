@@ -13,6 +13,12 @@
       </div>
       <button class="join-button" @click="JoinEvent">Join</button>
       <p v-if="message" class="message">{{ message }}</p>
+      <GoogleMap
+        :center="{ lat: event.latitude, lng: event.longitude }"
+        :zoom="15"
+        style="width: 100%; height: 300px; margin-top: 15px;"
+      >
+      </GoogleMap>
     </div>
     <div v-else>
       <h1>Loading... Please wait a moment</h1>
@@ -24,8 +30,13 @@
 import { db } from "@/firebase";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { GoogleMap } from "vue3-google-map";
 
 export default {
+  components: {
+    GoogleMap,
+  },
+  
   data() {
     return {
       event: null,
@@ -64,6 +75,7 @@ export default {
           console.warn("Step 6: No event image specified in Firestore.");
           this.eventImageUrl = null; // No image available
         }
+        this.initializeMap(this.event.latitude, this.event.longitude);
       } else {
         console.error("No such event found!");
       }
@@ -77,6 +89,8 @@ export default {
         this.message = ""; // Clear message
       }, 2000); // Delay in milliseconds
     },
+
+
     async JoinEvent() {
       const auth = getAuth();
       const currentUser = auth.currentUser;
