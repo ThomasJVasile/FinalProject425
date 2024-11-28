@@ -11,7 +11,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, serverTimestamp} from 'firebase/firestore'
+import { collection, addDoc, query, where, getDocs, serverTimestamp} from 'firebase/firestore'
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -24,7 +24,11 @@ export default {
     methods: {
         async SendMessage() {
             const auth = getAuth();
-            const SenderID = auth.currentUser;     
+            const SenderID = auth.currentUser ? auth.currentUser.uid : null;    
+            if (!this.SenderID) {
+                alert("You must be logged in to send a message.");
+            }
+            
             if (this.ReceiverUsername.trim() === '') {
                 alert("Enter receiver's username.");
                 return;
@@ -35,10 +39,29 @@ export default {
             }
             
             try {
-                const ReceiverReference = collection(db, 'users');
-                 
-            }
+                const ReceiverQuery = query(collection(db, 'users'), where('username', '==', this.ReceiverUsername));
+                const ReceiverSnapshot = await getDocs(ReceiverQuery);
+                if (ReceiverSnapshot.empty) {
+                    alert("user not found.");
+                    return;
+                }
+                const ReceiverDoc = ReceiverSnapshot.docs[0];
+                const ReceiverID = ReceiverDoc.id;
+                await addDoc(collection(db, 'messages'), {
+                    SenderID: SenderID,
+                    ReceiverID: ReceiverID,
+                    content: this.Content,
+                    timestamp: serverTimestamp(),
+                });
+                this.Content = '';
+                this.ReceiverUsername = '';
+                alert("message sent");
 
+                 
+            } catch (error) {
+                console.error("error sending message:", error);
+                alert("failed to send message");
+            }
         },
     },  
 };

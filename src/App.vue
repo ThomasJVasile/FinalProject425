@@ -130,6 +130,10 @@ export default {
         console.error("Sign out error: ", error);
         }
       },
+    
+    GoToInbox() {
+        this.$router.push('/UserInboxPage');
+      },
     },
   
   mounted() {
