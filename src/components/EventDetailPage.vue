@@ -1,3 +1,4 @@
+
 <template>
   <div class="container">
     <div v-if="event" class="box">
@@ -13,6 +14,11 @@
       </div>
       <button class="join-button" @click="JoinEvent">Join</button>
       <p v-if="message" class="message">{{ message }}</p>
+
+      <!-- beefore demo match this button with join maybe so it looks better -->
+      <div v-if="isOwner" style="margin-top: 20px;">
+        <button class="delete-button" @click="deleteEvent">Delete Event</button>
+      </div>
       <GoogleMap
         :center="{ lat: event.latitude, lng: event.longitude }"
         :zoom="15"
@@ -28,7 +34,7 @@
 
 <script>
 import { db } from "@/firebase";
-import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { GoogleMap } from "vue3-google-map";
 
@@ -43,6 +49,7 @@ export default {
       ownerName: "Loading...",
       message: "",
       eventImageUrl: null,
+      isOwner: false, 
     };
   },
   async created() {
@@ -66,14 +73,19 @@ export default {
           this.ownerName = "Unknown User";
         }
 
-        // Fetch event image URL + all the comments for debugging 
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        this.isOwner = currentUser && currentUser.uid === this.event.createdBy;
+        console.log("Step 4: Is user the owner?", this.isOwner);
+
+        // Fetch event image URL
         if (this.event.imageUrl) {
-          console.log("Step 4: Fetching event image URL...");
-          this.eventImageUrl = this.event.imageUrl; // Dynamically fetched from Firestore not hardcoded
-          console.log("Step 5: Event image URL fetched from Firestore:", this.eventImageUrl);
+          console.log("Step 5: Fetching event image URL...");
+          this.eventImageUrl = this.event.imageUrl; 
+          console.log("Step 6: Event image URL fetched:", this.eventImageUrl);
         } else {
-          console.warn("Step 6: No event image specified in Firestore.");
-          this.eventImageUrl = null; // No image available
+          console.warn("Step 7: No event image specified in Firestore.");
+          this.eventImageUrl = null; 
         }
         this.initializeMap(this.event.latitude, this.event.longitude);
       } else {
@@ -139,6 +151,20 @@ export default {
       }
       this.hideMessageAfterDelay();
     },
+    async deleteEvent() {
+      const confirmDelete = confirm("Are you sure you want to delete this event?");
+      if (!confirmDelete) return;
+
+      try {
+        const eventId = this.$route.params.id;
+        await deleteDoc(doc(db, "events", eventId));
+        alert("Event deleted successfully.");
+        this.$router.push("/homepage"); 
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        alert("Failed to delete the event.");
+      }
+    },
   },
 };
 </script>
@@ -171,5 +197,18 @@ p {
   margin-top: 15px;
   color: green;
   font-size: 16px;
+}
+.delete-button {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+.delete-button:hover {
+  background-color: #e60000;
 }
 </style>
