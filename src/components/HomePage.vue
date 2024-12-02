@@ -1,112 +1,118 @@
 <template>
   <div class="events-page">
+    <!-- Profile Button Section -->
+    <div v-if="userName !== 'Anonymous'" class="profile-section">
+      <router-link to="/ProfilePage">
+        <button class="profile-button">Go to Profile</button>
+      </router-link>
+    </div>
+    <div v-else>
+      <p>Please <router-link to="/log-in">log in</router-link> to access your profile.</p>
+    </div>
+
     <h1>Events</h1>
-    <div class = "events-container">
+    <div class="events-container">
       <aside class="filters">
-      <h3>Filters</h3>
+        <h3>Filters</h3>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Cars
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Sports
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Writing
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Learning
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Games
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Jobs
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Parties
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Crafts
           </label>
         </div>
         <div>
           <label>
-            <input type="checkbox"/>
+            <input type="checkbox" />
             Dogs
           </label>
         </div>
-    </aside>
-    
-    <div class="main-content">
+      </aside>
 
-    </div>
+      <div class="main-content">
+        <!-- Main content (could be more things here) -->
+      </div>
 
-    <div class="main-content">
-      
-    </div>
-
-    <div class="event-container">
-      <input 
-        type="text"
-        v-model="searchQuery"
-        placeholder="Search for event"
-        class="search-bar"/>
-
-      <div class="event-list">
-      <div 
-        v-for="event in filteredEvents" 
-        :key="event.id" 
-        class="event-card"
-        @click="goToEventDetail(event.id)"
-      >
-        <img class="event-img" src="https://via.placeholder.com/100" alt="Event image" />
-        <div class="event-info">
-          <h2>{{ event.eventName }}</h2>
-          <p>Owner: {{ event.ownerName || 'Unknown Owner' }}</p>
-          <p>{{ event.eventDescription }}</p>
-          <p>People attending: {{ event.AttendanceCount }}</p>
+      <div class="event-container">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search for event"
+          class="search-bar"
+        />
+        <div class="event-list">
+          <div
+            v-for="event in filteredEvents"
+            :key="event.id"
+            class="event-card"
+            @click="goToEventDetail(event.id)"
+          >
+            <img class="event-img" src="https://via.placeholder.com/100" alt="Event image" />
+            <div class="event-info">
+              <h2>{{ event.eventName }}</h2>
+              <p>Owner: {{ event.ownerName || 'Unknown Owner' }}</p>
+              <p>{{ event.eventDescription }}</p>
+              <p>People attending: {{ event.AttendanceCount }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    </div>
-
-    </div>
-    
   </div>
 </template>
 
 <script>
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default {
   data() {
     return {
       events: [],
       searchQuery: "",
+      userName: "Anonymous", // Default user state as 'Anonymous'
     };
   },
   computed: {
@@ -115,16 +121,25 @@ export default {
       return this.events.filter((event) =>
         (event.eventName || "").toLowerCase().includes(query) ||
         (event.ownerName || "").toLowerCase().includes(query)
-    );
+      );
     },
   },
-
   async created() {
     const querySnapshot = await getDocs(collection(db, "events"));
     querySnapshot.forEach((doc) => {
       const eventData = doc.data();
-      const AttendanceCount = eventData.participants ? eventData.participants.length: 0;
+      const AttendanceCount = eventData.participants ? eventData.participants.length : 0;
       this.events.push({ id: doc.id, AttendanceCount, ...eventData });
+    });
+
+    // Firebase authentication state listener
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.userName = user.displayName || user.email; // Set to displayName or email
+      } else {
+        this.userName = "Anonymous"; // Keep as Anonymous if not logged in
+      }
     });
   },
   methods: {
@@ -136,18 +151,34 @@ export default {
 </script>
 
 <style scoped>
-
 .events-page {
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  align-items: center; 
-  min-height: 100vh; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   padding: 20px;
-  box-sizing: border-box; 
-  background-color: #f3f3f3; 
+  box-sizing: border-box;
+  background-color: #f3f3f3;
 }
 
+.profile-section {
+  margin-bottom: 20px;
+}
+
+.profile-button {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+}
+
+.profile-button:hover {
+  background-color: #45a049;
+}
 
 .event-list {
   display: flex;
@@ -216,5 +247,4 @@ export default {
   font-weight: bold;
   color: #333;
 }
-
 </style>

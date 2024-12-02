@@ -1,3 +1,6 @@
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/firebase'; // Import auth from firebase.js
+
 <template>
   <div>
     <h1>Login</h1>
