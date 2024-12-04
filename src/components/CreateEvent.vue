@@ -9,8 +9,8 @@
         <label for="date">Event Date:</label>
         <input type="date" v-model="eventDate" id="date" class="input-field" required />
 
-        <!-- <label for="location">Event Location:</label>
-        <input type="text" v-model="eventLocation" id="location" class="input-field" required /> -->
+        <label for="location">Event Location:</label>
+        <input type="text" v-model="eventLocation" id="location" class="input-field" required />
 
         <label for="description">Event Description:</label>
         <textarea v-model="eventDescription" id="description" class="textarea-field" required></textarea>
@@ -38,7 +38,7 @@ export default {
     return {
       eventTitle: "",
       eventDate: "",
-      // eventLocation: "",
+      eventLocation: "",
       eventDescription: "",
       eventImage: null,
       message: "",
@@ -61,28 +61,28 @@ export default {
     // !!!!!!
 
 
-    // async GeoLocationAddress(address) {
-    //   try {
-    //     const response = await fetch(
-    //       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-    //         address
-    //       )}&key=AIzaSyCAZ4OWGg8gtBbZ2ULE-b7-tjNxGQGQs6E`
-    //     );
-    //     const data = await response.json();
-    //     if (data.status === "OK") {
-    //       const location = data.results[0].geometry.location;
-    //       return {
-    //         latitude: location.lat,
-    //         longitude: location.lng,
-    //       };
-    //     } else {
-    //       throw new Error("Geocoding failed: " + data.status);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error during geo-location: ", error);
-    //     throw error;
-    //   }
-    // },
+    async GeoLocationAddress(address) {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            address
+          )}&key=AIzaSyCAZ4OWGg8gtBbZ2ULE-b7-tjNxGQGQs6E`
+        );
+        const data = await response.json();
+        if (data.status === "OK") {
+          const location = data.results[0].geometry.location;
+          return {
+            latitude: location.lat,
+            longitude: location.lng,
+          };
+        } else {
+          throw new Error("Geocoding failed: " + data.status);
+        }
+      } catch (error) {
+        console.error("Error during geo-location: ", error);
+        throw error;
+      }
+    },
 
     async createEvent() {
       if (!this.isAuthenticated) {
@@ -107,15 +107,15 @@ export default {
           imageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        // const getLocation = await this.GeoLocationAddress(this.eventLocation);
+        const getLocation = await this.GeoLocationAddress(this.eventLocation);
 
         const newEvent = {
           eventName: this.eventTitle,
           eventDate: this.eventDate,
-          // eventLocation: this.eventLocation,
+          eventLocation: this.eventLocation,
           eventDescription: this.eventDescription,
-          // latitude: getLocation.latitude,
-          // longitude: getLocation.longitude,
+          latitude: getLocation.latitude,
+          longitude: getLocation.longitude,
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
           imageUrl,
@@ -133,7 +133,7 @@ export default {
     resetForm() {
       this.eventTitle = "";
       this.eventDate = "";
-      // this.eventLocation = ""; 
+      this.eventLocation = ""; 
       this.eventDescription = "";
       this.eventImage = null;
     },
