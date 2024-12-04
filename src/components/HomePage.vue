@@ -1,97 +1,51 @@
 <template>
-  <div class="events-page">
-    <h1>Events</h1>
-    <div class="events-container">
-      <aside class="filters">
-        <h3>Filters</h3>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Cars
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Sports
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Writing
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Learning
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Games
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Jobs
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Parties
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Crafts
-          </label>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" />
-            Dogs
-          </label>
-        </div>
-      </aside>
+  <div class="home-page">
+    <aside class="sidebar">
+      <h3>Categories</h3>
+      <ul>
+        <li><input type="checkbox" /> Cars</li>
+        <li><input type="checkbox" /> Sports</li>
+        <li><input type="checkbox" /> Writing</li>
+        <li><input type="checkbox" /> Learning</li>
+        <li><input type="checkbox" /> Games</li>
+        <li><input type="checkbox" /> Jobs</li>
+        <li><input type="checkbox" /> Parties</li>
+        <li><input type="checkbox" /> Crafts</li>
+        <li><input type="checkbox" /> Dogs</li>
+      </ul>
+    </aside>
 
-      <div class="event-container">
-        <input
-          type="text"
-          v-model="searchQuery"
-          placeholder="Search for event"
-          class="search-bar"
-        />
-
-        <div class="event-list">
-          <div
-            v-for="event in filteredEvents"
-            :key="event.id"
-            class="event-card"
-            @click="goToEventDetail(event.id)"
-          >
-            <img
-              v-if="event.imageUrl"
-              :src="event.imageUrl"
-              class="event-img"
-              alt="Event image"
-            />
-            <div v-else class="event-img-placeholder">No Image</div>
-            <div class="event-info">
-              <h2>{{ event.eventName }}</h2>
-              <p>Owner: {{ event.ownerName || "Unknown Owner" }}</p>
-              <p>{{ event.eventDescription }}</p>
-              <p>People attending: {{ event.AttendanceCount }}</p>
-            </div>
+    <main class="content">
+      <h1>Events</h1>
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Search for events"
+        class="search-bar"
+      />
+      <div class="event-list">
+        <div
+          v-for="event in filteredEvents"
+          :key="event.id"
+          class="event-card"
+          @click="goToEventDetail(event.id)"
+        >
+          <img
+            v-if="event.imageUrl"
+            :src="event.imageUrl"
+            class="event-img"
+            alt="Event image"
+          />
+          <div v-else class="event-img-placeholder">No Image</div>
+          <div class="event-info">
+            <h2>{{ event.eventName }}</h2>
+            <p>Owner: {{ event.ownerName || "Unknown Owner" }}</p>
+            <p>{{ event.eventDescription }}</p>
+            <p>People attending: {{ event.AttendanceCount }}</p>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -116,7 +70,6 @@ export default {
       );
     },
   },
-
   async created() {
     try {
       const querySnapshot = await getDocs(collection(db, "events"));
@@ -125,12 +78,6 @@ export default {
         const AttendanceCount = eventData.participants
           ? eventData.participants.length
           : 0;
-
-        if (eventData.imageUrl) {
-          console.log(`Fetching image for event ${eventData.eventName}`);
-        } else {
-          console.log(`No image URL for event: ${eventData.eventName}`);
-        }
 
         this.events.push({
           id: doc.id,
@@ -151,94 +98,89 @@ export default {
 </script>
 
 <style scoped>
-.events-page {
+/* Main layout */
+.home-page {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
   padding: 20px;
-  box-sizing: border-box;
-  background-color: #f3f3f3;
+  background-color: #f5f5f5;
+  gap: 20px;
 }
 
+/* Sidebar styles */
+.sidebar {
+  width: 250px;
+}
+
+.sidebar h3 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin: 5px 0;
+}
+
+/* Content styles */
+.content {
+  flex-grow: 1;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+/* Event list styles */
 .event-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid #000000;
-  border-radius: 8px;
-  padding: 10px;
-  transition: box-shadow 0.2s ease;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
-  max-height: 63vh;
-  overflow-y: auto;
-}
-
-.events-container {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  left: 20%;
-}
-
-.filters {
-  width: 200px;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #f9f9f9;
 }
 
 .event-card {
-  display: flex;
-  align-items: center;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 10px;
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
-}
-
-.event-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .event-img {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 150px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 4px;
 }
 
 .event-img-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 150px;
   background-color: #ddd;
-  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #888;
 }
 
 .event-info {
-  margin-left: 20px;
+  margin-top: 10px;
 }
 
 .event-info h2 {
+  font-size: 1.2rem;
+  color: #333;
   margin: 0;
-  font-size: 1.5rem;
 }
 
 .event-info p {
   margin: 5px 0;
+  font-size: 0.9rem;
   color: #555;
-}
-
-.event-info p:last-child {
-  font-weight: bold;
-  color: #333;
 }
 </style>
