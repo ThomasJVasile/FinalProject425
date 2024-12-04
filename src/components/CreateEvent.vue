@@ -66,7 +66,7 @@ export default {
     //     const response = await fetch(
     //       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
     //         address
-    //       )}&key=YOUR_API_KEY`
+    //       )}&key=AIzaSyCAZ4OWGg8gtBbZ2ULE-b7-tjNxGQGQs6E`
     //     );
     //     const data = await response.json();
     //     if (data.status === "OK") {
