@@ -98,7 +98,10 @@ export default {
 </script>
 
 <style scoped>
-/* Main layout */
+* {
+  font-family: Arial, sans-serif;
+}
+
 .home-page {
   display: flex;
   padding: 20px;
@@ -106,7 +109,6 @@ export default {
   gap: 20px;
 }
 
-/* Sidebar styles */
 .sidebar {
   width: 250px;
 }
@@ -125,7 +127,6 @@ export default {
   margin: 5px 0;
 }
 
-/* Content styles */
 .content {
   flex-grow: 1;
 }
@@ -139,7 +140,6 @@ export default {
   font-size: 1rem;
 }
 
-/* Event list styles */
 .event-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
