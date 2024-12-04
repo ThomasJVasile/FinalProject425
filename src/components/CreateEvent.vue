@@ -4,19 +4,51 @@
       <h1>Create a New Event</h1>
       <form @submit.prevent="createEvent" v-if="isAuthenticated">
         <label for="title">Event Title:</label>
-        <input type="text" v-model="eventTitle" id="title" class="input-field" required />
+        <input
+          type="text"
+          v-model="eventTitle"
+          id="title"
+          class="input-field"
+          placeholder="Enter event title"
+          required
+        />
 
         <label for="date">Event Date:</label>
-        <input type="date" v-model="eventDate" id="date" class="input-field" required />
+        <input
+          type="date"
+          v-model="eventDate"
+          id="date"
+          class="input-field"
+          required
+        />
 
         <label for="location">Event Location:</label>
-        <input type="text" v-model="eventLocation" id="location" class="input-field" required />
+        <input
+          type="text"
+          v-model="eventLocation"
+          id="location"
+          class="input-field"
+          placeholder="Enter event location"
+          required
+        />
 
         <label for="description">Event Description:</label>
-        <textarea v-model="eventDescription" id="description" class="textarea-field" required></textarea>
+        <textarea
+          v-model="eventDescription"
+          id="description"
+          class="textarea-field"
+          placeholder="Write a brief description..."
+          required
+        ></textarea>
 
         <label for="image">Event Image:</label>
-        <input type="file" @change="onFileChange" id="image" class="file-input" accept="image/*" />
+        <input
+          type="file"
+          @change="onFileChange"
+          id="image"
+          class="file-input"
+          accept="image/*"
+        />
 
         <button type="submit" class="submit-button">Create Event</button>
       </form>
@@ -40,7 +72,7 @@ export default {
       eventDate: "",
       eventLocation: "",
       eventDescription: "",
-      eventImage: null,
+      eventImage: null, 
       message: "",
       isAuthenticated: false,
     };
@@ -53,20 +85,15 @@ export default {
   },
   methods: {
     onFileChange(event) {
-      this.eventImage = event.target.files[0]; 
+      this.eventImage = event.target.files[0];
     },
-
-    // this is not working and is not letting us create event with location on
-
-    // !!!!!!
-
 
     async GeoLocationAddress(address) {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
             address
-          )}&key=AIzaSyCAZ4OWGg8gtBbZ2ULE-b7-tjNxGQGQs6E`
+          )}&key=AIzaSyDc9ouuqPa6pc_M1-8LC83LaIOq1AQBbok`
         );
         const data = await response.json();
         if (data.status === "OK") {
@@ -101,8 +128,12 @@ export default {
 
         const userData = userDoc.data();
         let imageUrl = "";
+
         if (this.eventImage) {
-          const imageRef = storageRef(storage, `event-picture/${Date.now()}_${this.eventImage.name}`);
+          const imageRef = storageRef(
+            storage,
+            `event-picture/${Date.now()}_${this.eventImage.name}`
+          );
           const snapshot = await uploadBytes(imageRef, this.eventImage);
           imageUrl = await getDownloadURL(snapshot.ref);
         }
@@ -118,7 +149,7 @@ export default {
           longitude: getLocation.longitude,
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
-          imageUrl,
+          imageUrl, 
           eventParticipants: [],
         };
 
@@ -133,7 +164,7 @@ export default {
     resetForm() {
       this.eventTitle = "";
       this.eventDate = "";
-      this.eventLocation = ""; 
+      this.eventLocation = "";
       this.eventDescription = "";
       this.eventImage = null;
     },
@@ -146,7 +177,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f9fafb;
+  background-color: #f9fafc;
   min-height: 100vh;
   padding: 20px;
 }
