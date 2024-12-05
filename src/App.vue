@@ -91,10 +91,12 @@ router-link {
           <i class="fas fa-envelope"></i>
         </div>
         <div class="user_icon" @click="ToggleDropdown">
-          <i class="fas fa-user-circle"></i>
+          <img v-if="avatarUrl" :src="avatarUrl" alt="Avatar" class="avatar-img" />
+          <i v-else class="fas fa-user-circle"></i>
           <span v-if="userName">{{ userName }}</span>
           <div v-if="IsDropdownVisible" class="dropdown-menu">
             <button @click="signOut">Sign Out</button>
+            <button @click="goToProfile">View Profile</button>
           </div>
         </div>
       </div>
@@ -134,9 +136,13 @@ export default {
       },
     
     GoToInbox() {
-        this.$router.push('/UserInboxPage');
-      },
-    },
+      this.$router.push('/UserInboxPage');
+  },
+    goToProfile() {
+      this.$router.push('/UserProfilePage');
+      this.IsDropdownVisible = false;
+  },
+},
   
   mounted() {
     const auth = getAuth();
@@ -147,6 +153,7 @@ export default {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             this.userName = `${userData.firstName} ${userData.lastName}`;
+            this.avatarUrl = userData.avatarUrl || null; 
           } else {
             console.error("User document does not exist.");
           }
@@ -231,9 +238,19 @@ nav {
   display: block;
 }
 
-
 .user_icon span {
   margin-left: 10px;
   font-size: 1rem;
 }
+
+.avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
 </style>
+
+

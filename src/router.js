@@ -5,6 +5,7 @@ import CreateEvent from "./components/CreateEvent.vue";
 import RegisterPage from "./components/RegisterPage.vue";
 import EventDetailPage from "./components/EventDetailPage.vue"; 
 import UserInboxPage from "./components/UserInboxPage.vue";
+import UserProfilePage from "@/components/UserProfilePage.vue"; // Ensure correct path
 
 
 const routes = [
@@ -15,6 +16,7 @@ const routes = [
   { path: "/eventDetailPage/:id", name: "EventDetailPage", component: EventDetailPage },  // Add CreateEvent route
   { path: "/RegisterPage", name: "RegisterPage", component: RegisterPage},
   { path: "/UserInboxPage", name: "UserInboxPage", component: UserInboxPage},
+  { path: "/UserProfilePage",name: "UserProfilePage",component: UserProfilePage},
   { path: "/", redirect: "/homepage" }, 
 ];
 
