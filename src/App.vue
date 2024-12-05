@@ -85,7 +85,9 @@ router-link {
         <router-link v-if="userName !== 'Anonymous'" to="/create-event">Create Event</router-link>
       </div>
       <div class="icons">
-        <div class="inbox_icon" @click="GoToInbox">
+        <div class="inbox_icon" 
+        v-if="userName !== 'Anonymous'" 
+        @click="GoToInbox">
           <i class="fas fa-envelope"></i>
         </div>
         <div class="user_icon" @click="ToggleDropdown">
