@@ -28,6 +28,7 @@
       <!-- Navigation tabs displayed as buttons -->
       <button @click="goToPage('HomePage')">Home</button> <!-- Home tab -->
       <button>Friends</button> <!-- Friends tab (no additional implementation yet) -->
+      <button @click="$router.push('/events')">Events</button>
       <button>Events</button> <!-- Events tab (no additional implementation yet) -->
       <button>Photos</button> <!-- Photos tab (no additional implementation yet) -->
       <button>Settings</button> <!-- Settings tab (no additional implementation yet) -->
