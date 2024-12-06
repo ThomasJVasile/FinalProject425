@@ -102,7 +102,6 @@ export default {
       }, 2000); // Delay in milliseconds
     },
 
-
     async JoinEvent() {
       const auth = getAuth();
       const currentUser = auth.currentUser;
