@@ -6,6 +6,8 @@ import RegisterPage from "./components/RegisterPage.vue";
 import EventDetailPage from "./components/EventDetailPage.vue"; 
 import UserInboxPage from "./components/UserInboxPage.vue";
 import UserProfilePage from "@/components/UserProfilePage.vue"; // Ensure correct path
+import EventsPage from "./components/EventsPage.vue";
+
 
 
 const routes = [
@@ -17,6 +19,9 @@ const routes = [
   { path: "/RegisterPage", name: "RegisterPage", component: RegisterPage},
   { path: "/UserInboxPage", name: "UserInboxPage", component: UserInboxPage},
   { path: "/UserProfilePage",name: "UserProfilePage",component: UserProfilePage},
+  { path: "/EventsPage",name: "EventsPage",component: EventsPage},
+
+  
   { path: "/", redirect: "/homepage" }, 
 ];
 
