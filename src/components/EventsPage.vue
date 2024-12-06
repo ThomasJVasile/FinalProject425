@@ -2,17 +2,17 @@
   <div class="events-page">
     <main class="content">
       <!-- Title -->
-      <h1>My Events</h1>
+      <h1>All Events</h1>
 
       <!-- Search Bar -->
       <input
         type="text"
         v-model="searchQuery"
-        placeholder="Search your events"
+        placeholder="Search events"
         class="search-bar"
       />
 
-      <!-- List of User's Events -->
+      <!-- List of All Events -->
       <div class="event-list">
         <div
           v-for="event in filteredEvents"
@@ -39,13 +39,12 @@
 
 <script>
 import { db } from "@/firebase"; // Import Firebase instance
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 export default {
   data() {
     return {
-      userId: "currentUserId", // Replace with the logged-in user's actual ID
-      events: [], // List of events created by the user
+      events: [], // List of all events
       searchQuery: "", // Search query for filtering events
     };
   },
@@ -62,12 +61,8 @@ export default {
   },
   async created() {
     try {
-      // Fetch events created by the current user
-      const eventsQuery = query(
-        collection(db, "events"),
-        where("ownerId", "==", this.userId) // Fetch only the user's events
-      );
-      const querySnapshot = await getDocs(eventsQuery);
+      // Fetch all events from the Firebase "events" collection
+      const querySnapshot = await getDocs(collection(db, "events"));
 
       for (const doc of querySnapshot.docs) {
         const eventData = doc.data();
