@@ -1,131 +1,219 @@
 <template>
-  <div id="profile-page">
-    <div class="profile-header">
-      <!-- Section for the profile picture -->
-      <div class="profile-picture">
-        <label for="profile-upload">
-          <!-- Displays the user's profile picture -->
-          <img :src="profilePicture" alt="Profile Picture" />
-        </label>
-        <!-- File input to upload a new profile picture -->
-        <input
-          id="profile-upload"
-          type="file"
-          accept="image/*"
-          @change="uploadProfilePicture"
-        />
+<!-- I combined the old code from Thomas with the buttons from Lalise, my original code is in userProfilePageThomas -->
+
+    <div class="profile-page">
+      <h1>Edit Profile</h1>
+      <div class="profile-container">
+        <!-- Avatar Section -->
+        <div class="avatar-container">
+            <div>
+                <img
+                v-if="userAvatar"
+                :src="userAvatar"
+                alt="User Avatar"
+                class="avatar-img"
+                />
+                <div v-else class="avatar-placeholder">No Avatar</div>
+            </div>
+            <label for="profile-upload">
+                <input
+                id="profile-upload"
+                type="file"
+                accept="image/*"
+                @change="onFileChange"
+                class="avatar-upload"
+                />
+            </label>
+            <button @click="uploadAvatar" class="upload-button">Upload Avatar</button>
+            </div>
+  
+        <!-- Profile Information -->
+        <div class="profile-info">
+          <h1>{{ firstName }} {{ lastName }}</h1>
+        </div>
       </div>
-
-      <!-- Section for the user's name -->
-      <div class="profile-info">
-        <!-- Displays the user's first and last name -->
-        <h1>{{ firstName }} {{ lastName }}</h1>
+  
+      <!-- Navigation Tabs -->
+      <div class="profile-tabs">
+        <button @click="goToPage('HomePage')">Home</button>
+        <button>Friends</button>
+        <button>Events</button>
+        <button>Photos</button>
+        <button>Settings</button>
+        <button>Timeline</button>
       </div>
+  
+      <!-- Message Section -->
+      <p v-if="message" class="message">{{ message }}</p>
     </div>
-
-    <!-- Navigation tabs section -->
-    <div class="profile-tabs">
-      <!-- Navigation tabs displayed as buttons -->
-      <button @click="goToPage('HomePage')">Home</button> <!-- Home tab -->
-      <button>Friends</button> <!-- Friends tab (no additional implementation yet) -->
-      <button>Events</button> <!-- Events tab (no additional implementation yet) -->
-      <button>Photos</button> <!-- Photos tab (no additional implementation yet) -->
-      <button>Settings</button> <!-- Settings tab (no additional implementation yet) -->
-      <button>Timeline</button> <!-- Timeline tab (no additional implementation yet) -->
-    </div>
-  </div>
-</template>
-
-<script>
-export default {
-  data() {
-    return {
-      profilePicture: "placeholder-profile.png", // Default placeholder image
-      firstName: "John", // First name of the user
-      lastName: "Doe", // Last name of the user
-    };
-  },
-  methods: {
-    // Method to handle profile picture upload
-    uploadProfilePicture(event) {
-      const file = event.target.files[0]; // Get the selected file
-      if (file) {
-        const reader = new FileReader(); // Create a FileReader instance
-        reader.onload = (e) => {
-          this.profilePicture = e.target.result; // Update the profile picture with the uploaded image
-        };
-        reader.readAsDataURL(file); // Convert the file into a data URL for display
+  </template>
+  
+  <script>
+  import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+  import { db, storage } from "@/firebase";
+  import { doc, updateDoc, getDoc } from "firebase/firestore";
+  import { getAuth } from "firebase/auth";
+  
+  export default {
+    data() {
+      return {
+        userAvatar: null, // Avatar image URL
+        selectedFile: null, // File selected for upload
+        message: "", // Feedback message
+        firstName: "John", // First name
+        lastName: "Doe", // Last name
+      };
+    },
+    async created() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+  
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            this.userAvatar = userData.avatarUrl || null; // Avatar URL
+            this.firstName = userData.firstName || "John"; // Fetch first name
+            this.lastName = userData.lastName || "Doe"; // Fetch last name
+          }
+        } catch (error) {
+          console.error("Error fetching user data: ", error);
+        }
       }
     },
-    // Navigates to the specified page
-    goToPage(pageName) {
-      this.$router.push({ name: pageName }); // Uses Vue Router to navigate to the page
+    methods: {
+      // Handle file selection
+      onFileChange(event) {
+        this.selectedFile = event.target.files[0];
+      },
+      // Upload avatar to Firebase
+      async uploadAvatar() {
+        if (!this.selectedFile) {
+          this.message = "Please select a file to upload.";
+          return;
+        }
+  
+        const auth = getAuth();
+        const user = auth.currentUser;
+  
+        if (user) {
+          try {
+            const avatarRef = storageRef(
+              storage,
+              `user-avatars/${user.uid}_${this.selectedFile.name}`
+            );
+            const snapshot = await uploadBytes(avatarRef, this.selectedFile);
+            const avatarUrl = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, "users", user.uid), {
+              avatarUrl: avatarUrl,
+            });
+  
+            this.userAvatar = avatarUrl;
+            this.message = "Avatar updated successfully!";
+          } catch (error) {
+            console.error("Error uploading avatar: ", error);
+            this.message = "Failed to upload avatar. Please try again.";
+          }
+        }
+      },
+      // Navigation function
+      goToPage(pageName) {
+        this.$router.push({ name: pageName });
+      },
     },
-  },
-};
-</script>
+  };
+  </script>
+  
+  <style scoped>
+  .profile-page {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  
+  .profile-container {
+    margin: 20px auto;
+    max-width: 400px;
+  }
+  
+  .avatar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .avatar-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+  }
+  
+  .avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    color: #aaa;
+  }
+  
+  .avatar-upload {
+    margin-top: 10px;
+  }
+  
+  .upload-button {
+    padding: 8px 16px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .upload-button:hover {
+    background-color: #45a049;
+  }
+  
+  .profile-info h1 {
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .profile-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .profile-tabs button {
+    padding: 10px 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .profile-tabs button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .message {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #007bff;
+  }
 
-<style scoped>
-/* Styles for the overall profile page */
-#profile-page {
-  display: flex;
-  flex-direction: column; /* Arrange items vertically */
-  align-items: flex-start; /* Align items to the left */
-  padding: 20px;
-}
 
-/* Header section containing profile picture and name */
-.profile-header {
-  display: flex;
-  align-items: center;
-  width: 100%; /* Full width */
-}
+  </style>
 
-/* Profile picture styling */
-.profile-picture {
-  position: relative;
-}
-
-.profile-picture img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%; /* Makes the image circular */
-  cursor: pointer; /* Changes cursor to pointer for clickable effect */
-  border: 2px solid #007bff; /* Blue border around the picture */
-}
-
-.profile-picture input {
-  display: none; /* Hide file input */
-}
-
-/* Profile name styling */
-.profile-info {
-  margin-left: 20px; /* Adds space between profile picture and name */
-}
-
-.profile-info h1 {
-  font-size: 24px; /* Font size for the name */
-  margin: 0;
-  color: #333; /* Dark gray color for the text */
-}
-
-/* Styling for navigation tabs */
-.profile-tabs {
-  display: flex; /* Arrange tabs horizontally */
-  justify-content: flex-start; /* Align tabs to the left */
-  margin-top: 20px; /* Add spacing below the header */
-  gap: 10px; /* Space between each tab */
-}
-
-.profile-tabs button {
-  padding: 10px 20px; /* Add padding inside the buttons */
-  background-color: #f0f0f0; /* Light gray background */
-  border: 1px solid #ccc; /* Light border */
-  border-radius: 5px; /* Rounded corners */
-  cursor: pointer; /* Pointer cursor for interactivity */
-}
-
-.profile-tabs button:hover {
-  background-color: #e0e0e0; /* Slightly darker gray on hover */
-}
-</style>
+  
