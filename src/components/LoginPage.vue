@@ -76,24 +76,6 @@ export default {
       }
     },
 
-
-    // async loginWithGoogle() {
-    //   const auth = getAuth();
-    //   const provider = new GoogleAuthProvider();
-    //   try {
-    //     const result = await signInWithPopup(auth, provider);
-    //     const user = result.user;
-    //     this.successMessage = `Logged in as ${user.displayName}`;
-    //     this.errorMessage = "";
-    //     console.log("Google login successful:", user);
-    //     this.$router.push("/homepage");
-    //   } catch (error) {
-    //     console.error("Google login failed:", error);
-    //     this.errorMessage = "Google login failed. Please try again.";
-    //     this.successMessage = "";
-    //   }
-    // },
-
   async loginWithGoogle() { //this works but we still have to verify id for students somehow
   const auth = getAuth();
   const provider = new GoogleAuthProvider();
@@ -114,9 +96,6 @@ export default {
     loginWithApple() {
       console.log("do this before demo!!!!!!!!!!!!!!!!!!!!!!!!!!!!"); //before demo
     },
-
-
-
     
   },
 };
@@ -234,4 +213,9 @@ button:hover {
 .create-account-link:hover {
   text-decoration: underline;
 }
+
+* {
+  font-family: Arial, sans-serif;
+}
+
 </style>

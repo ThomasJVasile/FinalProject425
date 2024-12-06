@@ -2,8 +2,19 @@
 <template>
   <div class="container">
     <div v-if="event" class="box">
-      <h1>{{ event.eventName }}</h1>
-      <p><strong>Owner:</strong> {{ ownerName }}</p>
+      <h1>{{ event.eventName }}</h1> 
+      <div class="owner-info">
+        <p><strong>Owner:</strong></p>
+        <img
+          v-if="ownerAvatar"
+          :src="ownerAvatar"
+          alt="Owner Avatar"
+          class="owner-avatar"
+        />
+        <p>{{ ownerName }}</p>
+      </div>
+
+      <!-- <p><strong>Owner:</strong> {{ ownerName }}</p> -->
       <p><strong>Date:</strong> {{ event.eventDate }}</p>
       <p><strong>Description:</strong> {{ event.eventDescription }}</p>
       <div v-if="eventImageUrl">
@@ -47,6 +58,7 @@ export default {
     return {
       event: null,
       ownerName: "Loading...",
+      ownerAvatar: null,
       message: "",
       eventImageUrl: null,
       isOwner: false, 
@@ -67,10 +79,12 @@ export default {
         if (ownerDoc.exists()) {
           const ownerData = ownerDoc.data();
           this.ownerName = `${ownerData.firstName} ${ownerData.lastName}`;
-          console.log("Step 3: Owner details fetched:", this.ownerName);
+          this.ownerAvatar = ownerData.avatarUrl || ownerData.photoURL || null;
+          console.log("Step 3: Owner details fetched:", this.ownerName, this.ownerAvatar);
         } else {
           console.error("Owner details not found.");
           this.ownerName = "Unknown User";
+          this.ownerAvatar = null;
         }
 
         const auth = getAuth();
@@ -211,4 +225,24 @@ p {
 .delete-button:hover {
   background-color: #e60000;
 }
+
+.owner-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.owner-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover; 
+  margin-right: 10px;
+  border: 1px solid #ccc;
+}
+
+* {
+  font-family: Arial, sans-serif;
+}
+
 </style>
