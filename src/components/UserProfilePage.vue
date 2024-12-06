@@ -60,8 +60,8 @@
         userAvatar: null, // Avatar image URL
         selectedFile: null, // File selected for upload
         message: "", // Feedback message
-        firstName: "John", // First name
-        lastName: "Doe", // Last name
+        firstName: "Lalise", // First name
+        lastName: "Gizaw", // Last name
       };
     },
     async created() {
@@ -212,7 +212,6 @@
     font-size: 14px;
     color: #007bff;
   }
-
 
 
   </style>
