@@ -16,7 +16,7 @@ const routes = [
   { path: "/eventDetailPage/:id", name: "EventDetailPage", component: EventDetailPage },  // Add CreateEvent route
   { path: "/RegisterPage", name: "RegisterPage", component: RegisterPage},
   { path: "/UserInboxPage", name: "UserInboxPage", component: UserInboxPage},
-  { path: "/UserProfilePage/:id",name: "UserProfilePage",component: UserProfilePage},
+  { path: "/UserProfilePage/",name: "UserProfilePage",component: UserProfilePage},
   { path: "/", redirect: "/homepage" }, 
 ];
 
