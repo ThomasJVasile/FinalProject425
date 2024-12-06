@@ -13,9 +13,11 @@
     <!-- show content based on active tab -->
     <div class="settings-content">
       <div v-if="activeTab === 'account'">
-        <h2>Account Settings</h2>
-        <form @submit.prevent="updateAccount">
-          <!-- Umm, maybe I should validate this? -->
+
+<!-- Account -->	  
+ <h2>Account Settings</h2>
+  <form @submit.prevent="updateAccount">
+         
           <label>
             Username:
             <input type="text" v-model="username" />
@@ -70,7 +72,7 @@
         </label>
         <label>
           <input type="checkbox" v-model="pushNotifications" />
-          Enable Push Notifications
+          Receive Email Notificatin 
         </label>
         <button @click="saveNotificationSettings">Save Notification Settings</button>
       </div>
@@ -82,11 +84,11 @@
 export default {
 data() {
     return {
-        activeTab: 'account', // starting with account, maybe change later??
-        username: "lalise123", // ok, hardcoded for now
-        email: "lalise@example.com", // gotta add validation later
+        activeTab: 'account', 
+        username: "", // ok, hardcoded for now
+        email: "", // gotta add validation later
         password: "", // ahh, empty for now
-        bio: "Just your average bio.", // I should make this dynamic later
+        bio: "", // I should make this dynamic later
         profileVisibility: false, // by default, not private
         postVisibility: false, // ok, also public posts for now
         emailNotifications: true, // I like emails

@@ -17,70 +17,108 @@
           id="profile-upload"
           type="file"
           accept="image/*"
-          @change="uploadProfilePicture"
+          @change="onFileChange"
         />
+        <!-- Save button -->
+        <button @click="uploadProfilePicture" class="upload-button">
+          Save Profile Picture
+        </button>
       </div>
 
       <!-- User Name Section -->
       <div class="profile-info">
-        <!-- Displays the user's first and last name -->
-        <h1>{{ firstName }} {{ lastName }}</h1>
+        <h1>{{ userName }}</h1>
       </div>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="profile-tabs">
-
-        <button>
-  <i class="fa fa-users"></i> Friends
-</button>
-<button @click="goToPage('EventsPage')">
-  <i class="fa fa-calendar"></i> Events
-</button>
-<button>
-  <i class="fa fa-image"></i> Photos
-</button>
-
-
-<button @click="goToPage('SettingsPage')">
-  <i class="fa fa-cog"></i> Settings
-</button>
-
-
-
-<button>
-  <i class="fa fa-clock"></i> Timeline
-</button>
-
-
+      <button><i class="fa fa-users"></i> Friends</button>
+      <button @click="goToPage('EventsPage')"><i class="fa fa-calendar"></i> My Events</button>
+      <button><i class="fa fa-image"></i> Photos</button>
+      <button @click="goToPage('SettingsPage')"><i class="fa fa-cog"></i> Settings</button>
+      <button><i class="fa fa-clock"></i> Timeline</button>
     </div>
+
+    <p v-if="message" class="message">{{ message }}</p>
   </div>
 </template>
 
 <script>
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "@/firebase"; // Firebase instance
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
 export default {
   data() {
     return {
-      profilePicture: "placeholder-profile.png", // Default placeholder image for the profile picture
-      firstName: "Lalise", // User's first name
-      lastName: "Gizaw", // User's last name
+      profilePicture: "placeholder-profile.png", // Placeholder image
+      userName: "", // User's name
+      selectedFile: null, // File selected for upload
+      message: "", // Message for success or errors
     };
   },
+  async created() {
+    // Fetch user details from Firestore on component creation
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          this.userName = userData.name || "Guest"; // Set user's name
+          this.profilePicture = userData.avatarUrl || "placeholder-profile.png"; // Set profile picture
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+  },
   methods: {
-    // Handles uploading a new profile picture
-    uploadProfilePicture(event) {
-      const file = event.target.files[0]; // Get the selected file
-      if (file) {
-        const reader = new FileReader(); // Create a FileReader instance
-        reader.onload = (e) => {
-          this.profilePicture = e.target.result; // Update the profile picture with the uploaded image
-        };
-        reader.readAsDataURL(file); // Convert the file into a Data URL for display
+    onFileChange(event) {
+      this.selectedFile = event.target.files[0]; // Store the selected file
+    },
+    async uploadProfilePicture() {
+      if (!this.selectedFile) {
+        this.message = "Please select a file to upload.";
+        return;
+      }
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user) {
+        try {
+          // Create a reference for the file in Firebase Storage
+          const avatarRef = storageRef(
+            storage,
+            `user-avatars/${user.uid}_${this.selectedFile.name}`
+          );
+
+          // Upload the file to Firebase Storage
+          const snapshot = await uploadBytes(avatarRef, this.selectedFile);
+
+          // Get the URL of the uploaded file
+          const avatarUrl = await getDownloadURL(snapshot.ref);
+
+          // Update Firestore document with the new profile picture URL
+          await updateDoc(doc(db, "users", user.uid), {
+            avatarUrl: avatarUrl,
+          });
+
+          this.profilePicture = avatarUrl; // Update the UI with the new profile picture
+          this.message = "Profile picture updated successfully!";
+        } catch (error) {
+          console.error("Error uploading profile picture:", error);
+          this.message = "Failed to upload profile picture. Please try again.";
+        }
       }
     },
-    // Navigates to the specified page
     goToPage(pageName) {
-      this.$router.push({ name: pageName }); // Uses Vue Router to navigate to the specified page
+      this.$router.push({ name: pageName });
     },
   },
 };
@@ -93,6 +131,9 @@ export default {
   flex-direction: column; /* Arrange items vertically */
   align-items: flex-start; /* Align items to the left */
   padding: 20px;
+  background: linear-gradient(120deg, #050f30, #ffffff); /* Background gradient */
+  border-radius: 8px; /* Rounded corners for the card */
+  box-shadow: 0 4px 8px rgba(194, 179, 179, 0.808); /* Subtle shadow for a card effect */
 }
 
 /* Header section containing profile picture and name */
@@ -113,7 +154,7 @@ export default {
   height: 100px; /* Fixed height for the profile picture */
   border-radius: 50%; /* Makes the image circular */
   cursor: pointer; /* Changes the cursor to indicate clickable */
-  border: 2px solid #007bff; /* Blue border around the picture */
+  border: 2px solid #f80c0c; /* Blue border around the picture */
 }
 
 /* Hidden file input */
@@ -126,7 +167,7 @@ export default {
   position: absolute; /* Positioned relative to the profile-picture container */
   bottom: 10px; /* Positioned 10px from the bottom */
   right: 10px; /* Positioned 10px from the right */
-  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+  background-color: rgba(223, 16, 16, 0.7); /* Semi-transparent black background */
   color: white; /* White color for the camera icon */
   width: 24px; /* Fixed width for the overlay */
   height: 24px; /* Fixed height for the overlay */
@@ -167,17 +208,26 @@ export default {
 
 .profile-tabs button:hover {
   background-color: #e0e0e0; /* Slightly darker background on hover */
-
 }
 
-#profile-page {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 20px;
-  background: linear-gradient(120deg, #db64b3, #ffffff); /* Background gradient */
-  border-radius: 8px; /* Rounded corners for the card */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for a card effect */
+.upload-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
+.upload-button:hover {
+  background-color: #45a049;
+}
+
+.message {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #007bff;
+}
 </style>

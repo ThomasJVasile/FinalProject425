@@ -2,7 +2,7 @@
   <div class="events-page">
     <main class="content">
       <!-- Title -->
-      <h1>All Events</h1>
+      <h1>My Events</h1>
 
       <!-- Search Bar -->
       <input
@@ -12,7 +12,7 @@
         class="search-bar"
       />
 
-      <!-- List of All Events -->
+      <!-- List of User-Created Events -->
       <div class="event-list">
         <div
           v-for="event in filteredEvents"
@@ -38,13 +38,14 @@
 </template>
 
 <script>
-import { db } from "@/firebase"; // Import Firebase instance
-import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase"; // Firebase Firestore instance
+import { collection, getDocs, query, where } from "firebase/firestore"; // Firestore query methods
+import { getAuth } from "firebase/auth"; // Firebase Authentication
 
 export default {
   data() {
     return {
-      events: [], // List of all events
+      events: [], // List of events created by the user
       searchQuery: "", // Search query for filtering events
     };
   },
@@ -61,23 +62,38 @@ export default {
   },
   async created() {
     try {
-      // Fetch all events from the Firebase "events" collection
-      const querySnapshot = await getDocs(collection(db, "events"));
+      const auth = getAuth(); // Get Firebase Authentication instance
+      const user = auth.currentUser; // Get the currently logged-in user
 
-      for (const doc of querySnapshot.docs) {
-        const eventData = doc.data();
-        const AttendanceCount = eventData.participants
-          ? eventData.participants.length
-          : 0;
+      if (user) {
+        const userUid = user.uid; // Get the user's UID
 
-        this.events.push({
-          id: doc.id,
-          AttendanceCount,
-          ...eventData,
+        // Query Firestore for events created by the logged-in user
+        const eventsQuery = query(
+          collection(db, "events"),
+          where("createdBy", "==", userUid) // Only fetch events where `createdBy` matches the user's UID
+        );
+
+        const querySnapshot = await getDocs(eventsQuery); // Execute the query
+
+        // Process and store the events
+        querySnapshot.forEach((doc) => {
+          const eventData = doc.data();
+          const AttendanceCount = eventData.participants
+            ? eventData.participants.length
+            : 0;
+
+          this.events.push({
+            id: doc.id,
+            AttendanceCount,
+            ...eventData,
+          });
         });
+      } else {
+        console.warn("No authenticated user found.");
       }
     } catch (error) {
-      console.error("Error fetching events:", error);
+      console.error("Error fetching user events:", error);
     }
   },
 };
