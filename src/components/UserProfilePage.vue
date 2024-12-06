@@ -40,9 +40,14 @@
 <button>
   <i class="fa fa-image"></i> Photos
 </button>
-<button>
+
+
+<button @click="goToPage('SettingsPage')">
   <i class="fa fa-cog"></i> Settings
 </button>
+
+
+
 <button>
   <i class="fa fa-clock"></i> Timeline
 </button>
