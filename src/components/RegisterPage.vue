@@ -181,4 +181,8 @@ button:hover {
   background-color: #45a049;
 }
 
+* {
+  font-family: Arial, sans-serif;
+}
+
 </style>

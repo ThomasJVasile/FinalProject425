@@ -248,4 +248,9 @@ label {
   font-size: 14px;
   color: #007bff;
 }
+
+* {
+  font-family: Arial, sans-serif;
+}
+
 </style>
