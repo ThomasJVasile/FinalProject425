@@ -1,35 +1,62 @@
 <template>
+
+  <!-- the following is the template for the profile page. -->
+  <!-- (1) -->
   <div id="profile-page">
-    <!-- Header section for the profile -->
+    <!-- Header for the profile (1) -->
+    <!-- (2) -->
     <div class="profile-header">
-      <!-- Profile Picture Section -->
-      <div class="profile-picture">
-        <label for="profile-upload">
-          <!-- Displays the user's profile picture -->
-          <img :src="profilePicture" alt="Profile Picture" />
-          <!-- Overlay with a camera icon for uploading a new picture -->
-          <div class="upload-symbol">
-            <i class="fa fa-camera"></i> <!-- FontAwesome camera icon -->
-          </div>
-        </label>
-        <!-- Hidden file input for uploading profile pictures -->
-        <input
-          id="profile-upload"
-          type="file"
-          accept="image/*"
-          @change="onFileChange"
-        />
-        <!-- Save button -->
-        <button @click="uploadProfilePicture" class="upload-button">
-          Save Profile Picture
-        </button>
+      <!-- for profile picture -->
+      <!-- profile container(2)  -->
+
+      <!-- (3) -->
+      <div class="profile-picture"> 
+        <!-- for profile circle (4) -->
+        <div class="profile-circle">
+
+          <!-- Displaying the profile picture with an option to change it --> 
+          <img 
+            v-if="profilePicture" 
+            :src="profilePicture" 
+            alt="Profile Picture" 
+            class="profile-image" 
+          />
+          
+          <!-- Placeholder User Icon if No Picture --> 
+          <!-- https://fontawesome.com/icons/user?s=solid  -->
+          <i class="fa fa-user user-icon" v-if="!profilePicture"></i>    
+
+          <!-- Camera Icon for Upload -->
+          <label for="profile-upload" class="camera-icon">
+            <i class="fa fa-camera"></i>
+          </label>
+
+          <!-- Hidden File Input for Upload -->
+          <input 
+            id="profile-upload" 
+            type="file" 
+            accept="image/*" 
+            @change="onFileChange" 
+          />
+          <!-- (1) -->
+
+        </div>
+        <!-- Save Button -->
+        <button @click="uploadProfilePicture" class="upload-button">Save</button>
+        <!-- (2) -->
       </div>
 
       <!-- User Name Section -->
+      <!-- (5) -->
       <div class="profile-info">
-        <h1>{{ userName }}</h1>
+        <!-- Safely Display User's Name, Username, or Email -->
+        <h1>{{ firstName || lastName ? firstName + " " + lastName : username || "Guest" }}</h1>
+        <!-- (3) -->
       </div>
+      <!-- (4) -->
+
     </div>
+  
 
     <!-- Navigation Tabs -->
     <div class="profile-tabs">
@@ -40,47 +67,83 @@
       <button><i class="fa fa-clock"></i> Timeline</button>
     </div>
 
+    <!-- Feedback Message -->
     <p v-if="message" class="message">{{ message }}</p>
+    <!-- (5) -->
+
   </div>
+
 </template>
 
+
+
+
+
+
+
+
+
 <script>
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/firebase"; // Firebase instance
-import { doc, updateDoc, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+// Correct Firebase Imports
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import { db, storage } from "@/firebase"; 
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 export default {
   data() {
     return {
-      profilePicture: "placeholder-profile.png", // Placeholder image
-      userName: "", // User's name
-      selectedFile: null, // File selected for upload
-      message: "", // Message for success or errors
+      profilePicture: null, // Profile picture URL
+      user: {},             // Authenticated user
+      firstName: "",        // User's first name from Firestore
+      lastName: "",         // User's last name from Firestore
+      username: "",         // User's username from Firestore
+      selectedFile: null,   // Stores the uploaded file
+      message: "",          // Displays success or error messages
     };
   },
-  async created() {
-    // Fetch user details from Firestore on component creation
-    const auth = getAuth();
-    const user = auth.currentUser;
 
-    if (user) {
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          this.userName = userData.name || "Guest"; // Set user's name
-          this.profilePicture = userData.avatarUrl || "placeholder-profile.png"; // Set profile picture
+  async created() {
+    const auth = getAuth();
+
+    // Track user state changes
+    onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        this.user = currentUser;
+
+        try {
+          // Fetch user details from Firestore
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            this.profilePicture =
+              userData.avatarUrl || currentUser.photoURL || "placeholder-profile.png";
+            
+            // Extract Firestore name fields
+            this.firstName = userData.firstName || "";
+            this.lastName = userData.lastName || "";
+            this.username = userData.username || "";
+          } else {
+            this.profilePicture = currentUser.photoURL || "placeholder-profile.png"; 
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+      } else {
+        this.user = {}; 
       }
-    }
+    });
   },
+
   methods: {
     onFileChange(event) {
-      this.selectedFile = event.target.files[0]; // Store the selected file
+      this.selectedFile = event.target.files[0]; 
     },
+
     async uploadProfilePicture() {
       if (!this.selectedFile) {
         this.message = "Please select a file to upload.";
@@ -92,24 +155,26 @@ export default {
 
       if (user) {
         try {
-          // Create a reference for the file in Firebase Storage
+          // Upload file to Firebase Storage
           const avatarRef = storageRef(
             storage,
             `user-avatars/${user.uid}_${this.selectedFile.name}`
           );
 
-          // Upload the file to Firebase Storage
           const snapshot = await uploadBytes(avatarRef, this.selectedFile);
-
-          // Get the URL of the uploaded file
           const avatarUrl = await getDownloadURL(snapshot.ref);
 
-          // Update Firestore document with the new profile picture URL
+          // Update Firestore with new profile picture URL
           await updateDoc(doc(db, "users", user.uid), {
             avatarUrl: avatarUrl,
           });
 
-          this.profilePicture = avatarUrl; // Update the UI with the new profile picture
+          // Update Firebase Auth user profile
+          await user.updateProfile({
+            photoURL: avatarUrl,
+          });
+
+          this.profilePicture = avatarUrl; 
           this.message = "Profile picture updated successfully!";
         } catch (error) {
           console.error("Error uploading profile picture:", error);
@@ -117,6 +182,7 @@ export default {
         }
       }
     },
+
     goToPage(pageName) {
       this.$router.push({ name: pageName });
     },
@@ -124,92 +190,115 @@ export default {
 };
 </script>
 
+
+
+
+
+
 <style scoped>
-/* Container for the overall profile page */
+/* Profile Page Container */
 #profile-page {
   display: flex;
-  flex-direction: column; /* Arrange items vertically */
-  align-items: flex-start; /* Align items to the left */
+  flex-direction: column;
+  align-items: flex-start;
   padding: 20px;
-  background: linear-gradient(120deg, #050f30, #ffffff); /* Background gradient */
-  border-radius: 8px; /* Rounded corners for the card */
-  box-shadow: 0 4px 8px rgba(194, 179, 179, 0.808); /* Subtle shadow for a card effect */
+  background: linear-gradient(120deg, #050f30, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(194, 179, 179, 0.808);
 }
 
-/* Header section containing profile picture and name */
+/* Header Section */
 .profile-header {
   display: flex;
   align-items: center;
-  width: 100%; /* Full width of the container */
+  width: 100%;
 }
 
-/* Profile picture container */
+/* Profile Picture Container */
 .profile-picture {
-  position: relative; /* Allows positioning of the camera icon */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Styling for the profile picture */
-.profile-picture img {
-  width: 100px; /* Fixed width for the profile picture */
-  height: 100px; /* Fixed height for the profile picture */
-  border-radius: 50%; /* Makes the image circular */
-  cursor: pointer; /* Changes the cursor to indicate clickable */
-  border: 2px solid #f80c0c; /* Blue border around the picture */
+/* Profile Picture Circle */
+.profile-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 10px;
 }
 
-/* Hidden file input */
+/* Default User Icon */
+.user-icon {
+  font-size: 70px;
+  color: #555;
+}
+
+/* Profile Image */
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Camera Icon Overlay */
+.camera-icon {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: white;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #333;
+  border: 2px solid #ddd;
+}
+
+.camera-icon:hover {
+  background: #eee;
+}
+
+/* Hidden File Input */
 .profile-picture input {
-  display: none; /* Hides the file input from view */
+  display: none;
 }
 
-/* Overlay for the camera icon */
-.upload-symbol {
-  position: absolute; /* Positioned relative to the profile-picture container */
-  bottom: 10px; /* Positioned 10px from the bottom */
-  right: 10px; /* Positioned 10px from the right */
-  background-color: rgba(223, 16, 16, 0.7); /* Semi-transparent black background */
-  color: white; /* White color for the camera icon */
-  width: 24px; /* Fixed width for the overlay */
-  height: 24px; /* Fixed height for the overlay */
-  border-radius: 50%; /* Makes the overlay circular */
-  display: flex; /* Flexbox to center the camera icon */
-  justify-content: center; /* Centers the icon horizontally */
-  align-items: center; /* Centers the icon vertically */
-  font-size: 14px; /* Font size for the camera icon */
-  pointer-events: none; /* Prevents interference with click events on the label */
-}
-
-/* Profile name styling */
-.profile-info {
-  margin-left: 20px; /* Adds space between the profile picture and name */
-}
-
+/* User Name Styling */
 .profile-info h1 {
-  font-size: 24px; /* Font size for the user's name */
-  margin: 0; /* Removes extra margins */
-  color: #333; /* Dark gray color for the text */
+  font-size: 24px;
+  margin: 0;
+  color: #333;
 }
 
-/* Navigation tabs styling */
+/* Navigation Tabs */
 .profile-tabs {
-  display: flex; /* Arrange the tabs horizontally */
-  justify-content: flex-start; /* Align tabs to the left */
-  margin-top: 20px; /* Adds spacing above the tabs */
-  gap: 10px; /* Adds spacing between each tab */
+  display: flex;
+  margin-top: 20px;
+  gap: 10px;
 }
 
 .profile-tabs button {
-  padding: 10px 20px; /* Adds padding to the buttons */
-  background-color: #f0f0f0; /* Light gray background color */
-  border: 1px solid #ccc; /* Light border around the buttons */
-  border-radius: 5px; /* Rounded corners for the buttons */
-  cursor: pointer; /* Pointer cursor for interactivity */
+  padding: 10px 20px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .profile-tabs button:hover {
-  background-color: #e0e0e0; /* Slightly darker background on hover */
+  background-color: #e0e0e0;
 }
 
+/* Upload Button */
 .upload-button {
   margin-top: 10px;
   padding: 8px 16px;
@@ -225,6 +314,7 @@ export default {
   background-color: #45a049;
 }
 
+/* Feedback Message */
 .message {
   margin-top: 10px;
   font-size: 14px;
