@@ -47,6 +47,16 @@ export default {
   },
 
   methods: {
+    async toggleReadStatus(messageId, newStatus) {
+    try {
+      await updateDoc(doc(db, "messages", messageId), { read: newStatus });
+      this.fetchMessages(); // Refresh the messages list
+    } catch (error) {
+      console.error("Error toggling read status:", error);
+      alert("Failed to update read status");
+    }
+  },
+  
     async SendMessage() {
       const auth = getAuth();
       const SenderID = auth.currentUser ? auth.currentUser.uid : null;
