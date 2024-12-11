@@ -240,4 +240,26 @@ li {
 small {
   color: gray;
 }
+
+input[type="text"] {
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: calc(100% - 1rem);
+}
+
+button {
+  padding: 0.5rem 1rem;
+  margin: 0.5rem 0;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
 </style>
