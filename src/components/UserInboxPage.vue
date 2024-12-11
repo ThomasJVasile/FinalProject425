@@ -14,6 +14,7 @@
         <strong>{{ message.senderUsername }}</strong>: {{ message.content }}
         <br />
         <small>{{ formatTimestamp(message.timestamp) }}</small>
+        <button @click="deleteMessage(message.id)">Delete</button>
       </li>
     </ul>
   </div>
@@ -21,7 +22,8 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDoc, doc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { deleteDoc } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -47,6 +49,8 @@ export default {
       }
 
       try {
+        const dummydoc = doc;
+        dummydoc.length = 2;
         const ReceiverQuery = query(collection(db, 'users'), where('username', '==', this.ReceiverUsername));
         const ReceiverSnapshot = await getDocs(ReceiverQuery);
         if (ReceiverSnapshot.empty) {
@@ -73,6 +77,7 @@ export default {
       }
     },
 
+
     async fetchMessages() {
       const auth = getAuth();
       const currentUser = auth.currentUser;
@@ -91,16 +96,14 @@ export default {
         const messagesSnapshot = await getDocs(messagesQuery);
 
         const messagesData = await Promise.all(
-          messagesSnapshot.docs.map(async (doc) => { // The doc parameter here refers to each document in the query snapshot
+          messagesSnapshot.docs.map(async (doc) => { // The `doc` here is used for each message document
             const messageData = doc.data();
 
-            // Fetch sender's username using SenderID as the document ID
+            // Fetch sender's username using SenderID
             let senderUsername = "Unknown";
             if (messageData.SenderID) {
               try {
-                const senderDocRef = doc(db, "users", messageData.SenderID); // doc function is used here to create a reference to the sender's document
-                const senderDoc = await getDoc(senderDocRef); // Retrieve the sender's document
-
+                const senderDoc = await getDoc(collection(db, "users").doc(messageData.SenderID));  // Directly create the reference with `.doc()`
                 if (senderDoc.exists()) {
                   senderUsername = senderDoc.data().username || "Unknown";
                 } else {
@@ -123,6 +126,17 @@ export default {
       } catch (error) {
         console.error("Error fetching messages:", error);
         alert("Failed to load messages");
+      }
+    },
+
+    async deleteMessage(messageId) {
+      try {
+        await deleteDoc(doc(db, "messages", messageId)); // Delete the message document
+        alert("Message deleted");
+        this.fetchMessages(); // Refresh the messages list
+      } catch (error) {
+        console.error("Error deleting message:", error);
+        alert("Failed to delete message");
       }
     },
 
