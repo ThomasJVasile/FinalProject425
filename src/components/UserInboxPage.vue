@@ -9,6 +9,8 @@
 
     <h2>Inbox</h2>
     <div v-if="messages.length === 0">No messages</div>
+    <input v-model="searchQuery" type="text" placeholder="Search messages" />
+    <button @click="searchMessages">Search</button>
     <ul>
       <li v-for="(message, index) in messages" :key="index">
         <strong>{{ message.senderUsername }}</strong>: {{ message.content }}
@@ -34,6 +36,16 @@ export default {
       messages: [],
     };
   },
+  computed: {
+    filteredMessages() {
+      if (!this.searchQuery.trim()) return this.messages;
+      return this.messages.filter(message =>
+        message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        message.content.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
+  },
+
   methods: {
     async SendMessage() {
       const auth = getAuth();
@@ -69,14 +81,64 @@ export default {
         this.ReceiverUsername = '';
         alert("Message sent");
 
-        // Fetch updated messages after sending
         this.fetchMessages();
       } catch (error) {
         console.error("Error sending message:", error);
         alert("Failed to send message");
       }
     },
+    async searchMessagesFromDB() {
+      if (!this.searchQuery.trim()) {
+        this.fetchMessages(); 
+        return;
+      }
 
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.error("No authenticated user");
+        return;
+      }
+
+      try {
+        const messagesQuery = query(
+          collection(db, "messages"),
+          where("ReceiverID", "==", currentUser.uid)
+        );
+        const messagesSnapshot = await getDocs(messagesQuery);
+
+        const messagesData = await Promise.all(
+          messagesSnapshot.docs.map(async (doc) => {
+            const messageData = doc.data();
+
+      
+            let senderUsername = "Unknown";
+            if (messageData.SenderID) {
+              const senderDoc = await getDoc(doc(db, "users", messageData.SenderID));
+              if (senderDoc.exists()) {
+                senderUsername = senderDoc.data().username || "Unknown";
+              }
+            }
+
+            return {
+              ...messageData,
+              senderUsername,
+              timestamp: messageData.timestamp?.toDate() || null,
+            };
+          })
+        );
+
+        // Filter results by query
+        this.messages = messagesData.filter(message =>
+          message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          message.content.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      } catch (error) {
+        console.error("Error searching messages:", error);
+        alert("Failed to search messages");
+      }
+    },
 
     async fetchMessages() {
       const auth = getAuth();
