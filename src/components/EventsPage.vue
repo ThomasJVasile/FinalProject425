@@ -1,3 +1,4 @@
+<!--This is a page to display what the user have created -->
 <template>
   <div class="events-page">
     <main class="content">

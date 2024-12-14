@@ -83,6 +83,8 @@ router-link {
         <router-link to="/log-in">Log In</router-link> |
         <router-link to="/RegisterPage">Register</router-link> |
         <router-link v-if="userName !== 'Anonymous'" to="/create-event">Create Event</router-link>
+        
+        
       </div>
       <div class="icons">
         <div class="inbox_icon" 

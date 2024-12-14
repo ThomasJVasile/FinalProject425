@@ -10,12 +10,12 @@
       <button @click="activeTab = 'notifications'">Notifications</button>
     </div>
 
-    <!-- show content based on active tab -->
+    <!-- show content based on active tab 
     <div class="settings-content">
       <div v-if="activeTab === 'account'">
 
-<!-- Account -->	  
- <h2>Account Settings</h2>
+<-- Account -->	  
+<!-- <h2>Account Settings</h2>
   <form @submit.prevent="updateAccount">
          
           <label>
@@ -39,7 +39,7 @@
         <form @submit.prevent="updateProfile">
           <label>
             Bio:
-            <!-- Should I add a character limit here?? -->
+            <-- Should I add a character limit here?? --
             <textarea v-model="bio"></textarea>
           </label>
           <label>
@@ -65,7 +65,7 @@
 
       <div v-if="activeTab === 'notifications'">
         <h2>Notification Settings</h2>
-        <!-- Umm, should this also have categories? -->
+        < Umm, should this also have categories? --
         <label>
           <input type="checkbox" v-model="emailNotifications" />
           Enable Email Notifications
@@ -77,7 +77,38 @@
         <button @click="saveNotificationSettings">Save Notification Settings</button>
       </div>
     </div>
+  </div>n  -->
+
+  <!-- Tab Content Sections -->
+    <div class="settings-content">
+      <!-- Account Tab Content -->
+      <div v-if="activeTab === 'account'">
+        <h2>Account Settings</h2>
+        <p>Here users will be able to change their name, profile information, birdthday and etc.</p>
+      </div>
+
+      <!-- Profile Tab Content -->
+      <div v-if="activeTab === 'profile'">
+        <h2>Profile Settings</h2>
+        <p>There they include what they want to display on their profile like bio and etc</p>
+      </div>
+
+      <!-- Privacy Tab Content -->
+      <div v-if="activeTab === 'privacy'">
+        <h2>Privacy Settings</h2>
+        <p>In here maybe user can make their profile public or private. </p>
+      </div>
+
+      <!-- Notifications Tab Content -->
+      <div v-if="activeTab === 'notifications'">
+        <h2>Notification Settings</h2>
+        <p>User can mayeb turn on notification based on ceratin activitie or their frirnds. But here is where they manage their notificatuon settinsg</p>
+      </div>
+    </div>
   </div>
+
+
+   
 </template>
 
 <script>
@@ -96,27 +127,27 @@ data() {
     }
 },
 methods: {
-    updateAccount() {
+    //updateAccount() {
         // TODO: Add actual validation here
-        console.log("Updated account settings: ", this.username, this.email);
-    },
-    updateProfile() {
-        console.log("Profile updated with bio: ", this.bio);
+      //  console.log("Updated account settings: ", this.username, this.email);
+    //},
+   // updateProfile() {
+    //    console.log("Profile updated with bio: ", this.bio);
         // should I add profile picture saving here??
-    },
-    uploadProfilePicture(event) {
-        const file = event.target.files[0];
-        if (file) {
-            console.log("Profile picture upload triggered!");
+   // },
+  //  uploadProfilePicture(event) {
+  //      const file = event.target.files[0];
+  //      if (file) {
+  //          console.log("Profile picture upload triggered!");
             // maybe add preview here? file.name?
-        }
-    },
-    savePrivacySettings() {
-        console.log("Privacy updated to:", this.profileVisibility, this.postVisibility);
-    },
-    saveNotificationSettings() {
-        console.log("Notifications updated:", this.emailNotifications, this.pushNotifications);
-    }
+  //      }
+ //   },
+  ///  savePrivacySettings() {
+ //       console.log("Privacy updated to:", this.profileVisibility, this.postVisibility);
+ //   },
+ //   saveNotificationSettings() {
+ //       console.log("Notifications updated:", this.emailNotifications, this.pushNotifications);
+////    }
 }
 }
 </script>
