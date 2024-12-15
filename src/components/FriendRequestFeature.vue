@@ -1,3 +1,7 @@
+<!-- This is the freidn request implementation. It is currently not functioning when the assignment is submitted bbut will be by spring 2025 -->
+
+
+
 <template>
   <div class="friend-request-page">
     <h1>Friend Requests</h1>
