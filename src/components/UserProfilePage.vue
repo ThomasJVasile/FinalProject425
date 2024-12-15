@@ -196,7 +196,7 @@ export default {
 
 
 <style scoped>
-/* Profile Page Container */
+/* backgound  */
 #profile-page {
   display: flex;
   flex-direction: column;
@@ -207,14 +207,14 @@ export default {
   box-shadow: 0 4px 8px rgba(194, 179, 179, 0.808);
 }
 
-/* Header Section */
+
 .profile-header {
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-/* Profile Picture Container */
+/* profile pictire style */
 .profile-picture {
   display: flex;
   flex-direction: column;
@@ -276,7 +276,7 @@ export default {
 .profile-info h1 {
   font-size: 24px;
   margin: 0;
-  color: #333;
+  color: rgb(255, 255, 255);
 }
 
 /* Navigation Tabs */
