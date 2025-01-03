@@ -1,0 +1,7 @@
+LAlise 
+Additional Resources
+Profile Page  
+https://stackoverflow.com/questions/41406509/add-a-profile-picture-in-form-in-html-and-css
+https://www.youtube.com/watch?v=RrWUAmh93r4
+
+Icons: https://fontawesome.com/icons
