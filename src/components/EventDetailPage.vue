@@ -11,10 +11,9 @@
           alt="Owner Avatar"
           class="owner-avatar"
         />
-        <p>{{ ownerName }}</p>
+        <p> {{ ownerName }}</p>
       </div>
 
-      <!-- <p><strong>Owner:</strong> {{ ownerName }}</p> -->
       <p><strong>Date:</strong> {{ event.eventDate }}</p>
       <p><strong>Description:</strong> {{ event.eventDescription }}</p>
       <div v-if="eventImageUrl">
@@ -228,17 +227,19 @@ p {
 .owner-info {
   display: flex;
   align-items: center;
+  justify-content: center; 
   margin-bottom: 15px;
+  text-align: center; 
 }
-
 .owner-avatar {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  object-fit: cover; 
+  object-fit: cover;
   margin-right: 10px;
   border: 1px solid #ccc;
 }
+
 
 * {
   font-family: Arial, sans-serif;
