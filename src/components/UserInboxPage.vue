@@ -51,7 +51,7 @@ export default {
     };
   },
   computed: {
-    filteredMessages() {
+    filteredMessages() {  // FUNCTION FOR FILTERING MESSAGES 
       if (!this.searchQuery.trim()) return this.messages;
       return this.messages.filter(message =>
         message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -100,7 +100,7 @@ export default {
       }
     },
 
-    async SendMessage() {
+    async SendMessage() { // FUNCTION FOR SENDING MESSAGES
       const auth = getAuth();
       const SenderID = auth.currentUser ? auth.currentUser.uid : null;
 
@@ -114,8 +114,6 @@ export default {
       }
 
       try {
-        const dummydoc = doc;
-        dummydoc.length = 2;
         const ReceiverQuery = query(collection(db, 'users'), where('username', '==', this.ReceiverUsername));
         const ReceiverSnapshot = await getDocs(ReceiverQuery);
         if (ReceiverSnapshot.empty) {
@@ -140,6 +138,7 @@ export default {
         alert("Failed to send message");
       }
     },
+
     async searchMessagesFromDB() {
       if (!this.searchQuery.trim()) {
         this.fetchMessages();
@@ -237,7 +236,7 @@ export default {
   }
 },
 
-    async deleteMessage(messageId) {
+    async deleteMessage(messageId) { // REMOVE A MESSAGE FROM THE DATABASE
       try {
         await deleteDoc(doc(db, "messages", messageId)); // Delete the message document
         alert("Message deleted");
