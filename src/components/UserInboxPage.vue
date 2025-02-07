@@ -12,10 +12,11 @@
     <input v-model="searchQuery" type="text" placeholder="Search messages" />
     <button @click="searchMessages">Search</button>
     <ul>
-      <li v-for="(message, index) in filteredMessages" :key="index">
-        <strong>{{ message.senderUsername }}</strong>: {{ message.content }}
-        <br />
-        <small>{{ formatTimestamp(message.timestamp) }}</small>
+      <li v-for="message in filteredMessages" :key="message.id">
+        <p><strong>From:</strong> {{ message.SenderID }}</p>
+        <p><strong>To:</strong> {{ message.ReceiverID }}</p>
+        <p>{{ message.content }}</p>
+        <p>{{ message.timestamp }}</p>
         <button @click="deleteMessage(message.id)">Delete</button>
         <button @click="showReplyForm(message)">Reply</button>
         <div v-if="message.replying">
@@ -42,7 +43,7 @@ import { getAuth } from 'firebase/auth';
 
 export default {
   data() {
-    return {
+    return { 
       Content: '',
       ReceiverUsername: '',
       messages: [],
@@ -71,9 +72,9 @@ export default {
       }
     },
     showReplyForm(message) {
-    this.messages.forEach((msg) => (msg.replying = false)); 
-    message.replying = true; 
-  },
+      this.messages.forEach((msg) => (msg.replying = false));
+      message.replying = true;
+    },
     async sendReply(parentMessageId) {
       if (this.replyContent.trim() === '') {
         alert("Reply cannot be empty.");
@@ -193,48 +194,36 @@ export default {
     },
 
     async fetchMessages() {
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
 
-  if (!currentUser) {
-    console.error("No authenticated user");
-    return;
-  }
+      if (!currentUser) {
+        console.error("No authenticated user");
+        return;
+      }
 
-  try {
-    const messagesQuery = query(
-      collection(db, "messages"),
-      where("ReceiverID", "==", currentUser.uid)
-    );
-    const messagesSnapshot = await getDocs(messagesQuery);
+      try {
+        const messagesQuery = query(
+          collection(db, "messages"),
+          where("ReceiverID", "==", currentUser.uid)
+        );
+        const messagesSnapshot = await getDocs(messagesQuery);
+        const messages = messagesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log(messages);
 
-    const messagesData = await Promise.all(
-      messagesSnapshot.docs.map(async (doc) => {
-        const messageData = doc.data();
-        let senderUsername = "Unknown";
-        if (messageData.SenderID) {
-          const senderDoc = await getDoc(doc(db, "users", messageData.SenderID));
-          if (senderDoc.exists()) {
-            senderUsername = senderDoc.data().username || "Unknown";
-          }
-        }
+        this.messages = messages.map(message => ({
+          ...message,
+          timestamp: message.timestamp ? message.timestamp.toDate() : null
+        }));
 
-        return {
-          ...messageData,
-          senderUsername,
-          timestamp: messageData.timestamp?.toDate() || null,
-          replying: false, // Initialize replying property
-          replies: [], // Ensure replies property exists
-        };
-      })
-    );
-
-    this.messages = messagesData;
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    alert("Failed to load messages");
-  }
-},
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        alert("Failed to load messages");
+      }
+    },
 
     async deleteMessage(messageId) { // REMOVE A MESSAGE FROM THE DATABASE
       try {
@@ -245,11 +234,6 @@ export default {
         console.error("Error deleting message:", error);
         alert("Failed to delete message");
       }
-    },
-
-    formatTimestamp(timestamp) {
-      if (!timestamp) return "Unknown time";
-      return timestamp.toLocaleString();
     },
   },
 
