@@ -1,44 +1,60 @@
 <template>
-  <div>
-    <h1>Send Message</h1>
-    <form @submit.prevent="SendMessage">
-      <input v-model="ReceiverUsername" type="text" placeholder="Enter receiver's username" />
-      <input v-model="Content" type="text" placeholder="Enter Message" />
-      <button type="submit">Send Message</button>
-    </form>
+  <v-container>
+    <v-card class="pa-4">
+      <v-card-title class="text-h5">Send Message</v-card-title>
+      <v-form @submit.prevent="SendMessage">
+        <v-text-field v-model="ReceiverUsername" label="Receiver's Username" required></v-text-field>
+        <v-text-field v-model="Content" label="Message" required></v-text-field>
+        <v-btn color="primary" type="submit" block>Send Message</v-btn>
+      </v-form>
+    </v-card>
 
-    <h2>Inbox</h2>
-    <div v-if="messages.length === 0">No messages</div>
-    <input v-model="searchQuery" type="text" placeholder="Search messages" />
-    <button @click="searchMessages">Search</button>
-    <ul>
-      <li v-for="message in filteredMessages" :key="message.id">
-        <p><strong>From:</strong> {{ message.SenderID }}</p>
-        <p><strong>To:</strong> {{ message.ReceiverID }}</p>
-        <p>{{ message.content }}</p>
-        <p>{{ message.timestamp }}</p>
-        <button @click="deleteMessage(message.id)">Delete</button>
-        <button @click="showReplyForm(message)">Reply</button>
-        <div v-if="message.replying">
-          <input v-model="replyContent" type="text" placeholder="Enter your reply" />
-          <button @click="sendReply(message.id)">Send Reply</button>
-        </div>
-        <ul>
-          <li v-for="reply in message.replies" :key="reply.id">
-            <strong>Reply:</strong> {{ reply.content }}
-            <br />
-            <small>{{ formatTimestamp(reply.timestamp) }}</small>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </div>
+    <v-card class="mt-4 pa-4">
+      <v-card-title class="text-h5">Inbox</v-card-title>
+      <v-text-field v-model="searchQuery" label="Search messages" @input="searchMessagesFromDB"></v-text-field>
+      <v-list>
+        <v-list-item v-for="message in filteredMessages" :key="message.id">
+          <v-card class="pa-3 mb-2">
+            <v-card-subtitle>
+              <strong>From:</strong> {{ message.senderUsername }} <br />
+              <strong>To:</strong> {{ message.ReceiverID }}
+            </v-card-subtitle>
+            <v-card-text>
+              {{ message.content }}
+              <br />
+              <small>{{ message.timestamp }}</small>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn color="error" @click="deleteMessage(message.id)">Delete</v-btn>
+              <v-btn color="secondary" @click="showReplyForm(message)">Reply</v-btn>
+            </v-card-actions>
+            <v-expand-transition>
+              <div v-if="message.replying">
+                <v-text-field v-model="replyContent" label="Enter your reply"></v-text-field>
+                <v-btn color="success" @click="sendReply(message.id)" block>Send Reply</v-btn>
+              </div>
+            </v-expand-transition>
+            <v-list dense>
+              <v-list-item v-for="reply in message.replies" :key="reply.id">
+                <v-card class="pa-2">
+                  <v-card-text>
+                    <strong>Reply:</strong> {{ reply.content }}
+                    <br />
+                    <small>{{ reply.timestamp }}</small>
+                  </v-card-text>
+                </v-card>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
 import { db } from '@/firebase';
-import { collection, updateDoc, addDoc, getDoc, doc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
-import { deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -52,7 +68,7 @@ export default {
     };
   },
   computed: {
-    filteredMessages() {  // FUNCTION FOR FILTERING MESSAGES 
+    filteredMessages() {
       if (!this.searchQuery.trim()) return this.messages;
       return this.messages.filter(message =>
         message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -60,190 +76,66 @@ export default {
       );
     },
   },
-
   methods: {
-    async toggleReadStatus(messageId, newStatus) {
-      try {
-        await updateDoc(doc(db, "messages", messageId), { read: newStatus });
-        this.fetchMessages(); // Refresh the messages list
-      } catch (error) {
-        console.error("Error toggling read status:", error);
-        alert("Failed to update read status");
-      }
-    },
-    showReplyForm(message) {
-      this.messages.forEach((msg) => (msg.replying = false));
+    async showReplyForm(message) {
+      this.messages.forEach(msg => msg.replying = false);
       message.replying = true;
     },
     async sendReply(parentMessageId) {
-      if (this.replyContent.trim() === '') {
-        alert("Reply cannot be empty.");
-        return;
-      }
-
+      if (!this.replyContent.trim()) return alert("Reply cannot be empty.");
       try {
-        const auth = getAuth();
-        const SenderID = auth.currentUser ? auth.currentUser.uid : null;
-
+        const SenderID = getAuth().currentUser?.uid;
         await addDoc(collection(db, 'replies'), {
-          parentMessageId,
-          SenderID,
-          content: this.replyContent,
-          timestamp: serverTimestamp(),
+          parentMessageId, SenderID, content: this.replyContent, timestamp: serverTimestamp(),
         });
-
-        this.replyContent = ''; // Clear the reply input
-        this.fetchMessages(); // Refresh the messages list
-        alert("Reply sent");
+        this.replyContent = '';
+        this.fetchMessages();
       } catch (error) {
         console.error("Error sending reply:", error);
-        alert("Failed to send reply");
       }
     },
-
-    async SendMessage() { // FUNCTION FOR SENDING MESSAGES
-      const auth = getAuth();
-      const SenderID = auth.currentUser ? auth.currentUser.uid : null;
-
-      if (this.ReceiverUsername.trim() === '') {
-        alert("Enter receiver's username.");
-        return;
-      }
-      if (this.Content.trim() === '') {
-        alert("Message cannot be empty.");
-        return;
-      }
-
+    async SendMessage() {
+      if (!this.ReceiverUsername.trim() || !this.Content.trim()) return;
       try {
-        const ReceiverQuery = query(collection(db, 'users'), where('username', '==', this.ReceiverUsername));
-        const ReceiverSnapshot = await getDocs(ReceiverQuery);
-        if (ReceiverSnapshot.empty) {
-          alert("User not found.");
-          return;
-        }
-        const ReceiverDoc = ReceiverSnapshot.docs[0];
-        const ReceiverID = ReceiverDoc.id;
+        const auth = getAuth();
+        const SenderID = auth.currentUser?.uid;
+        const ReceiverSnapshot = await getDocs(query(collection(db, 'users'), where('username', '==', this.ReceiverUsername)));
+        if (ReceiverSnapshot.empty) return alert("User not found.");
         await addDoc(collection(db, 'messages'), {
-          SenderID: SenderID,
-          ReceiverID: ReceiverID,
-          content: this.Content,
-          timestamp: serverTimestamp(),
+          SenderID, ReceiverID: ReceiverSnapshot.docs[0].id, content: this.Content, timestamp: serverTimestamp(),
         });
-        this.Content = '';
-        this.ReceiverUsername = '';
-        alert("Message sent");
-
+        this.Content = ''; this.ReceiverUsername = '';
         this.fetchMessages();
       } catch (error) {
         console.error("Error sending message:", error);
-        alert("Failed to send message");
       }
     },
-
-    async searchMessagesFromDB() {
-      if (!this.searchQuery.trim()) {
-        this.fetchMessages();
-        return;
-      }
-
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        console.error("No authenticated user");
-        return;
-      }
-
-      try {
-        const messagesQuery = query(
-          collection(db, "messages"),
-          where("ReceiverID", "==", currentUser.uid)
-        );
-        const messagesSnapshot = await getDocs(messagesQuery);
-
-        const messagesData = await Promise.all(
-          messagesSnapshot.docs.map(async (doc) => {
-            const messageData = doc.data();
-
-
-            let senderUsername = "Unknown";
-            if (messageData.SenderID) {
-              const senderDoc = await getDoc(doc(db, "users", messageData.SenderID));
-              if (senderDoc.exists()) {
-                senderUsername = senderDoc.data().username || "Unknown";
-              }
-            }
-
-            return {
-              ...messageData,
-              senderUsername,
-              timestamp: messageData.timestamp?.toDate() || null,
-            };
-          })
-        );
-
-        // Filter results by query
-        this.messages = messagesData.filter(message =>
-          message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          message.content.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      } catch (error) {
-        console.error("Error searching messages:", error);
-        alert("Failed to search messages");
-      }
-    },
-
     async fetchMessages() {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        console.error("No authenticated user");
-        return;
-      }
-
       try {
-        const messagesQuery = query(
-          collection(db, "messages"),
-          where("ReceiverID", "==", currentUser.uid)
-        );
-        const messagesSnapshot = await getDocs(messagesQuery);
-        const messages = messagesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        console.log(messages);
-
-        this.messages = messages.map(message => ({
-          ...message,
-          timestamp: message.timestamp ? message.timestamp.toDate() : null
-        }));
-
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
+        const messagesSnapshot = await getDocs(query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid)));
+        this.messages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: doc.data().timestamp?.toDate() }));
       } catch (error) {
         console.error("Error fetching messages:", error);
-        alert("Failed to load messages");
       }
     },
-
-    async deleteMessage(messageId) { // REMOVE A MESSAGE FROM THE DATABASE
+    async deleteMessage(messageId) {
       try {
-        await deleteDoc(doc(db, "messages", messageId)); // Delete the message document
-        alert("Message deleted");
-        this.fetchMessages(); // Refresh the messages list
+        await deleteDoc(doc(db, "messages", messageId));
+        this.fetchMessages();
       } catch (error) {
         console.error("Error deleting message:", error);
-        alert("Failed to delete message");
       }
     },
   },
-
   mounted() {
-    this.fetchMessages(); // Correct lifecycle hook to fetch messages when the component is mounted
+    this.fetchMessages();
   },
 };
 </script>
 
-<style scoped>
+<!-- <style scoped>
 h1 {
   font-size: 2rem;
   margin-bottom: 1rem;
@@ -376,4 +268,4 @@ div.v-if {
   padding: 0.75rem;
   border-radius: 8px;
 }
-</style>
+</style> -->
