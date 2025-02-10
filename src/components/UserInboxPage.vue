@@ -10,8 +10,8 @@
     </v-card>
 
     <v-card class="mt-4 pa-4">
-      <v-card-title class="text-h5">Inbox</v-card-title>
-      <v-text-field v-model="searchQuery" label="Search messages" @input="searchMessagesFromDB"></v-text-field>
+      <v-card-title class="text-h5"></v-card-title>
+      <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
       <v-list>
         <v-list-item v-for="message in filteredMessages" :key="message.id">
           <v-card class="pa-3 mb-2">
@@ -78,8 +78,10 @@ export default {
   },
   methods: {
     async showReplyForm(message) {
-      this.messages.forEach(msg => msg.replying = false);
-      message.replying = true;
+      this.messages.forEach(msg => {
+    if (msg !== message) msg.replying = false;
+  });
+      message.replying = !message.replying;
     },
     async sendReply(parentMessageId) {
       if (!this.replyContent.trim()) return alert("Reply cannot be empty.");
@@ -117,7 +119,6 @@ export default {
         const messagesSnapshot = await getDocs(
           query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
         );        
-        this.messages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: doc.data().timestamp?.toDate() }));
       
         this.messages = await Promise.all(messagesSnapshot.docs.map(async (docSnapshot) => {
           const messageData = docSnapshot.data();
