@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router'; 
 import '@fortawesome/fontawesome-free/css/all.css';
+import '@mdi/font/css/materialdesignicons.css';
 
 import 'vuetify/styles';
 import { createVuetify } from 'vuetify';
@@ -16,11 +17,17 @@ const vuetify = createVuetify({
     defaultTheme: 'customTheme',
     themes: {
       customTheme: {
-        dark: false,
+        dark: false, // Light theme for a clean look
         colors: {
-          primary: '#6200ea',
-          secondary: '#03dac6',
-          background: '#f5f5f5',
+          primary: '#1E3A8A',   // Deep blue for a strong, professional feel
+          secondary: '#F59E0B', // Warm gold for accents (buttons, highlights)
+          background: '#F3F4F6', // Soft gray for a subtle, modern UI
+          surface: '#FFFFFF',   // White surfaces for better contrast
+          accent: '#2563EB',    // Lighter blue for small highlights
+          error: '#EF4444',     // Red for error messages
+          info: '#3B82F6',      // Blue for informational messages
+          success: '#10B981',   // Green for success states
+          warning: '#FBBF24',   // Yellow-orange for warnings
         },
       },
     },
