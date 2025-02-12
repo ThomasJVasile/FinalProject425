@@ -1,52 +1,54 @@
 <template>
-  <div class="home-page">
-    <aside class="sidebar">
-      <h3>Categories</h3>
-      <ul>
-        <li><input type="checkbox" /> Cars</li>
-        <li><input type="checkbox" /> Sports</li>
-        <li><input type="checkbox" /> Writing</li>
-        <li><input type="checkbox" /> Learning</li>
-        <li><input type="checkbox" /> Games</li>
-        <li><input type="checkbox" /> Jobs</li>
-        <li><input type="checkbox" /> Parties</li>
-        <li><input type="checkbox" /> Crafts</li>
-        <li><input type="checkbox" /> Dogs</li>
-      </ul>
-    </aside>
+  <v-container class="home-page" fluid>
+    <v-row>
+      <v-col cols="12" md="3">
+        <v-card class="sidebar">
+          <v-card-title>Categories</v-card-title>
+          <v-list>
+            <v-list-item v-for="category in categories" :key="category">
+              <v-checkbox :label="category" />
+            </v-list-item>
+          </v-list>
+        </v-card>
+      </v-col>
 
-    <main class="content">
-      <h1>Events</h1>
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Search for events"
-        class="search-bar"
-      />
-      <div class="event-list">
-        <div
-          v-for="event in filteredEvents"
-          :key="event.id"
-          class="event-card"
-          @click="goToEventDetail(event.id)"
-        >
-          <img
-            v-if="event.imageUrl"
-            :src="event.imageUrl"
-            class="event-img"
-            alt="Event image"
-          />
-          <div v-else class="event-img-placeholder">No Image</div>
-          <div class="event-info">
-            <h2>{{ event.eventName }}</h2>
-            <p>Owner: {{ event.ownerName || "Unknown Owner" }}</p>
-            <p>{{ event.eventDescription }}</p>
-            <p>People attending: {{ event.AttendanceCount }}</p>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+      <v-col cols="12" md="9">
+        <v-card class="content">
+          <v-card-title>
+            <v-text-field
+              v-model="searchQuery"
+              label="Search for events"
+              solo
+            ></v-text-field>
+          </v-card-title>
+
+          <v-row>
+            <v-col
+              v-for="event in filteredEvents"
+              :key="event.id"
+              cols="12" sm="6" md="4"
+            >
+              <v-card class="event-card" @click="goToEventDetail(event.id)">
+                <v-img
+                  v-if="event.imageUrl"
+                  :src="event.imageUrl"
+                  height="200px"
+                ></v-img>
+                <v-card-title>{{ event.eventName }}</v-card-title>
+                <v-card-subtitle>
+                  Owner: {{ event.ownerName || "Unknown Owner" }}
+                </v-card-subtitle>
+                <v-card-text>
+                  <div>{{ event.eventDescription }}</div>
+                  <div>People attending: {{ event.AttendanceCount }}</div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -58,6 +60,17 @@ export default {
     return {
       events: [],
       searchQuery: "",
+      categories: [
+        "Cars",
+        "Sports",
+        "Writing",
+        "Learning",
+        "Games",
+        "Jobs",
+        "Parties",
+        "Crafts",
+        "Dogs",
+      ],
     };
   },
   computed: {
@@ -98,89 +111,36 @@ export default {
 </script>
 
 <style scoped>
-* {
-  font-family: Arial, sans-serif;
-}
-
 .home-page {
-  display: flex;
+  background-color: #e6e6e6;
   padding: 20px;
-  background-color: #f5f5f5;
-  gap: 20px;
 }
 
 .sidebar {
-  width: 250px;
-}
-
-.sidebar h3 {
-  margin-bottom: 15px;
-  font-size: 1.2rem;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  margin: 5px 0;
+  padding: 20px;
 }
 
 .content {
-  flex-grow: 1;
-}
-
-.search-bar {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-}
-
-.event-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  padding: 20px;
 }
 
 .event-card {
   cursor: pointer;
 }
 
-.event-img {
-  width: 100%;
-  height: 150px;
+.event-card img {
   object-fit: cover;
   border-radius: 4px;
 }
 
-.event-img-placeholder {
-  width: 100%;
-  height: 150px;
-  background-color: #ddd;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  color: #888;
-}
-
-.event-info {
-  margin-top: 10px;
-}
-
-.event-info h2 {
+.v-card-title {
   font-size: 1.2rem;
-  color: #333;
-  margin: 0;
+  color: #000000;
 }
 
-.event-info p {
-  margin: 5px 0;
+.v-card-subtitle {
   font-size: 0.9rem;
-  color: #555;
+  color: #000000;
 }
 </style>
+

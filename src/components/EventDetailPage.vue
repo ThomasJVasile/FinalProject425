@@ -1,45 +1,58 @@
-
 <template>
-  <div class="container">
-    <div v-if="event" class="box">
-      <h1>{{ event.eventName }}</h1> 
-      <div class="owner-info">
-        <p><strong>Owner:</strong></p>
-        <img
-          v-if="ownerAvatar"
-          :src="ownerAvatar"
-          alt="Owner Avatar"
-          class="owner-avatar"
-        />
-        <p> {{ ownerName }}</p>
-      </div>
+  <v-container class="d-flex justify-center">
+    <v-card v-if="event" class="pa-4" max-width="500">
+      <v-card-title class="text-center">
+        <h1>{{ event.eventName }}</h1>
+      </v-card-title>
 
-      <p><strong>Date:</strong> {{ event.eventDate }}</p>
-      <p><strong>Description:</strong> {{ event.eventDescription }}</p>
-      <div v-if="eventImageUrl">
-        <img :src="eventImageUrl" alt="Event Image" style="max-width: 100%; height: auto; margin-top: 15px;" />
-      </div>
-      <div v-else>
-        <p>No image available for this event.</p>
-      </div>
-      <button class="join-button" @click="JoinEvent">Join</button>
-      <p v-if="message" class="message">{{ message }}</p>
+      <v-divider></v-divider>
 
-      <!-- beefore demo match this button with join maybe so it looks better -->
-      <div v-if="isOwner" style="margin-top: 20px;">
-        <button class="delete-button" @click="deleteEvent">Delete Event</button>
-      </div>
-      <GoogleMap
-        :center="{ lat: event.latitude, lng: event.longitude }"
-        :zoom="15"
-        style="width: 100%; height: 300px; margin-top: 15px;"
-      >
-      </GoogleMap>
-    </div>
-    <div v-else>
-      <h1>Loading... Please wait a moment</h1>
-    </div>
-  </div>
+      <v-row class="mt-4">
+        <v-col cols="12" class="text-center">
+          <p><strong>Owner:</strong></p>
+          <v-avatar v-if="ownerAvatar" size="50">
+            <img :src="ownerAvatar" alt="Owner Avatar" />
+          </v-avatar>
+          <p>{{ ownerName }}</p>
+        </v-col>
+
+        <v-col cols="12" class="text-center">
+          <p><strong>Date:</strong> {{ event.eventDate }}</p>
+          <p><strong>Description:</strong> {{ event.eventDescription }}</p>
+        </v-col>
+
+        <v-col cols="12" v-if="eventImageUrl" class="text-center">
+          <v-img :src="eventImageUrl" alt="Event Image" max-width="100%" />
+        </v-col>
+
+        <v-col cols="12" v-else class="text-center">
+          <p>No image available for this event.</p>
+        </v-col>
+
+        <v-col cols="12" class="text-center">
+          <v-btn color="primary" @click="JoinEvent">Join</v-btn>
+        </v-col>
+
+        <v-col cols="12" v-if="message" class="text-center">
+          <v-alert type="success" v-if="message" class="mt-4">{{ message }}</v-alert>
+        </v-col>
+
+        <v-col cols="12" v-if="isOwner" class="text-center mt-4">
+          <v-btn color="red" @click="deleteEvent">Delete Event</v-btn>
+        </v-col>
+
+        <v-col cols="12" class="text-center mt-4">
+          <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15" style="height: 300px; width: 100%;" />
+        </v-col>
+      </v-row>
+    </v-card>
+    
+    <v-card v-else class="pa-4">
+      <v-card-title class="text-center">
+        <h1>Loading... Please wait a moment</h1>
+      </v-card-title>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -182,34 +195,22 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f5f5f5;
+
+.owner-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  border: 1px solid #ccc;
 }
-.box {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 80%;
-  max-width: 500px;
-}
-h1 {
-  margin-bottom: 15px;
-  font-size: 24px;
-}
-p {
-  margin: 5px 0;
-  font-size: 18px;
-}
+
 .message {
   margin-top: 15px;
   color: green;
   font-size: 16px;
 }
+
 .delete-button {
   background-color: #ff4d4d;
   color: white;
@@ -220,29 +221,10 @@ p {
   border-radius: 5px;
   transition: background-color 0.2s ease;
 }
+
 .delete-button:hover {
   background-color: #e60000;
 }
 
-.owner-info {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  margin-bottom: 15px;
-  text-align: center; 
-}
-.owner-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 10px;
-  border: 1px solid #ccc;
-}
-
-
-* {
-  font-family: Arial, sans-serif;
-}
-
 </style>
+

@@ -1,36 +1,35 @@
 <template>
-  <div class="login-container">
-    <div class = "login-box">
-      <h1>Register Now</h1>
-      <form @submit.prevent="register">
-        <label for="firstName">First Name:</label>
-        <input v-model="firstName" type="text" id="firstName" required />
-        <br />
+  <v-container class="fill-height d-flex justify-center align-center">
+    <v-card class="pa-5" elevation="10" max-width="500">
+      <v-card-title class="text-center">
+        <v-icon class="mr-2">mdi-account-plus</v-icon>
+        Register Now
+      </v-card-title>
+      <v-card-text>
+        <v-form @submit.prevent="register">
+          <v-text-field v-model="firstName" label="First Name" outlined dense required></v-text-field>
 
-        <label for="lastName">Last Name:</label>
-        <input v-model="lastName" type="text" id="lastName" required />
-        <br />
+          <v-text-field v-model="lastName" label="Last Name" outlined dense required></v-text-field>
 
-        <label for="email">Email:</label>
-        <input v-model="email" type="email" id="email" required />
-        <br />
+          <v-text-field v-model="email" label="Email" outlined dense type="email" required></v-text-field>
 
-        <label for="username">Username:</label>
-        <input v-model="username" type="text" id="username" required />
-        <br />
+          <v-text-field v-model="username" label="Username" outlined dense required></v-text-field>
 
-        <label for="password">Password:</label>
-        <input v-model="password" type="password" id="password" required />
-        <br />
+          <v-text-field v-model="password" label="Password" outlined dense type="password" required></v-text-field>
 
-        <label for="confirmpassword">Confirm Password:</label>
-        <input v-model="confirmpassword" type="password" id="confirmpassword" required />
-        <br />
+          <v-text-field v-model="confirmpassword" label="Confirm Password" outlined dense type="password" required></v-text-field>
 
-        <button type="submit">Register Now</button>
-      </form>
-    </div>
-  </div>
+          <v-alert v-if="errorMessage" type="error" class="mt-3">
+            {{ errorMessage }}
+          </v-alert>
+
+          <v-btn block color="primary" class="mt-3" type="submit">
+            Register Now
+          </v-btn>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -49,16 +48,17 @@ export default {
     const username = ref("");
     const password = ref("");
     const confirmpassword = ref("");
+    const errorMessage = ref("");
     const users = ref([]);
 
     const register = async () => {
       if (!firstName.value || !lastName.value || !email.value || !username.value || !password.value || !confirmpassword.value) {
-        alert("Please fill out all fields.");
+        errorMessage.value = "Please fill out all fields.";
         return;
       }
 
       if (password.value !== confirmpassword.value) {
-        alert("Passwords do not match.");
+        errorMessage.value = "Passwords do not match.";
         return;
       }
 
@@ -73,10 +73,9 @@ export default {
           email: email.value,
         });
 
-        alert("Registration successful.");
         router.push("/homepage");
       } catch (error) {
-        alert("Registration failed: " + error.message);
+        errorMessage.value = "Registration failed: " + error.message;
       }
     };
 
@@ -103,6 +102,7 @@ export default {
       username,
       password,
       confirmpassword,
+      errorMessage,
       users,
       register,
     };
@@ -111,78 +111,11 @@ export default {
 </script>
 
 <style scoped>
-h1 {
-  text-align: center;
-  color: #000000;
-}
-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.login-container {
+.v-card-title {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
+  font-weight: bold;
 }
-
-.login-box {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-}
-
-input {
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-button {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-}
-
-.create-account-link:hover {
-  text-decoration: underline;
-}
-
-.create-account-link {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.create-account {
-  margin-top: 20px;
-  font-size: 14px;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-* {
-  font-family: Arial, sans-serif;
-}
-
 </style>
+
