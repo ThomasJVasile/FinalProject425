@@ -42,11 +42,15 @@
         </v-col>
 
         <v-col cols="12" class="text-center mt-4">
-          <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15" style="height: 300px; width: 100%;" />
+          <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15"
+            style="height: 300px; width: 100%;" >
+            <Marker v-if="markerOptions" :options="markerOptions" />
+          </google-map>
+            <!-- <Marker v-if="markerOptions" :options="markerOptions" /> -->
         </v-col>
       </v-row>
     </v-card>
-    
+
     <v-card v-else class="pa-4">
       <v-card-title class="text-center">
         <h1>Loading... Please wait a moment</h1>
@@ -59,13 +63,14 @@
 import { db } from "@/firebase";
 import { arrayUnion, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { GoogleMap } from "vue3-google-map";
+import { GoogleMap, Marker } from "vue3-google-map";
 
 export default {
   components: {
     GoogleMap,
+    Marker,
   },
-  
+
   data() {
     return {
       event: null,
@@ -73,7 +78,8 @@ export default {
       ownerAvatar: null,
       message: "",
       eventImageUrl: null,
-      isOwner: false, 
+      isOwner: false,
+      markerOptions: null,
     };
   },
   async created() {
@@ -85,6 +91,16 @@ export default {
       if (eventDoc.exists()) {
         this.event = eventDoc.data();
         console.log("Step 2: Event details fetched:", this.event);
+
+        if (this.event.latitude && this.event.longitude) {
+          this.markerOptions = {
+            position: { lat: this.event.latitude, lng: this.event.longitude },
+            title: this.event.eventName,
+          };
+          console.log("Step 3: Marker options set:", this.markerOptions);
+        } else {
+          console.warn("Step 4: No coordinates found for marker.");
+        }
 
         // Fetch owner details
         const ownerDoc = await getDoc(doc(db, "users", this.event.createdBy));
@@ -107,13 +123,13 @@ export default {
         // Fetch event image URL
         if (this.event.imageUrl) {
           console.log("Step 5: Fetching event image URL...");
-          this.eventImageUrl = this.event.imageUrl; 
+          this.eventImageUrl = this.event.imageUrl;
           console.log("Step 6: Event image URL fetched:", this.eventImageUrl);
+          console.log("Event Location:", this.event.latitude, this.event.longitude);
         } else {
           console.warn("Step 7: No event image specified in Firestore.");
-          this.eventImageUrl = null; 
+          this.eventImageUrl = null;
         }
-        this.initializeMap(this.event.latitude, this.event.longitude);
       } else {
         console.error("No such event found!");
       }
@@ -184,7 +200,7 @@ export default {
         const eventId = this.$route.params.id;
         await deleteDoc(doc(db, "events", eventId));
         alert("Event deleted successfully.");
-        this.$router.push("/homepage"); 
+        this.$router.push("/homepage");
       } catch (error) {
         console.error("Error deleting event:", error);
         alert("Failed to delete the event.");
@@ -195,7 +211,6 @@ export default {
 </script>
 
 <style scoped>
-
 .owner-avatar {
   width: 50px;
   height: 50px;
@@ -225,6 +240,4 @@ export default {
 .delete-button:hover {
   background-color: #e60000;
 }
-
 </style>
-

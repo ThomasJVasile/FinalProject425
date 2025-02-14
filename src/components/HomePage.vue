@@ -3,6 +3,8 @@
     <v-row>
       <v-col cols="12" md="3">
         <v-card class="sidebar">
+          <v-card-title>Filter by Location</v-card-title>
+          <v-text-field v-model="locationQuery" label="Enter city or town" solo></v-text-field>
           <v-card-title>Categories</v-card-title>
           <v-list>
             <v-list-item v-for="category in categories" :key="category">
@@ -15,29 +17,21 @@
       <v-col cols="12" md="9">
         <v-card class="content">
           <v-card-title>
-            <v-text-field
-              v-model="searchQuery"
-              label="Search for events"
-              solo
-            ></v-text-field>
+            <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
           </v-card-title>
 
           <v-row>
-            <v-col
-              v-for="event in filteredEvents"
-              :key="event.id"
-              cols="12" sm="6" md="4"
-            >
+            <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
               <v-card class="event-card" @click="goToEventDetail(event.id)">
-                <v-img
-                  v-if="event.imageUrl"
-                  :src="event.imageUrl"
-                  height="200px"
-                ></v-img>
+                <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
                 <v-card-title>{{ event.eventName }}</v-card-title>
                 <v-card-subtitle>
                   Owner: {{ event.ownerName || "Unknown Owner" }}
                 </v-card-subtitle>
+                <v-card-subtitle>
+                  Location: {{ event.eventLocation || "location" }}
+                </v-card-subtitle>
+
                 <v-card-text>
                   <div>{{ event.eventDescription }}</div>
                   <div>People attending: {{ event.AttendanceCount }}</div>
@@ -143,4 +137,3 @@ export default {
   color: #000000;
 }
 </style>
-
