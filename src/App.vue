@@ -11,8 +11,8 @@
       <v-menu v-model="menuVisible" offset-y>
         <template v-slot:activator="{ on, attrs }">
           <v-btn icon v-bind="attrs" v-on="on" @click="toggleMenu">
-            <v-avatar v-if="avatarUrl" size="40">
-              <img :src="avatarUrl" alt="Avatar" />
+            <v-avatar v-if="avatarUrl" size="43">
+              <img :src="avatarUrl" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
             </v-avatar>
             <v-icon v-else>mdi-account-circle</v-icon>
           </v-btn>
@@ -114,8 +114,30 @@ export default {
 };
 </script>
 
-<style>
-.v-toolbar-title {
-  font-weight: bold;
+<style scoped>
+::v-deep(.v-toolbar-title) {
+  font-weight: 900;
+  font-size: 40px;
+  line-height: 1.6;
+  /* Adjust line-height to prevent cutting off */
+  letter-spacing: 3px;
+  padding-bottom: 7px;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: border-box;
+  /* Standard property */
+  -webkit-background-clip: border-box;
+  /* For WebKit-based browsers */
+  -moz-background-clip: border-box;
+  /* For Firefox (if needed) */
+
+  text-shadow:
+    3px 3px 0px #35bb7894,
+    /* Dark purple shadow */
+    6px 6px 0px #302a4d,
+    /* Deeper shadow */
+    9px 9px 5px rgba(0, 0, 0, 0.4);
+  /* Soft outer glow */
 }
 </style>
