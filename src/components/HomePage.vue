@@ -3,6 +3,7 @@
     <v-row>
       <v-col cols="12" md="3">
         <v-card class="sidebar">
+          
           <v-card-title>Filter by Location</v-card-title>
           <v-text-field v-model="locationQuery" label="Enter city or town" solo></v-text-field>
           <v-card-title>Categories</v-card-title>
@@ -112,10 +113,12 @@ export default {
 
 .sidebar {
   padding: 20px;
+  width: 350px;
 }
 
 .content {
   padding: 20px;
+  width: 95%;
 }
 
 .event-card {

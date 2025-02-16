@@ -13,7 +13,7 @@
       <v-card-title class="text-h5"></v-card-title>
       <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
       <v-list>
-        <v-list-item v-for="message in filteredMessages" :key="message.id">
+        <v-list-item v-for="message in messages" :key="message.id">
           <v-card class="pa-3 mb-2">
             <v-card-subtitle>
               <strong>From:</strong> {{ message.senderUsername }} <br />
@@ -25,29 +25,43 @@
               <small>{{ message.timestamp }}</small>
             </v-card-text>
             <v-card-actions>
+              <v-btn color="primary" @click="message.expanded = !message.expanded">
+                {{ message.expanded ? "Hide History" : "View History" }}
+              </v-btn>
+              <v-btn color="success" @click="initiateReply(message)">
+                {{ message.replying ? "Cancel" : "Reply" }}
+              </v-btn>
               <v-btn color="error" @click="deleteMessage(message.id)">Delete</v-btn>
-              <v-btn color="secondary" @click="showReplyForm(message)">Reply</v-btn>
             </v-card-actions>
+
+            <!-- reply input field -->
             <v-expand-transition>
-              <div v-if="message.replying">
-                <v-text-field v-model="replyContent" label="Enter your reply"></v-text-field>
-                <v-btn color="success" @click="sendReply(message.id)" block>Send Reply</v-btn>
+              <div v-if="message.replying" class="pa-3">
+                <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined" dense></v-text-field>
+                <v-btn color="success" @click="sendReply(message)">Send</v-btn>
               </div>
             </v-expand-transition>
-            <v-list dense>
-              <v-list-item v-for="reply in message.replies" :key="reply.id">
-                <v-card class="pa-2">
-                  <v-card-text>
-                    <strong>Reply:</strong> {{ reply.content }}
-                    <br />
-                    <small>{{ reply.timestamp }}</small>
-                  </v-card-text>
-                </v-card>
-              </v-list-item>
-            </v-list>
+
+            <!-- expandable message history -->
+            <v-expand-transition>
+              <div v-if="message.expanded">
+                <v-list dense>
+                  <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)" :key="oldMessage.id">
+                    <v-card class="pa-2">
+                      <v-card-text>
+                        <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
+                        <br />
+                        <small>{{ oldMessage.timestamp }}</small>
+                      </v-card-text>
+                    </v-card>
+                  </v-list-item>
+                </v-list>
+              </div>
+            </v-expand-transition>
           </v-card>
         </v-list-item>
       </v-list>
+
     </v-card>
   </v-container>
 </template>
@@ -59,7 +73,7 @@ import { getAuth } from 'firebase/auth';
 
 export default {
   data() {
-    return { 
+    return {
       Content: '',
       ReceiverUsername: '',
       messages: [],
@@ -77,20 +91,29 @@ export default {
     },
   },
   methods: {
-    async showReplyForm(message) {
-      this.messages.forEach(msg => {
-    if (msg !== message) msg.replying = false;
-  });
-      message.replying = !message.replying;
+    initiateReply(message) {
+      this.messages.forEach(msg => msg.replying = false);
+      message.replying = true;
     },
-    async sendReply(parentMessageId) {
-      if (!this.replyContent.trim()) return alert("Reply cannot be empty.");
+    async sendReply(parentMessage) {
+      if (!this.replyContent || typeof this.replyContent !== 'string' || !this.replyContent.trim()) {
+  alert("Reply cannot be empty.");
+  return;
+}
+
+      if (!this.replyContent || !this.replyContent.trim()) {
+        alert("Reply cannot be empty.");
+        return;
+      }
       try {
         const SenderID = getAuth().currentUser?.uid;
-        await addDoc(collection(db, 'replies'), {
-          parentMessageId, SenderID, content: this.replyContent, timestamp: serverTimestamp(),
+        await addDoc(collection(db, 'messages'), {
+          SenderID,
+          ReceiverID: parentMessage.SenderID,
+          content: this.replyContent.trim(),
+          timestamp: serverTimestamp(),
         });
-        this.replyContent = '';
+        this.replyContent = ''; // Clear after sending
         this.fetchMessages();
       } catch (error) {
         console.error("Error sending reply:", error);
@@ -116,26 +139,46 @@ export default {
       try {
         const currentUser = getAuth().currentUser;
         if (!currentUser) return;
+
         const messagesSnapshot = await getDocs(
           query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
-        );        
-      
-        this.messages = await Promise.all(messagesSnapshot.docs.map(async (docSnapshot) => {
-          const messageData = docSnapshot.data();
-          const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", messageData.SenderID)));
-          const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
-          const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", messageData.ReceiverID)));
-          const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
-          return {
-            id: docSnapshot.id,
-            ...messageData,
-            senderUsername, // Attach the sender's username
-            ReceiverUsername,
-            timestamp: messageData.timestamp?.toDate(),
-        };
-      }));
+        );
 
-      
+        const latestMessages = new Map();
+        const messageHistory = new Map();
+
+        for (const docSnapshot of messagesSnapshot.docs) {
+          const messageData = docSnapshot.data();
+          const senderId = messageData.SenderID;
+
+          if (!messageHistory.has(senderId)) {    // track all messages from each sender
+            messageHistory.set(senderId, []);
+          }
+          messageHistory.get(senderId).push({ id: docSnapshot.id, ...messageData });
+
+          if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {  // track only the latest message from each sender
+            latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
+          }
+        }
+
+        this.messages = await Promise.all(
+          Array.from(latestMessages.values()).map(async (message) => {
+            const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
+            const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
+            const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
+            const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
+
+            return {
+              ...message,
+              senderUsername,
+              ReceiverUsername,
+              timestamp: message.timestamp?.toDate(),
+              expanded: false, // track dropdown state
+            };
+          })
+        );
+
+        this.messageHistory = messageHistory; // store full history
       } catch (error) {
         console.error("Error fetching messages:", error);
       }

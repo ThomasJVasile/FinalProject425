@@ -133,11 +133,11 @@ export default {
   /* For Firefox (if needed) */
 
   text-shadow:
-    3px 3px 0px #35bb7894,
+    3px 3px 0px #a7a5a594,
     /* Dark purple shadow */
     6px 6px 0px #302a4d,
     /* Deeper shadow */
-    9px 9px 5px rgba(0, 0, 0, 0.4);
+    9px 9px 5px rgba(49, 48, 48, 0.4);
   /* Soft outer glow */
 }
 </style>
