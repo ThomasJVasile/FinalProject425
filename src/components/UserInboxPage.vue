@@ -97,9 +97,9 @@ export default {
     },
     async sendReply(parentMessage) {
       if (!this.replyContent || typeof this.replyContent !== 'string' || !this.replyContent.trim()) {
-  alert("Reply cannot be empty.");
-  return;
-}
+        alert("Reply cannot be empty.");
+        return;
+      }
 
       if (!this.replyContent || !this.replyContent.trim()) {
         alert("Reply cannot be empty.");
@@ -151,6 +151,9 @@ export default {
           const messageData = docSnapshot.data();
           const senderId = messageData.SenderID;
 
+          // Convert timestamp to Date object if it's not already
+          messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+
           if (!messageHistory.has(senderId)) {    // track all messages from each sender
             messageHistory.set(senderId, []);
           }
@@ -172,7 +175,7 @@ export default {
               ...message,
               senderUsername,
               ReceiverUsername,
-              timestamp: message.timestamp?.toDate(),
+              timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
               expanded: false, // track dropdown state
             };
           })
