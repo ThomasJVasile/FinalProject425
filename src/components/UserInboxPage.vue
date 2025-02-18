@@ -46,12 +46,12 @@
             <v-expand-transition>
               <div v-if="message.expanded">
                 <v-list dense>
-                  <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)" :key="oldMessage.id">
+                  <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)" :key="oldMessage.id">
                     <v-card class="pa-2">
                       <v-card-text>
                         <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
                         <br />
-                        <small>{{ oldMessage.timestamp }}</small>
+                        <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() : 'Unknown Date' }}</small>
                       </v-card-text>
                     </v-card>
                   </v-list-item>
@@ -148,22 +148,22 @@ export default {
         const messageHistory = new Map();
 
         for (const docSnapshot of messagesSnapshot.docs) {
-          const messageData = docSnapshot.data();
-          const senderId = messageData.SenderID;
+  const messageData = docSnapshot.data();
+  const senderId = messageData.SenderID;
 
-          // Convert timestamp to Date object if it's not already
-          messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+  // Convert timestamp to Date object if it's not already
+  messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
 
-          if (!messageHistory.has(senderId)) {    // track all messages from each sender
-            messageHistory.set(senderId, []);
-          }
-          messageHistory.get(senderId).push({ id: docSnapshot.id, ...messageData });
+  if (!messageHistory.has(senderId)) {    
+    messageHistory.set(senderId, []);
+  }
 
-          if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {  // track only the latest message from each sender
-            latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
-          }
-        }
+  messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData }); // Reverse order
 
+  if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {  
+    latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
+  }
+}
         this.messages = await Promise.all(
           Array.from(latestMessages.values()).map(async (message) => {
             const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
