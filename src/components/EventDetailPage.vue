@@ -11,7 +11,7 @@
         <v-col cols="12" class="text-center">
           <p><strong>Owner:</strong></p>
           <v-avatar v-if="ownerAvatar" size="50">
-            <img :src="ownerAvatar" alt="Owner Avatar" />
+            <img :src="ownerAvatar" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
           </v-avatar>
           <p>{{ ownerName }}</p>
         </v-col>
