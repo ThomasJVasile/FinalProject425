@@ -51,6 +51,14 @@
           @change="onFileChange"
         />
 
+        <!-- Restriction Switch -->
+        <v-switch
+          v-model="isRestricted"
+          label="Restricted Event"
+          :color="isRestricted ? 'red' : 'green'"
+          class="mt-2"
+        />
+
         <v-btn type="submit" color="primary" block class="mt-4">Create Event</v-btn>
       </v-form>
 
@@ -73,7 +81,8 @@ export default {
       eventDate: "",
       eventLocation: "",
       eventDescription: "",
-      eventImage: null, 
+      eventImage: null,
+      isRestricted: false, // Added isRestricted property
       message: "",
       isAuthenticated: false,
     };
@@ -89,7 +98,7 @@ export default {
       this.eventImage = event.target.files[0];
     },
 
-    async GeoLocationAddress(address) {
+     async GeoLocationAddress(address) {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -150,8 +159,9 @@ export default {
           longitude: getLocation.longitude,
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
-          imageUrl, 
+          imageUrl,
           eventParticipants: [],
+          isRestricted: this.isRestricted, // Save restriction status
         };
 
         await addDoc(collection(db, "events"), newEvent);
@@ -168,6 +178,7 @@ export default {
       this.eventLocation = "";
       this.eventDescription = "";
       this.eventImage = null;
+      this.isRestricted = false; // Reset restriction status
     },
   },
 };
@@ -184,3 +195,4 @@ export default {
   color: #007bff;
 }
 </style>
+

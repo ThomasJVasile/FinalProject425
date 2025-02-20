@@ -30,7 +30,10 @@
         </v-col>
 
         <v-col cols="12" class="text-center">
-          <v-btn color="primary" @click="JoinEvent">Join</v-btn>
+          <!-- Check if the event is restricted, display "Request to Join" if restricted is 1 -->
+          <v-btn v-if="event.restricted === 1" color="primary" @click="requestToJoin">Request to Join</v-btn>
+          <!-- Otherwise, display "Join" button -->
+          <v-btn v-else color="primary" @click="JoinEvent">Join</v-btn>
         </v-col>
 
         <v-col cols="12" v-if="message" class="text-center">
@@ -43,10 +46,10 @@
 
         <v-col cols="12" class="text-center mt-4">
           <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15"
-            style="height: 300px; width: 100%;" >
+            style="height: 300px; width: 100%;">
             <Marker v-if="markerOptions" :options="markerOptions" />
           </google-map>
-            <!-- <Marker v-if="markerOptions" :options="markerOptions" /> -->
+          <!-- <Marker v-if="markerOptions" :options="markerOptions" /> -->
         </v-col>
       </v-row>
     </v-card>
