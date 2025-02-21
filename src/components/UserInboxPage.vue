@@ -10,7 +10,7 @@
           </v-list>
         </v-card>
       </v-col>
-      
+
       <!-- Main Content -->
       <v-col cols="9">
         <v-row>
@@ -42,19 +42,23 @@
                     </v-card-actions>
                     <v-expand-transition>
                       <div v-if="message.replying" class="pa-3">
-                        <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined" dense></v-text-field>
+                        <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
+                          dense></v-text-field>
                         <v-btn color="success" @click="sendReply(message)">Send</v-btn>
                       </div>
                     </v-expand-transition>
                     <v-expand-transition>
                       <div v-if="message.expanded">
                         <v-list dense>
-                          <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)" :key="oldMessage.id">
+                          <v-list-item
+                            v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
+                            :key="oldMessage.id">
                             <v-card class="pa-2">
                               <v-card-text>
                                 <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
                                 <br />
-                                <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() : 'Unknown Date' }}</small>
+                                <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
+                                  'Unknown Date' }}</small>
                               </v-card-text>
                             </v-card>
                           </v-list-item>
@@ -70,7 +74,7 @@
           <!-- Notifications Section -->
           <v-col v-if="activeForm === 'notifications'" cols="12">
             <v-card class="pa-4">
-              <v-card-title class="text-h5">Notifications</v-card-title>
+              <v-card-title class="text-h5">Event Notifications</v-card-title>
               <v-list>
                 <v-list-item v-for="notification in notifications" :key="notification.id">
                   <v-card class="pa-3 mb-2">
@@ -79,6 +83,10 @@
                       <br />
                       <small>{{ notification.timestamp }}</small>
                     </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
+                      <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
+                    </v-card-actions>
                   </v-card>
                 </v-list-item>
               </v-list>
@@ -92,7 +100,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc, setDoc} from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -140,68 +148,110 @@ export default {
         console.error("Error sending reply:", error);
       }
     },
-    async fetchMessages() {
+    async fetchNotifications() {
       try {
         const currentUser = getAuth().currentUser;
         if (!currentUser) return;
 
-        const messagesSnapshot = await getDocs(
-          query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
+        const requestsSnapshot = await getDocs(
+          query(collection(db, "RequestJoin"), where("EventOwnerUID", "==", currentUser.uid), where("status", "==", "pending"))
+
         );
 
-        const latestMessages = new Map();
-        const messageHistory = new Map();
+        this.notifications = requestsSnapshot.docs.map(docSnapshot => {
+          const requestData = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            content: `User ${requestData.requesterUsername} wants to join your event.`,
+            timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
+            requesterId: requestData.requesterId,
+            eventId: requestData.eventId
+          };
+        });
+      } catch (error) {
+        console.error("Error fetching event notifications:", error);
+      }
+    },
+    async acceptRequest(notification) {
+      try {
+        await setDoc(doc(db, "eventRequests", notification.id), { status: "accepted" }, { merge: true });
+        this.fetchNotifications();
+      } catch (error) {
+        console.error("Error accepting request:", error);
+      }
+    },
+    async rejectRequest(notification) {
+      try {
+        await deleteDoc(doc(db, "eventRequests", notification.id));
+        this.fetchNotifications();
+      } catch (error) {
+        console.error("Error rejecting request:", error);
+      }
+    },
 
-        for (const docSnapshot of messagesSnapshot.docs) {
-          const messageData = docSnapshot.data();
-          const senderId = messageData.SenderID;
+  async fetchMessages() {
+    try {
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) return;
 
-          messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+      const messagesSnapshot = await getDocs(
+        query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
+      );
 
-          if (!messageHistory.has(senderId)) {
-            messageHistory.set(senderId, []);
-          }
+      const latestMessages = new Map();
+      const messageHistory = new Map();
 
-          messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData });
+      for (const docSnapshot of messagesSnapshot.docs) {
+        const messageData = docSnapshot.data();
+        const senderId = messageData.SenderID;
 
-          if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {
-            latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
-          }
+        messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+
+        if (!messageHistory.has(senderId)) {
+          messageHistory.set(senderId, []);
         }
 
-        this.messages = await Promise.all(
-          Array.from(latestMessages.values()).map(async (message) => {
-            const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
-            const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
-            const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
-            const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
+        messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData });
 
-            return {
-              ...message,
-              senderUsername,
-              ReceiverUsername,
-              timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
-              expanded: false,
-            };
-          })
-        );
+        if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {
+          latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
+        }
+      }
 
-        this.messageHistory = messageHistory;
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    },
-    async deleteMessage(messageId) {
-      try {
-        await deleteDoc(doc(db, "messages", messageId));
-        this.fetchMessages();
-      } catch (error) {
-        console.error("Error deleting message:", error);
-      }
-    },
+      this.messages = await Promise.all(
+        Array.from(latestMessages.values()).map(async (message) => {
+          const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
+          const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
+          const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
+          const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
+
+          return {
+            ...message,
+            senderUsername,
+            ReceiverUsername,
+            timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
+            expanded: false,
+          };
+        })
+      );
+
+      this.messageHistory = messageHistory;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
   },
-  mounted() {
-    this.fetchMessages();
+  async deleteMessage(messageId) {
+    try {
+      await deleteDoc(doc(db, "messages", messageId));
+      this.fetchMessages();
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
   },
+},
+mounted() {
+  this.fetchMessages();
+  this.fetchNotifications();
+},
 };
 </script>

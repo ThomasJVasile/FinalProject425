@@ -31,7 +31,7 @@
 
         <v-col cols="12" class="text-center">
           <!-- Check if the event is restricted, display "Request to Join" if restricted is 1 -->
-          <v-btn v-if="event.restricted === 1" color="primary" @click="requestToJoin">Request to Join</v-btn>
+          <v-btn v-if="event.isRestricted === true" color="primary" @click="requestToJoin">Request to Join</v-btn>
           <!-- Otherwise, display "Join" button -->
           <v-btn v-else color="primary" @click="JoinEvent">Join</v-btn>
         </v-col>
@@ -64,7 +64,7 @@
 
 <script>
 import { db } from "@/firebase";
-import { arrayUnion, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, updateDoc, deleteDoc, collection, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { GoogleMap, Marker } from "vue3-google-map";
 
@@ -195,6 +195,44 @@ export default {
       }
       this.hideMessageAfterDelay();
     },
+
+    async requestToJoin() {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        this.message = "You must be logged in to request to join an event.";
+        this.hideMessageAfterDelay();
+        return;
+      }
+
+      try {
+        console.log("Requesting to join event...");
+        const eventId = this.$route.params.id;
+
+        const requestDocRef = doc(collection(db, "RequestJoin"), `${currentUser.uid}_${eventId}`);
+
+        await setDoc(requestDocRef, {
+          RequestingUserUID: currentUser.uid,
+          EventOwnerUID: this.event.createdBy,
+          EventID: eventId,
+          EventName: this.event.eventName,
+          status: "pending",
+          timestamp: new Date()
+        });
+
+        this.message = "Your request to join has been sent.";
+        console.log("Join request submitted:", {
+          RequestingUserUID: currentUser.uid,
+          EventOwnerUID: this.event.createdBy,
+          EventID: eventId,
+        });
+      } catch (error) {
+        this.message = "Failed to send join request.";
+        console.error("Error sending join request:", error);
+      }
+      this.hideMessageAfterDelay();
+    },
+
     async deleteEvent() {
       const confirmDelete = confirm("Are you sure you want to delete this event?");
       if (!confirmDelete) return;
