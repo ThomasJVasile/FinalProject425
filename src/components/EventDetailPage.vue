@@ -195,7 +195,6 @@ export default {
       }
       this.hideMessageAfterDelay();
     },
-
     async requestToJoin() {
       const auth = getAuth();
       const currentUser = auth.currentUser;
@@ -209,20 +208,33 @@ export default {
         console.log("Requesting to join event...");
         const eventId = this.$route.params.id;
 
+        // Fetch user data to get the username
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (!userDoc.exists()) {
+          this.message = "User information not found.";
+          this.hideMessageAfterDelay();
+          return;
+        }
+
+        const userData = userDoc.data();
+        const username = userData.username || "Unknown User";
+
         const requestDocRef = doc(collection(db, "RequestJoin"), `${currentUser.uid}_${eventId}`);
 
         await setDoc(requestDocRef, {
           RequestingUserUID: currentUser.uid,
+          RequestingUsername: username, // Added username
           EventOwnerUID: this.event.createdBy,
           EventID: eventId,
           EventName: this.event.eventName,
           status: "pending",
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
         this.message = "Your request to join has been sent.";
         console.log("Join request submitted:", {
           RequestingUserUID: currentUser.uid,
+          RequestingUsername: username, // Logging the username
           EventOwnerUID: this.event.createdBy,
           EventID: eventId,
         });

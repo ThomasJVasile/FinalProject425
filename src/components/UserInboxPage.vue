@@ -100,7 +100,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc, setDoc} from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -158,11 +158,12 @@ export default {
 
         );
 
+
         this.notifications = requestsSnapshot.docs.map(docSnapshot => {
           const requestData = docSnapshot.data();
           return {
             id: docSnapshot.id,
-            content: `User ${requestData.requesterUsername} wants to join your event.`,
+            content: `${requestData.RequestingUsername} has requested to attend ${requestData.EventName}.`,
             timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
             requesterId: requestData.requesterId,
             eventId: requestData.eventId
@@ -174,7 +175,7 @@ export default {
     },
     async acceptRequest(notification) {
       try {
-        await setDoc(doc(db, "eventRequests", notification.id), { status: "accepted" }, { merge: true });
+        await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
         this.fetchNotifications();
       } catch (error) {
         console.error("Error accepting request:", error);
@@ -182,76 +183,76 @@ export default {
     },
     async rejectRequest(notification) {
       try {
-        await deleteDoc(doc(db, "eventRequests", notification.id));
+        await deleteDoc(doc(db, "RequestJoin", notification.id));
         this.fetchNotifications();
       } catch (error) {
         console.error("Error rejecting request:", error);
       }
     },
 
-  async fetchMessages() {
-    try {
-      const currentUser = getAuth().currentUser;
-      if (!currentUser) return;
+    async fetchMessages() {
+      try {
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
 
-      const messagesSnapshot = await getDocs(
-        query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
-      );
+        const messagesSnapshot = await getDocs(
+          query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
+        );
 
-      const latestMessages = new Map();
-      const messageHistory = new Map();
+        const latestMessages = new Map();
+        const messageHistory = new Map();
 
-      for (const docSnapshot of messagesSnapshot.docs) {
-        const messageData = docSnapshot.data();
-        const senderId = messageData.SenderID;
+        for (const docSnapshot of messagesSnapshot.docs) {
+          const messageData = docSnapshot.data();
+          const senderId = messageData.SenderID;
 
-        messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+          messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
 
-        if (!messageHistory.has(senderId)) {
-          messageHistory.set(senderId, []);
+          if (!messageHistory.has(senderId)) {
+            messageHistory.set(senderId, []);
+          }
+
+          messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData });
+
+          if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {
+            latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
+          }
         }
 
-        messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData });
+        this.messages = await Promise.all(
+          Array.from(latestMessages.values()).map(async (message) => {
+            const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
+            const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
+            const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
+            const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
 
-        if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {
-          latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
-        }
+            return {
+              ...message,
+              senderUsername,
+              ReceiverUsername,
+              timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
+              expanded: false,
+            };
+          })
+        );
+
+        this.messageHistory = messageHistory;
+      } catch (error) {
+        console.error("Error fetching messages:", error);
       }
-
-      this.messages = await Promise.all(
-        Array.from(latestMessages.values()).map(async (message) => {
-          const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
-          const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
-          const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
-          const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
-
-          return {
-            ...message,
-            senderUsername,
-            ReceiverUsername,
-            timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
-            expanded: false,
-          };
-        })
-      );
-
-      this.messageHistory = messageHistory;
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
+    },
+    async deleteMessage(messageId) {
+      try {
+        await deleteDoc(doc(db, "messages", messageId));
+        this.fetchMessages();
+      } catch (error) {
+        console.error("Error deleting message:", error);
+      }
+    },
   },
-  async deleteMessage(messageId) {
-    try {
-      await deleteDoc(doc(db, "messages", messageId));
-      this.fetchMessages();
-    } catch (error) {
-      console.error("Error deleting message:", error);
-    }
+  mounted() {
+    this.fetchMessages();
+    this.fetchNotifications();
   },
-},
-mounted() {
-  this.fetchMessages();
-  this.fetchNotifications();
-},
 };
 </script>
