@@ -100,7 +100,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, doc, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -165,8 +165,8 @@ export default {
             id: docSnapshot.id,
             content: `${requestData.RequestingUsername} has requested to attend ${requestData.EventName}.`,
             timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
-            requesterId: requestData.requesterId,
-            eventId: requestData.eventId
+            EventID: requestData.EventID,
+            RequestingUsernameID: requestData.RequestingUsernameUID, 
           };
         });
       } catch (error) {
@@ -174,13 +174,27 @@ export default {
       }
     },
     async acceptRequest(notification) {
-      try {
-        await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
-        this.fetchNotifications();
-      } catch (error) {
-        console.error("Error accepting request:", error);
-      }
-    },
+  try {
+    // Update the request status
+    await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
+
+    // Fetch event document to update UserIDs
+    const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
+    const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
+
+    if (eventDocSnap.exists()) {
+      await updateDoc(eventDocRef, {
+        UserIDs: arrayUnion(notification.id), 
+      });
+    
+      this.fetchNotifications();
+    } else {
+      console.error("Event document not found.");
+    }
+  } catch (error) {
+    console.error("Error accepting request:", error);
+  }
+},
     async rejectRequest(notification) {
       try {
         await deleteDoc(doc(db, "RequestJoin", notification.id));

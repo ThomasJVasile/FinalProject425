@@ -162,6 +162,7 @@ export default {
           imageUrl,
           eventParticipants: [],
           isRestricted: this.isRestricted, // Save restriction status
+          UserIDs: [],
         };
 
         await addDoc(collection(db, "events"), newEvent);
