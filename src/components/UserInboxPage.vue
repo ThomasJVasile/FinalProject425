@@ -13,6 +13,16 @@
 
       <!-- Main Content -->
       <v-col cols="9">
+        <v-row v-if="activeForm === 'message'">
+          <v-col cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Send Message</v-card-title>
+              <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
+              <v-textarea v-model="content" label="Message Content" rows="4" />
+              <v-btn color="success" @click="sendMessage">Send</v-btn>
+            </v-card>
+          </v-col>
+        </v-row>
         <v-row>
           <!-- Messages Section -->
           <v-col v-if="activeForm === 'message'" cols="12">
@@ -107,7 +117,7 @@ export default {
   data() {
     return {
       activeForm: 'message', // Default view
-      Content: '',
+      content: '',
       ReceiverUsername: '',
       messages: [],
       searchQuery: '',
@@ -148,6 +158,51 @@ export default {
         console.error("Error sending reply:", error);
       }
     },
+    async sendMessage() {
+      if (!this.content || !this.ReceiverUsername) {
+        alert("Please provide both a receiver username and a message.");
+        return;
+      }
+
+      try {
+        // Get the ReceiverID from username
+        const userSnapshot = await getDocs(
+          query(collection(db, "users"), where("username", "==", this.ReceiverUsername))
+        );
+
+        if (userSnapshot.empty) {
+          alert("User not found.");
+          return;
+        }
+
+        const receiverDoc = userSnapshot.docs[0];
+        const ReceiverID = receiverDoc.id; // Get ReceiverID based on username
+
+        const SenderID = getAuth().currentUser?.uid; // Get the SenderID (current logged-in user)
+
+        if (!SenderID) {
+          alert("User not authenticated.");
+          return;
+        }
+
+        // Create a new message document
+        await addDoc(collection(db, 'messages'), {
+          SenderID,
+          ReceiverID,
+          content: this.content.trim(),
+          timestamp: serverTimestamp(),
+        });
+
+        // Clear the form
+        this.content = '';
+        this.ReceiverUsername = '';
+        this.fetchMessages();
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    },
+
+
     async fetchNotifications() {
       try {
         const currentUser = getAuth().currentUser;
@@ -166,7 +221,7 @@ export default {
             content: `${requestData.RequestingUsername} has requested to attend ${requestData.EventName}.`,
             timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
             EventID: requestData.EventID,
-            RequestingUsernameID: requestData.RequestingUsernameUID, 
+            UserID: requestData.RequestingUserUID,
           };
         });
       } catch (error) {
@@ -174,27 +229,27 @@ export default {
       }
     },
     async acceptRequest(notification) {
-  try {
-    // Update the request status
-    await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
+      try {
+        // Update the request status
+        await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
 
-    // Fetch event document to update UserIDs
-    const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
-    const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
+        // Fetch event document to update UserIDs
+        const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
+        const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
 
-    if (eventDocSnap.exists()) {
-      await updateDoc(eventDocRef, {
-        UserIDs: arrayUnion(notification.id), 
-      });
-    
-      this.fetchNotifications();
-    } else {
-      console.error("Event document not found.");
-    }
-  } catch (error) {
-    console.error("Error accepting request:", error);
-  }
-},
+        if (eventDocSnap.exists()) {
+          await updateDoc(eventDocRef, {
+            UserIDs: arrayUnion(notification.UserID),
+          });
+
+          this.fetchNotifications();
+        } else {
+          console.error("Event document not found.");
+        }
+      } catch (error) {
+        console.error("Error accepting request:", error);
+      }
+    },
     async rejectRequest(notification) {
       try {
         await deleteDoc(doc(db, "RequestJoin", notification.id));
