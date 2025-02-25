@@ -5,8 +5,9 @@
       <v-col cols="3">
         <v-card class="pa-4">
           <v-list>
-            <v-list-item @click="activeForm = 'message'">Chat Messages</v-list-item>
-            <v-list-item @click="activeForm = 'notifications'">Event Notifications</v-list-item>
+            <v-list-item @click="activeForm = 'message'">Inbox</v-list-item>
+            <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
+            <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
           </v-list>
         </v-card>
       </v-col>
@@ -81,10 +82,32 @@
             </v-card>
           </v-col>
 
+          <v-col v-if="activeForm === 'event-notifications'" cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Event Notifications</v-card-title>
+              <v-list>
+                <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
+                  <v-card class="pa-3 mb-2">
+                    <v-card-text>
+                      <strong>Event:</strong> {{ eventNotification.eventName }}<br />
+                      <strong>Message:</strong> {{ eventNotification.message }}<br />
+                      <small>{{ eventNotification.timestamp }}</small>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn>
+                      <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+
+
           <!-- Notifications Section -->
           <v-col v-if="activeForm === 'notifications'" cols="12">
             <v-card class="pa-4">
-              <v-card-title class="text-h5">Event Notifications</v-card-title>
+              <v-card-title class="text-h5">Event Requests</v-card-title>
               <v-list>
                 <v-list-item v-for="notification in notifications" :key="notification.id">
                   <v-card class="pa-3 mb-2">
@@ -114,6 +137,7 @@ import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp
 import { getAuth } from 'firebase/auth';
 
 export default {
+
   data() {
     return {
       activeForm: 'message', // Default view
@@ -123,6 +147,7 @@ export default {
       searchQuery: '',
       replyContent: '',
       notifications: [], // Assuming this is populated somewhere
+      eventNotifications: [],
     };
   },
   computed: {
@@ -158,6 +183,30 @@ export default {
         console.error("Error sending reply:", error);
       }
     },
+    async fetchEventNotifications() {
+      try {
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
+
+        const notificationsSnapshot = await getDocs(
+          query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
+        );
+
+        this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
+          const data = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            eventName: data.EventID,
+            message: data.notifications,
+            timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
+          };
+        });
+        console.log("Fetched event notifications:", this.eventNotifications);
+      } catch (error) {
+        console.error("Error fetching event notifications:", error);
+      }
+    },
+
     async sendMessage() {
       if (!this.content || !this.ReceiverUsername) {
         alert("Please provide both a receiver username and a message.");
@@ -237,11 +286,18 @@ export default {
         const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
         const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
 
+
+
         if (eventDocSnap.exists()) {
           await updateDoc(eventDocRef, {
             UserIDs: arrayUnion(notification.UserID),
           });
-
+          await addDoc(collection(db, "EventNotification"), {
+            recipientUID: notification.UserID, // Requesting user's UID
+            notifications: "You have been accepted",
+            eventID: notification.EventID, // Optional, in case you need to reference the event
+            timestamp: serverTimestamp()
+          });
           this.fetchNotifications();
         } else {
           console.error("Event document not found.");
@@ -322,6 +378,7 @@ export default {
   mounted() {
     this.fetchMessages();
     this.fetchNotifications();
+    this.fetchEventNotifications()
   },
 };
 </script>
