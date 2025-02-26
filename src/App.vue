@@ -49,6 +49,7 @@
     <v-main>
       <router-view />
     </v-main>
+
   </v-app>
 </template>
 
@@ -140,4 +141,6 @@ export default {
     9px 9px 5px rgba(49, 48, 48, 0.4);
   /* Soft outer glow */
 }
+
+
 </style>

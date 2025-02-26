@@ -185,6 +185,7 @@ export default {
 
         await updateDoc(eventRef, {
           participants: arrayUnion(username),
+          UserIDs: arrayUnion(currentUser.uid),
         });
 
         this.message = "You have joined the event.";

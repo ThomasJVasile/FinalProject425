@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12" md="3">
         <v-card class="sidebar">
-          
+
           <v-card-title>Filter by Location</v-card-title>
           <v-text-field v-model="locationQuery" label="Enter city or town" solo></v-text-field>
           <v-card-title>Categories</v-card-title>
@@ -17,29 +17,33 @@
 
       <v-col cols="12" md="9">
         <v-card class="content">
+          
           <v-card-title>
             <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
           </v-card-title>
+          
 
-          <v-row>
-            <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
-              <v-card class="event-card" @click="goToEventDetail(event.id)">
-                <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
-                <v-card-title>{{ event.eventName }}</v-card-title>
-                <v-card-subtitle>
-                  Owner: {{ event.ownerName || "Unknown Owner" }}
-                </v-card-subtitle>
-                <v-card-subtitle>
-                  Location: {{ event.eventLocation || "location" }}
-                </v-card-subtitle>
+          <div class="scrollable-events">
+            <v-row>
+              <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
+                <v-card class="event-card" @click="goToEventDetail(event.id)">
+                  <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
+                  <v-card-title>{{ event.eventName }}</v-card-title>
+                  <v-card-subtitle>
+                    Owner: {{ event.ownerName || "Unknown Owner" }}
+                  </v-card-subtitle>
+                  <v-card-subtitle>
+                    Location: {{ event.eventLocation || "location" }}
+                  </v-card-subtitle>
 
-                <v-card-text>
-                  <div>{{ event.eventDescription }}</div>
-                  <div>People attending: {{ event.AttendanceCount }}</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
+                  <v-card-text>
+                    <div>{{ event.eventDescription }}</div>
+                    <div>People attending: {{ event.AttendanceCount }}</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -106,10 +110,10 @@ export default {
 </script>
 
 <style scoped>
-.home-page {
+/* .home-page {
   background-color: #e6e6e6;
   padding: 20px;
-}
+} */
 
 .sidebar {
   padding: 20px;
@@ -122,7 +126,7 @@ export default {
 }
 
 .event-card {
-  cursor: pointer;
+  white-space: normal; 
 }
 
 .event-card img {
@@ -139,4 +143,34 @@ export default {
   font-size: 0.9rem;
   color: #000000;
 }
+
+.scrollable-events {
+  max-height: 800px;
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  padding-right: 10px; 
+}
+
+/* Style the scrollbar itself */
+.scrollable-events::-webkit-scrollbar {
+  width: 10px;  /* Set the width of the scrollbar */
+}
+
+/* Style the scrollbar track (the part the thumb moves within) */
+.scrollable-events::-webkit-scrollbar-track {
+  background: #f1f1f1;  /* Light gray track */
+  border-radius: 5px;
+}
+
+/* Style the scrollbar thumb (the draggable part) */
+.scrollable-events::-webkit-scrollbar-thumb {
+  background: #2a51d3;  /* Darker gray thumb */
+  border-radius: 5px;
+}
+
+/* Style the scrollbar thumb when hovered */
+.scrollable-events::-webkit-scrollbar-thumb:hover {
+  background: #1814e0;  /* Even darker gray on hover */
+}
+
 </style>

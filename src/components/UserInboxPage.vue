@@ -133,7 +133,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
@@ -206,6 +206,37 @@ export default {
         console.error("Error fetching event notifications:", error);
       }
     },
+
+    async dismissNotification(notificationId) {
+      try {
+        const notificationRef = doc(db, "EventNotification", notificationId);
+        const notificationSnap = await getDoc(notificationRef);
+
+        if (notificationSnap.exists()) {
+          const notificationData = notificationSnap.data();
+
+          // Move the notification to 'ProcessedEventNotification'
+          const processedNotificationRef = doc(db, "ProcessedEventNotification", notificationId);
+          await setDoc(processedNotificationRef, notificationData);
+
+          // Delete the original notification from 'EventNotification'
+          await deleteDoc(notificationRef);
+
+          // Remove it from local notifications array (if you have one)
+          this.notifications = this.notifications.filter(n => n.id !== notificationId);
+
+          console.log(`Notification ${notificationId} dismissed successfully.`);
+        } else {
+          console.log("Notification not found.");
+        }
+      } catch (error) {
+        console.error("Error dismissing notification:", error);
+      }
+    },
+
+    // async viewEventDetails(eventId) {
+
+    // },
 
     async sendMessage() {
       if (!this.content || !this.ReceiverUsername) {
