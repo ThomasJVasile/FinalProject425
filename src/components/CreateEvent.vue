@@ -1,3 +1,5 @@
+import { moderateImage } from "@/utils/imageModeration";
+
 <template>
   <div class="create-event-container">
     <div class="form-wrapper">
@@ -84,9 +86,19 @@ export default {
     });
   },
   methods: {
-    onFileChange(event) {
-      this.eventImage = event.target.files[0];
-    },
+    async onFileChange(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const isSafe = await moderateImage(file);
+      if (!isSafe) {
+          this.message = "This image is inappropriate and cannot be uploaded.";
+          this.eventImage = null;
+          return;
+      }
+
+      this.eventImage = file;
+},
 
     async GeoLocationAddress(address) {
       try {
