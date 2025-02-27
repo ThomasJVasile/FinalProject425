@@ -94,9 +94,68 @@ export default {
     });
   },
   methods: {
-    onFileChange(event) {
+    async onFileChange(event) {
       this.eventImage = event.target.files[0];
-    },
+      // Check if an image was selected
+    if (this.eventImage) {
+      // Check if the image contains inappropriate content using Google Vision API
+      const isInappropriate = await this.checkImageInappropriateness(this.eventImage);
+      
+      if (isInappropriate) {
+        this.message = "The image contains inappropriate content. Please upload a different image.";
+        this.eventImage = null;  // Clear the invalid image
+        return;
+      }
+      
+      // Proceed with uploading the image if it's appropriate
+      // (This is the current flow in your original code)
+    }
+  },
+
+  async checkImageInappropriateness(image) {
+    const apiKey = 'AIzaSyBRGMfXTlwVqjSZQrmn0fioEsyIpUFLefA';  // Use your API key here
+    const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+    
+    // Convert the image to Base64
+    const reader = new FileReader();
+    const imageBase64 = await new Promise((resolve, reject) => {
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(image);
+    });
+
+    // Make a request to Google Cloud Vision API
+    const requestBody = {
+      requests: [
+        {
+          image: { content: imageBase64 },
+          features: [{ type: 'SAFE_SEARCH_DETECTION' }],
+        },
+      ],
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+      
+      const data = await response.json();
+      if (data.responses && data.responses[0].safeSearchAnnotation) {
+        const safeSearch = data.responses[0].safeSearchAnnotation;
+        // If any of the safe search labels is "LIKELY" or "VERY_LIKELY", we reject the image
+        if (safeSearch.adult === 'LIKELY' || safeSearch.adult === 'VERY_LIKELY' || 
+            safeSearch.violence === 'LIKELY' || safeSearch.violence === 'VERY_LIKELY') {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking image:", error);
+    }
+    
+    return false;  // Return false if no inappropriate content is detected
+  },
 
      async GeoLocationAddress(address) {
       try {
@@ -186,6 +245,12 @@ export default {
 </script>
 
 <style scoped>
+.blue-shadow {
+  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+
 .auth-message {
   color: #ff0000;
 }

@@ -2,7 +2,7 @@
   <v-container class="home-page" fluid>
     <v-row>
       <v-col cols="12" md="3">
-        <v-card class="sidebar">
+        <v-card class="sidebar blue-shadow">
 
           <v-card-title>Filter by Location</v-card-title>
           <v-text-field v-model="locationQuery" label="Enter city or town" solo></v-text-field>
@@ -16,7 +16,7 @@
       </v-col>
 
       <v-col cols="12" md="9">
-        <v-card class="content">
+        <v-card class="content blue-shadow">
           
           <v-card-title>
             <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
@@ -26,7 +26,7 @@
           <div class="scrollable-events">
             <v-row>
               <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
-                <v-card class="event-card" @click="goToEventDetail(event.id)">
+                <v-card class="event-card light-blue-shadow" @click="goToEventDetail(event.id)">
                   <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
                   <v-card-title>{{ event.eventName }}</v-card-title>
                   <v-card-subtitle>
@@ -115,6 +115,23 @@ export default {
   padding: 20px;
 } */
 
+/* Blue shadow for forms */
+
+.light-blue-shadow {
+  box-shadow: 0 4px 10px rgba(86, 99, 139, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.blue-shadow {
+  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Stronger blue shadow on focus */
+.blue-input:focus-within {
+  box-shadow: 0 6px 14px rgba(0, 0, 255, 0.6) !important;
+}
+
 .sidebar {
   padding: 20px;
   width: 350px;
@@ -164,7 +181,7 @@ export default {
 
 /* Style the scrollbar thumb (the draggable part) */
 .scrollable-events::-webkit-scrollbar-thumb {
-  background: #2a51d3;  /* Darker gray thumb */
+  background: #2043b4;  /* Darker gray thumb */
   border-radius: 5px;
 }
 

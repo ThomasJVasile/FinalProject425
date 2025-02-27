@@ -26,7 +26,7 @@
         </v-row>
         <v-row>
           <!-- Messages Section -->
-          <v-col v-if="activeForm === 'message'" cols="12">
+          <v-col v-if="activeForm === 'message blue-shadow'" cols="12">
             <v-card class="pa-4">
               <v-card-title class="text-h5">Inbox</v-card-title>
               <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
@@ -413,3 +413,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+
+.blue-shadow {
+  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+</style>
