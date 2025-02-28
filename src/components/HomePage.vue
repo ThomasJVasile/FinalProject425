@@ -9,7 +9,7 @@
           <v-card-title>Categories</v-card-title>
           <v-list>
             <v-list-item v-for="category in categories" :key="category">
-              <v-checkbox :label="category" />
+              <v-checkbox :label="category" v-model="selectedCategories" :value="category" />
             </v-list-item>
           </v-list>
         </v-card>
@@ -17,11 +17,11 @@
 
       <v-col cols="12" md="9">
         <v-card class="content blue-shadow">
-          
+
           <v-card-title>
             <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
           </v-card-title>
-          
+
 
           <div class="scrollable-events">
             <v-row>
@@ -70,16 +70,32 @@ export default {
         "Crafts",
         "Dogs",
       ],
+      selectedCategories: [],
     };
   },
   computed: {
     filteredEvents() {
       const query = this.searchQuery.toLowerCase();
-      return this.events.filter(
-        (event) =>
+      return this.events.filter((event) => {
+        const matchesSearchQuery =
           (event.eventName || "").toLowerCase().includes(query) ||
-          (event.ownerName || "").toLowerCase().includes(query)
-      );
+          (event.ownerName || "").toLowerCase().includes(query);
+
+        // const matchesLocationQuery =
+        //   (this.locationQuery === "" || event.eventLocation?.toLowerCase().includes(this.locationQuery.toLowerCase()));
+
+        const matchesCategory = this.selectedCategories.length === 0 || 
+          (event.categories && event.categories.some(category => this.selectedCategories.includes(category)));
+
+        // return matchesSearchQuery && matchesLocationQuery && matchesCategory;
+        return matchesSearchQuery && matchesCategory;
+      });
+      
+      // return this.events.filter(
+      //   (event) =>
+      //     (event.eventName || "").toLowerCase().includes(query) ||
+      //     (event.ownerName || "").toLowerCase().includes(query)
+      // );
     },
   },
   async created() {
@@ -143,7 +159,7 @@ export default {
 }
 
 .event-card {
-  white-space: normal; 
+  white-space: normal;
 }
 
 .event-card img {
@@ -163,31 +179,34 @@ export default {
 
 .scrollable-events {
   max-height: 800px;
-  overflow-y: auto; 
-  overflow-x: hidden; 
-  padding-right: 10px; 
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
 }
 
 /* Style the scrollbar itself */
 .scrollable-events::-webkit-scrollbar {
-  width: 10px;  /* Set the width of the scrollbar */
+  width: 10px;
+  /* Set the width of the scrollbar */
 }
 
 /* Style the scrollbar track (the part the thumb moves within) */
 .scrollable-events::-webkit-scrollbar-track {
-  background: #f1f1f1;  /* Light gray track */
+  background: #f1f1f1;
+  /* Light gray track */
   border-radius: 5px;
 }
 
 /* Style the scrollbar thumb (the draggable part) */
 .scrollable-events::-webkit-scrollbar-thumb {
-  background: #2043b4;  /* Darker gray thumb */
+  background: #2043b4;
+  /* Darker gray thumb */
   border-radius: 5px;
 }
 
 /* Style the scrollbar thumb when hovered */
 .scrollable-events::-webkit-scrollbar-thumb:hover {
-  background: #1814e0;  /* Even darker gray on hover */
+  background: #1814e0;
+  /* Even darker gray on hover */
 }
-
 </style>

@@ -6,58 +6,21 @@
       </v-card-title>
 
       <v-form @submit.prevent="createEvent" v-if="isAuthenticated">
-        <v-text-field
-          v-model="eventTitle"
-          label="Event Title"
-          placeholder="Enter event title"
-          outlined
-          dense
-          required
-        />
+        <v-text-field v-model="eventTitle" label="Event Title" placeholder="Enter event title" outlined dense
+          required />
+        <v-text-field v-model="eventDate" label="Event Date" type="date" outlined dense required />
+        <v-text-field v-model="eventLocation" label="Event Location" placeholder="Enter event location" outlined dense
+          required />
 
-        <v-text-field
-          v-model="eventDate"
-          label="Event Date"
-          type="date"
-          outlined
-          dense
-          required
-        />
+        <v-select v-model="selectedCategories" :items="eventCategories" label="Select Categories" outlined dense
+          multiple required></v-select>
 
-        <v-text-field
-          v-model="eventLocation"
-          label="Event Location"
-          placeholder="Enter event location"
-          outlined
-          dense
-          required
-        />
-
-        <v-textarea
-          v-model="eventDescription"
-          label="Event Description"
-          placeholder="Write a brief description..."
-          outlined
-          dense
-          required
-        />
-
-        <v-file-input
-          v-model="eventImage"
-          label="Event Image"
-          accept="image/*"
-          outlined
-          dense
-          @change="onFileChange"
-        />
-
+        <v-textarea v-model="eventDescription" label="Event Description" placeholder="Write a brief description..."
+          outlined dense required />
+        <v-file-input v-model="eventImage" label="Event Image" accept="image/*" outlined dense @change="onFileChange" />
         <!-- Restriction Switch -->
-        <v-switch
-          v-model="isRestricted"
-          label="Restricted Event"
-          :color="isRestricted ? 'red' : 'green'"
-          class="mt-2"
-        />
+        <v-switch v-model="isRestricted" label="Restricted Event" :color="isRestricted ? 'red' : 'green'"
+          class="mt-2" />
 
         <v-btn type="submit" color="primary" block class="mt-4">Create Event</v-btn>
       </v-form>
@@ -84,7 +47,18 @@ export default {
       eventImage: null,
       isRestricted: false, // Added isRestricted property
       message: "",
+      eventCategories: [
+        "Cars",
+        "Sports",
+        "Writing",
+        "Learning",
+        "Games",
+        "Jobs",
+        "Parties",
+        "Crafts",
+        "Dogs",],
       isAuthenticated: false,
+      selectedCategories: [],
     };
   },
   created() {
@@ -97,67 +71,10 @@ export default {
     async onFileChange(event) {
       this.eventImage = event.target.files[0];
       // Check if an image was selected
-    if (this.eventImage) {
-      // Check if the image contains inappropriate content using Google Vision API
-      const isInappropriate = await this.checkImageInappropriateness(this.eventImage);
-      
-      if (isInappropriate) {
-        this.message = "The image contains inappropriate content. Please upload a different image.";
-        this.eventImage = null;  // Clear the invalid image
-        return;
-      }
-      
-      // Proceed with uploading the image if it's appropriate
-      // (This is the current flow in your original code)
-    }
-  },
 
-  async checkImageInappropriateness(image) {
-    const apiKey = 'AIzaSyBRGMfXTlwVqjSZQrmn0fioEsyIpUFLefA';  // Use your API key here
-    const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-    
-    // Convert the image to Base64
-    const reader = new FileReader();
-    const imageBase64 = await new Promise((resolve, reject) => {
-      reader.onloadend = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(image);
-    });
+    },
 
-    // Make a request to Google Cloud Vision API
-    const requestBody = {
-      requests: [
-        {
-          image: { content: imageBase64 },
-          features: [{ type: 'SAFE_SEARCH_DETECTION' }],
-        },
-      ],
-    };
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-      
-      const data = await response.json();
-      if (data.responses && data.responses[0].safeSearchAnnotation) {
-        const safeSearch = data.responses[0].safeSearchAnnotation;
-        // If any of the safe search labels is "LIKELY" or "VERY_LIKELY", we reject the image
-        if (safeSearch.adult === 'LIKELY' || safeSearch.adult === 'VERY_LIKELY' || 
-            safeSearch.violence === 'LIKELY' || safeSearch.violence === 'VERY_LIKELY') {
-          return true;
-        }
-      }
-    } catch (error) {
-      console.error("Error checking image:", error);
-    }
-    
-    return false;  // Return false if no inappropriate content is detected
-  },
-
-     async GeoLocationAddress(address) {
+    async GeoLocationAddress(address) {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -222,6 +139,7 @@ export default {
           eventParticipants: [],
           isRestricted: this.isRestricted, // Save restriction status
           UserIDs: [],
+          categories: this.selectedCategories,
         };
 
         await addDoc(collection(db, "events"), newEvent);
@@ -261,4 +179,3 @@ export default {
   color: #007bff;
 }
 </style>
-
