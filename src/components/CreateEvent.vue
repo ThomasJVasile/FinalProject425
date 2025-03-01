@@ -6,64 +6,36 @@ import { moderateContent } from "./utils/contentModeration";
 
 
 <template>
-  <div class="create-event-container">
-    <div class="form-wrapper">
-      <h1>Create a New Event</h1>
-      <form @submit.prevent="createEvent" v-if="isAuthenticated">
-        <label for="title">Event Title:</label>
-        <input
-          type="text"
-          v-model="eventTitle"
-          id="title"
-          class="input-field"
-          placeholder="Enter event title"
-          required
-        />
+  <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;">
+    <v-card class="pa-5" max-width="500px" outlined>
+      <v-card-title class="text-center">
+        <v-typography variant="h5">Create a New Event</v-typography>
+      </v-card-title>
 
-        <label for="date">Event Date:</label>
-        <input
-          type="date"
-          v-model="eventDate"
-          id="date"
-          class="input-field"
-          required
-        />
+      <v-form @submit.prevent="createEvent" v-if="isAuthenticated">
+        <v-text-field v-model="eventTitle" label="Event Title" placeholder="Enter event title" outlined dense
+          required />
+        <v-text-field v-model="eventDate" label="Event Date" type="date" outlined dense required />
+        <v-text-field v-model="eventLocation" label="Event Location" placeholder="Enter event location" outlined dense
+          required />
 
-        <label for="location">Event Location:</label>
-        <input
-          type="text"
-          v-model="eventLocation"
-          id="location"
-          class="input-field"
-          placeholder="Enter event location"
-          required
-        />
+        <v-select v-model="selectedCategories" :items="eventCategories" label="Select Categories" outlined dense
+          multiple required></v-select>
 
-        <label for="description">Event Description:</label>
-        <textarea
-          v-model="eventDescription"
-          id="description"
-          class="textarea-field"
-          placeholder="Write a brief description..."
-          required
-        ></textarea>
+        <v-textarea v-model="eventDescription" label="Event Description" placeholder="Write a brief description..."
+          outlined dense required />
+        <v-file-input v-model="eventImage" label="Event Image" accept="image/*" outlined dense @change="onFileChange" />
+        <!-- Restriction Switch -->
+        <v-switch v-model="isRestricted" label="Restricted Event" :color="isRestricted ? 'red' : 'green'"
+          class="mt-2" />
 
-        <label for="image">Event Image:</label>
-        <input
-          type="file"
-          @change="onFileChange"
-          id="image"
-          class="file-input"
-          accept="image/*"
-        />
+        <v-btn type="submit" color="primary" block class="mt-4">Create Event</v-btn>
+      </v-form>
 
-        <button type="submit" class="submit-button">Create Event</button>
-      </form>
-
-      <p v-else class="auth-message">You must be logged in to create an event.</p>
-      <p v-if="message" class="message">{{ message }}</p>
-    </div>
-  </div>
+      <p v-else class="auth-message text-center mt-3">You must be logged in to create an event.</p>
+      <p v-if="message" class="message text-center mt-3">{{ message }}</p>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -82,9 +54,21 @@ export default {
       eventDate: "",
       eventLocation: "",
       eventDescription: "",
-      eventImage: null, 
+      eventImage: null,
+      isRestricted: false, // Added isRestricted property
       message: "",
+      eventCategories: [
+        "Cars",
+        "Sports",
+        "Writing",
+        "Learning",
+        "Games",
+        "Jobs",
+        "Parties",
+        "Crafts",
+        "Dogs",],
       isAuthenticated: false,
+      selectedCategories: [],
     };
   },
   created() {
@@ -189,8 +173,11 @@ export default {
           longitude: getLocation.longitude,
           createdBy: currentUser.uid,
           ownerName: `${userData.firstName} ${userData.lastName}`,
-          imageUrl, 
+          imageUrl,
           eventParticipants: [],
+          isRestricted: this.isRestricted, // Save restriction status
+          UserIDs: [],
+          categories: this.selectedCategories,
         };
 
         await addDoc(collection(db, "events"), newEvent);
@@ -207,80 +194,21 @@ export default {
       this.eventLocation = "";
       this.eventDescription = "";
       this.eventImage = null;
+      this.isRestricted = false; // Reset restriction status
     },
   },
 };
 </script>
 
 <style scoped>
-.create-event-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f9fafc;
-  min-height: 100vh;
-  padding: 20px;
+.blue-shadow {
+  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
-.form-wrapper {
-  background-color: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-}
-
-h1 {
-  font-size: 24px;
-  color: #333333;
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #555555;
-  text-align: left;
-}
-
-.input-field,
-.textarea-field,
-.file-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #dddddd;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #555555;
-}
-
-.textarea-field {
-  height: 80px;
-  resize: none;
-}
-
-.submit-button {
-  background-color: #4caf50;
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.submit-button:hover {
-  background-color: #45a049;
-}
 
 .auth-message {
   color: #ff0000;
-  margin-top: 20px;
 }
 
 .message {
@@ -288,9 +216,4 @@ label {
   font-size: 14px;
   color: #007bff;
 }
-
-* {
-  font-family: Arial, sans-serif;
-}
-
 </style>

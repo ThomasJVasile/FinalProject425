@@ -1,111 +1,56 @@
-<!-- <template>
-  <div id="app">
-    <nav>
-      <div class="navigation">
-        <router-link to="/homepage">Home</router-link> |
-        <router-link to="/log-in">Log In</router-link> |
-        <router-link to="/RegisterPage">Register</router-link> |
-        <router-link v-if="user" to="/create-event">Create Event</router-link>
-      </div>
-      <div class="user_icon">
-        <span v-if="user">Welcome, {{ user.displayName || user.email }}</span>
-        <i v-else class="fas fa-user-circle"></i>
-      </div>
-    </nav>
-    <router-view />
-  </div>
-</template>
-
-<script>
-import { ref, onMounted } from 'vue';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-
-export default {
-  name: 'App',
-  setup() {
-    const user = ref(null);
-    const auth = getAuth();
-
-    onMounted(() => {
-      onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          user.value = currentUser;
-        } else {
-          user.value = null;
-        }
-      });
-    });
-
-    return { user };
-  },
-};
-</script>
-
-<style>
-nav {
-  text-align: center;
-  margin-bottom: 20px;
-}
-router-link {
-  margin: 0 10px;
-}
-
-.user_icon {
-  position: absolute;
-  right: 20px; 
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
-.user_icon span {
-  margin-right: 10px;
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.user_icon i {
-  font-size: 2.6rem;
-}
-
-.user_icon:hover {
-  color: #ffffffa0;
-}
-</style> -->
-
 <template>
-  <div id="app">
-    <nav>
-      <div class="title"> 
-        Get Together
-      </div>
-      <div class="navigation">
-        <router-link to="/homepage">Home</router-link> |
-        <router-link to="/log-in">Log In</router-link> |
-        <router-link to="/RegisterPage">Register</router-link> |
-        <router-link v-if="userName !== 'Anonymous'" to="/create-event">Create Event</router-link>
-        
-        
-      </div>
-      <div class="icons">
-        <div class="inbox_icon" 
-        v-if="userName !== 'Anonymous'" 
-        @click="GoToInbox">
-          <i class="fas fa-envelope"></i>
-        </div>
-        <div class="user_icon" @click="ToggleDropdown">
-          <img v-if="avatarUrl" :src="avatarUrl" alt="Avatar" class="avatar-img" />
-          <i v-else class="fas fa-user-circle"></i>
-          <span v-if="userName">{{ userName }}</span>
-          <div v-if="IsDropdownVisible" class="dropdown-menu">
-            <button @click="signOut">Sign Out</button>
-            <button @click="goToProfile">View Profile</button>
-          </div>
-        </div>
-      </div>
+  <v-app>
+    <v-app-bar app color="primary" dark>
+      <v-toolbar-title>Get Together</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn text to="/homepage">Home</v-btn>
+      <v-btn v-if="userName === 'Anonymous'" text to="/log-in">Log In</v-btn>
+      <v-btn v-if="userName === 'Anonymous'" text to="/RegisterPage">Register</v-btn>
+      <v-btn v-if="userName !== 'Anonymous'" text to="/create-event">Create Event</v-btn>
 
-    </nav>
-    <router-view />
-  </div>
+      <v-menu v-model="menuVisible" offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn icon v-bind="attrs" v-on="on" @click="toggleMenu">
+            <v-avatar v-if="avatarUrl" size="43">
+              <img :src="avatarUrl" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
+            </v-avatar>
+            <v-icon v-else>mdi-account-circle</v-icon>
+          </v-btn>
+        </template>
+        <v-list @click="closeMenu">
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>{{ userName }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item @click="goToProfile">
+            <v-list-item-icon>
+              <v-icon>mdi-account</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>View Profile</v-list-item-content>
+          </v-list-item>
+          <v-list-item @click="signOut">
+            <v-list-item-icon>
+              <v-icon>mdi-logout</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>Sign Out</v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+      <v-btn icon v-if="userName !== 'Anonymous'" @click="GoToInbox">
+        <v-icon>mdi-email</v-icon>
+      </v-btn>
+
+
+    </v-app-bar>
+
+    <v-main>
+      <router-view />
+    </v-main>
+
+  </v-app>
 </template>
 
 <script>
@@ -119,33 +64,35 @@ export default {
   data() {
     return {
       userName: "Anonymous",
-      IsDropdownVisible: false,     // make drop down invisible
+      avatarUrl: null,
+      menuVisible: false,
     };
   },
   methods: {
-    ToggleDropdown() {
-      this.IsDropdownVisible = !this.IsDropdownVisible;
+    toggleMenu() {
+      this.menuVisible = !this.menuVisible;
     },
+    closeMenu() {
+      this.menuVisible = false;
+    },
+
     async signOut() {
       try {
         const auth = getAuth();
         await signOut(auth);
         this.userName = "Anonymous";
-        this.IsDropdownVisible = false;
+        this.avatarUrl = null;
       } catch (error) {
         console.error("Sign out error: ", error);
-        }
-      },
-    
+      }
+    },
     GoToInbox() {
-      this.$router.push('/UserInboxPage');
-  },
+      this.$router.push("/UserInboxPage");
+    },
     goToProfile() {
-      this.$router.push('/UserProfilePage');
-      this.IsDropdownVisible = false;
+      this.$router.push("/UserProfilePage");
+    },
   },
-},
-  
   mounted() {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -155,7 +102,7 @@ export default {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             this.userName = `${userData.firstName} ${userData.lastName}`;
-            this.avatarUrl = userData.avatarUrl || null; 
+            this.avatarUrl = userData.avatarUrl || null;
           } else {
             console.error("User document does not exist.");
           }
@@ -168,91 +115,32 @@ export default {
 };
 </script>
 
-<style>
-nav {
-  display: flex;
-  text-align: center;
-  font-family: 'Open Sans', sans-serif;
-  font-weight: 600;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: rgba(126, 231, 173, 0.53);
-  padding: 1.25rem 20px;
+<style scoped>
+::v-deep(.v-toolbar-title) {
+  font-weight: 900;
+  font-size: 40px;
+  line-height: 1.6;
+  /* Adjust line-height to prevent cutting off */
+  letter-spacing: 3px;
+  padding-bottom: 7px;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: border-box;
+  /* Standard property */
+  -webkit-background-clip: border-box;
+  /* For WebKit-based browsers */
+  -moz-background-clip: border-box;
+  /* For Firefox (if needed) */
+
+  text-shadow:
+    3px 3px 0px #a7a5a594,
+    /* Dark purple shadow */
+    6px 6px 0px #302a4d,
+    /* Deeper shadow */
+    9px 9px 5px rgba(49, 48, 48, 0.4);
+  /* Soft outer glow */
 }
 
-.icons {
-  display: flex;
-  align-items: center;
-}
-
-.inbox_icon {
-  margin-bottom: 6px;
-  margin-right: 34px;
-  font-size: 1.75rem;
-  cursor: pointer;
-}
-
-.inbox_icon i {
-  color: rgb(0, 0, 0)0;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-left: 2px;
-}
-
-.navigation a {
-  margin: 0 10px;
-}
-.user_icon {
-  margin-top: -7px;
-  right: 20px;
-  font-size: 2.6rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%; 
-  left: 0;
-  background-color: rgb(182, 243, 230);
-  border: 1px solid #000000;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 0;
-  z-index: 10;
-}
-
-.dropdown-menu button {
-  background: none;
-  border: none;
-
-  padding: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  display: block;
-}
-
-.user_icon span {
-  margin-left: 10px;
-  font-size: 1rem;
-}
-
-.avatar-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 10px;
-}
 
 </style>
-
-

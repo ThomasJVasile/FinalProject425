@@ -1,53 +1,153 @@
 <template>
-  <div>
-    <h1>Send Message</h1>
-    <form @submit.prevent="SendMessage">
-      <input v-model="ReceiverUsername" type="text" placeholder="Enter receiver's username" />
-      <input v-model="Content" type="text" placeholder="Enter Message" />
-      <button type="submit">Send Message</button>
-    </form>
+  <v-container>
+    <v-row>
+      <!-- Sidebar -->
+      <v-col cols="3">
+        <v-card class="pa-4">
+          <v-list>
+            <v-list-item @click="activeForm = 'message'">Inbox</v-list-item>
+            <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
+            <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
+          </v-list>
+        </v-card>
+      </v-col>
 
-    <h2>Inbox</h2>
-    <div v-if="messages.length === 0">No messages</div>
-    <input v-model="searchQuery" type="text" placeholder="Search messages" />
-    <button @click="searchMessages">Search</button>
-    <ul>
-      <li v-for="(message, index) in filteredMessages" :key="index">
-        <strong>{{ message.senderUsername }}</strong>: {{ message.content }}
-        <br />
-        <small>{{ formatTimestamp(message.timestamp) }}</small>
-        <button @click="deleteMessage(message.id)">Delete</button>
-        <button @click="showReplyForm(message)">Reply</button>
-        <div v-if="message.replying">
-          <input v-model="replyContent" type="text" placeholder="Enter your reply" />
-          <button @click="sendReply(message.id)">Send Reply</button>
-        </div>
-        <ul>
-          <li v-for="reply in message.replies" :key="reply.id">
-            <strong>Reply:</strong> {{ reply.content }}
-            <br />
-            <small>{{ formatTimestamp(reply.timestamp) }}</small>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </div>
+      <!-- Main Content -->
+      <v-col cols="9">
+        <v-row v-if="activeForm === 'message'">
+          <v-col cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Send Message</v-card-title>
+              <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
+              <v-textarea v-model="content" label="Message Content" rows="4" />
+              <v-btn color="success" @click="sendMessage">Send</v-btn>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+          <!-- Messages Section -->
+          <v-col v-if="activeForm === 'message blue-shadow'" cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Inbox</v-card-title>
+              <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
+              <v-list>
+                <v-list-item v-for="message in messages" :key="message.id">
+                  <v-card class="pa-3 mb-2">
+                    <v-card-subtitle>
+                      <strong>From:</strong> {{ message.senderUsername }} <br />
+                      <strong>To:</strong> {{ message.ReceiverUsername }}
+                    </v-card-subtitle>
+                    <v-card-text>
+                      {{ message.content }}
+                      <br />
+                      <small>{{ message.timestamp }}</small>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="primary" @click="message.expanded = !message.expanded">
+                        {{ message.expanded ? "Hide History" : "View History" }}
+                      </v-btn>
+                      <v-btn color="success" @click="initiateReply(message)">
+                        {{ message.replying ? "Cancel" : "Reply" }}
+                      </v-btn>
+                      <v-btn color="error" @click="deleteMessage(message.id)">Delete</v-btn>
+                    </v-card-actions>
+                    <v-expand-transition>
+                      <div v-if="message.replying" class="pa-3">
+                        <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
+                          dense></v-text-field>
+                        <v-btn color="success" @click="sendReply(message)">Send</v-btn>
+                      </div>
+                    </v-expand-transition>
+                    <v-expand-transition>
+                      <div v-if="message.expanded">
+                        <v-list dense>
+                          <v-list-item
+                            v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
+                            :key="oldMessage.id">
+                            <v-card class="pa-2">
+                              <v-card-text>
+                                <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
+                                <br />
+                                <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
+                                  'Unknown Date' }}</small>
+                              </v-card-text>
+                            </v-card>
+                          </v-list-item>
+                        </v-list>
+                      </div>
+                    </v-expand-transition>
+                  </v-card>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+
+          <v-col v-if="activeForm === 'event-notifications'" cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Event Notifications</v-card-title>
+              <v-list>
+                <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
+                  <v-card class="pa-3 mb-2">
+                    <v-card-text>
+                      <strong>Event:</strong> {{ eventNotification.eventName }}<br />
+                      <strong>Message:</strong> {{ eventNotification.message }}<br />
+                      <small>{{ eventNotification.timestamp }}</small>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn>
+                      <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+
+
+          <!-- Notifications Section -->
+          <v-col v-if="activeForm === 'notifications'" cols="12">
+            <v-card class="pa-4">
+              <v-card-title class="text-h5">Event Requests</v-card-title>
+              <v-list>
+                <v-list-item v-for="notification in notifications" :key="notification.id">
+                  <v-card class="pa-3 mb-2">
+                    <v-card-text>
+                      {{ notification.content }}
+                      <br />
+                      <small>{{ notification.timestamp }}</small>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
+                      <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
 import { db } from '@/firebase';
-import { collection, updateDoc, addDoc, getDoc, doc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
-import { deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export default {
+
   data() {
     return {
-      Content: '',
+      activeForm: 'message', // Default view
+      content: '',
       ReceiverUsername: '',
       messages: [],
       searchQuery: '',
       replyContent: '',
+      notifications: [], // Assuming this is populated somewhere
+      eventNotifications: [],
     };
   },
   computed: {
@@ -59,338 +159,266 @@ export default {
       );
     },
   },
-
   methods: {
-    async toggleReadStatus(messageId, newStatus) {
-      try {
-        await updateDoc(doc(db, "messages", messageId), { read: newStatus });
-        this.fetchMessages(); // Refresh the messages list
-      } catch (error) {
-        console.error("Error toggling read status:", error);
-        alert("Failed to update read status");
-      }
+    initiateReply(message) {
+      this.messages.forEach(msg => msg.replying = false);
+      message.replying = true;
     },
-    showReplyForm(message) {
-    this.messages.forEach((msg) => (msg.replying = false)); 
-    message.replying = true; 
-  },
-    async sendReply(parentMessageId) {
-      if (this.replyContent.trim() === '') {
+    async sendReply(parentMessage) {
+      if (!this.replyContent || typeof this.replyContent !== 'string' || !this.replyContent.trim()) {
         alert("Reply cannot be empty.");
         return;
       }
-
       try {
-        const auth = getAuth();
-        const SenderID = auth.currentUser ? auth.currentUser.uid : null;
-
-        await addDoc(collection(db, 'replies'), {
-          parentMessageId,
+        const SenderID = getAuth().currentUser?.uid;
+        await addDoc(collection(db, 'messages'), {
           SenderID,
-          content: this.replyContent,
+          ReceiverID: parentMessage.SenderID,
+          content: this.replyContent.trim(),
           timestamp: serverTimestamp(),
         });
-
-        this.replyContent = ''; // Clear the reply input
-        this.fetchMessages(); // Refresh the messages list
-        alert("Reply sent");
+        this.replyContent = ''; // Clear after sending
+        this.fetchMessages();
       } catch (error) {
         console.error("Error sending reply:", error);
-        alert("Failed to send reply");
+      }
+    },
+    async fetchEventNotifications() {
+      try {
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
+
+        const notificationsSnapshot = await getDocs(
+          query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
+        );
+
+        this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
+          const data = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            eventName: data.EventID,
+            message: data.notifications,
+            timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
+          };
+        });
+        console.log("Fetched event notifications:", this.eventNotifications);
+      } catch (error) {
+        console.error("Error fetching event notifications:", error);
       }
     },
 
-    async SendMessage() {
-      const auth = getAuth();
-      const SenderID = auth.currentUser ? auth.currentUser.uid : null;
+    async dismissNotification(notificationId) {
+      try {
+        const notificationRef = doc(db, "EventNotification", notificationId);
+        const notificationSnap = await getDoc(notificationRef);
 
-      if (this.ReceiverUsername.trim() === '') {
-        alert("Enter receiver's username.");
-        return;
+        if (notificationSnap.exists()) {
+          const notificationData = notificationSnap.data();
+
+          // Move the notification to 'ProcessedEventNotification'
+          const processedNotificationRef = doc(db, "ProcessedEventNotification", notificationId);
+          await setDoc(processedNotificationRef, notificationData);
+
+          // Delete the original notification from 'EventNotification'
+          await deleteDoc(notificationRef);
+
+          // Remove it from local notifications array (if you have one)
+          this.notifications = this.notifications.filter(n => n.id !== notificationId);
+
+          console.log(`Notification ${notificationId} dismissed successfully.`);
+        } else {
+          console.log("Notification not found.");
+        }
+      } catch (error) {
+        console.error("Error dismissing notification:", error);
       }
-      if (this.Content.trim() === '') {
-        alert("Message cannot be empty.");
+    },
+
+    // async viewEventDetails(eventId) {
+
+    // },
+
+    async sendMessage() {
+      if (!this.content || !this.ReceiverUsername) {
+        alert("Please provide both a receiver username and a message.");
         return;
       }
 
       try {
-        const dummydoc = doc;
-        dummydoc.length = 2;
-        const ReceiverQuery = query(collection(db, 'users'), where('username', '==', this.ReceiverUsername));
-        const ReceiverSnapshot = await getDocs(ReceiverQuery);
-        if (ReceiverSnapshot.empty) {
+        // Get the ReceiverID from username
+        const userSnapshot = await getDocs(
+          query(collection(db, "users"), where("username", "==", this.ReceiverUsername))
+        );
+
+        if (userSnapshot.empty) {
           alert("User not found.");
           return;
         }
-        const ReceiverDoc = ReceiverSnapshot.docs[0];
-        const ReceiverID = ReceiverDoc.id;
+
+        const receiverDoc = userSnapshot.docs[0];
+        const ReceiverID = receiverDoc.id; // Get ReceiverID based on username
+
+        const SenderID = getAuth().currentUser?.uid; // Get the SenderID (current logged-in user)
+
+        if (!SenderID) {
+          alert("User not authenticated.");
+          return;
+        }
+
+        // Create a new message document
         await addDoc(collection(db, 'messages'), {
-          SenderID: SenderID,
-          ReceiverID: ReceiverID,
-          content: this.Content,
+          SenderID,
+          ReceiverID,
+          content: this.content.trim(),
           timestamp: serverTimestamp(),
         });
-        this.Content = '';
-        this.ReceiverUsername = '';
-        alert("Message sent");
 
+        // Clear the form
+        this.content = '';
+        this.ReceiverUsername = '';
         this.fetchMessages();
       } catch (error) {
         console.error("Error sending message:", error);
-        alert("Failed to send message");
       }
     },
-    async searchMessagesFromDB() {
-      if (!this.searchQuery.trim()) {
-        this.fetchMessages();
-        return;
-      }
 
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
 
-      if (!currentUser) {
-        console.error("No authenticated user");
-        return;
-      }
-
+    async fetchNotifications() {
       try {
-        const messagesQuery = query(
-          collection(db, "messages"),
-          where("ReceiverID", "==", currentUser.uid)
-        );
-        const messagesSnapshot = await getDocs(messagesQuery);
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
 
-        const messagesData = await Promise.all(
-          messagesSnapshot.docs.map(async (doc) => {
-            const messageData = doc.data();
+        const requestsSnapshot = await getDocs(
+          query(collection(db, "RequestJoin"), where("EventOwnerUID", "==", currentUser.uid), where("status", "==", "pending"))
 
-
-            let senderUsername = "Unknown";
-            if (messageData.SenderID) {
-              const senderDoc = await getDoc(doc(db, "users", messageData.SenderID));
-              if (senderDoc.exists()) {
-                senderUsername = senderDoc.data().username || "Unknown";
-              }
-            }
-
-            return {
-              ...messageData,
-              senderUsername,
-              timestamp: messageData.timestamp?.toDate() || null,
-            };
-          })
         );
 
-        // Filter results by query
-        this.messages = messagesData.filter(message =>
-          message.senderUsername.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          message.content.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
+
+        this.notifications = requestsSnapshot.docs.map(docSnapshot => {
+          const requestData = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            content: `${requestData.RequestingUsername} has requested to attend ${requestData.EventName}.`,
+            timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
+            EventID: requestData.EventID,
+            UserID: requestData.RequestingUserUID,
+          };
+        });
       } catch (error) {
-        console.error("Error searching messages:", error);
-        alert("Failed to search messages");
+        console.error("Error fetching event notifications:", error);
+      }
+    },
+    async acceptRequest(notification) {
+      try {
+        // Update the request status
+        await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
+
+        // Fetch event document to update UserIDs
+        const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
+        const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
+
+
+
+        if (eventDocSnap.exists()) {
+          await updateDoc(eventDocRef, {
+            UserIDs: arrayUnion(notification.UserID),
+          });
+          await addDoc(collection(db, "EventNotification"), {
+            recipientUID: notification.UserID, // Requesting user's UID
+            notifications: "You have been accepted",
+            eventID: notification.EventID, // Optional, in case you need to reference the event
+            timestamp: serverTimestamp()
+          });
+          this.fetchNotifications();
+        } else {
+          console.error("Event document not found.");
+        }
+      } catch (error) {
+        console.error("Error accepting request:", error);
+      }
+    },
+    async rejectRequest(notification) {
+      try {
+        await deleteDoc(doc(db, "RequestJoin", notification.id));
+        this.fetchNotifications();
+      } catch (error) {
+        console.error("Error rejecting request:", error);
       }
     },
 
     async fetchMessages() {
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+      try {
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
 
-  if (!currentUser) {
-    console.error("No authenticated user");
-    return;
-  }
+        const messagesSnapshot = await getDocs(
+          query(collection(db, "messages"), where("ReceiverID", "==", currentUser.uid))
+        );
 
-  try {
-    const messagesQuery = query(
-      collection(db, "messages"),
-      where("ReceiverID", "==", currentUser.uid)
-    );
-    const messagesSnapshot = await getDocs(messagesQuery);
+        const latestMessages = new Map();
+        const messageHistory = new Map();
 
-    const messagesData = await Promise.all(
-      messagesSnapshot.docs.map(async (doc) => {
-        const messageData = doc.data();
-        let senderUsername = "Unknown";
-        if (messageData.SenderID) {
-          const senderDoc = await getDoc(doc(db, "users", messageData.SenderID));
-          if (senderDoc.exists()) {
-            senderUsername = senderDoc.data().username || "Unknown";
+        for (const docSnapshot of messagesSnapshot.docs) {
+          const messageData = docSnapshot.data();
+          const senderId = messageData.SenderID;
+
+          messageData.timestamp = messageData.timestamp ? messageData.timestamp.toDate() : null;
+
+          if (!messageHistory.has(senderId)) {
+            messageHistory.set(senderId, []);
+          }
+
+          messageHistory.get(senderId).unshift({ id: docSnapshot.id, ...messageData });
+
+          if (!latestMessages.has(senderId) || latestMessages.get(senderId).timestamp < messageData.timestamp) {
+            latestMessages.set(senderId, { id: docSnapshot.id, ...messageData });
           }
         }
 
-        return {
-          ...messageData,
-          senderUsername,
-          timestamp: messageData.timestamp?.toDate() || null,
-          replying: false, // Initialize replying property
-          replies: [], // Ensure replies property exists
-        };
-      })
-    );
+        this.messages = await Promise.all(
+          Array.from(latestMessages.values()).map(async (message) => {
+            const senderDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.SenderID)));
+            const senderUsername = senderDoc.empty ? "Unknown User" : senderDoc.docs[0].data().username;
+            const receiverDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", message.ReceiverID)));
+            const ReceiverUsername = receiverDoc.empty ? "Unknown User" : receiverDoc.docs[0].data().username;
 
-    this.messages = messagesData;
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    alert("Failed to load messages");
-  }
-},
+            return {
+              ...message,
+              senderUsername,
+              ReceiverUsername,
+              timestamp: message.timestamp ? message.timestamp.toLocaleString() : 'Unknown Date',
+              expanded: false,
+            };
+          })
+        );
 
-    async deleteMessage(messageId) {
-      try {
-        await deleteDoc(doc(db, "messages", messageId)); // Delete the message document
-        alert("Message deleted");
-        this.fetchMessages(); // Refresh the messages list
+        this.messageHistory = messageHistory;
       } catch (error) {
-        console.error("Error deleting message:", error);
-        alert("Failed to delete message");
+        console.error("Error fetching messages:", error);
       }
     },
-
-    formatTimestamp(timestamp) {
-      if (!timestamp) return "Unknown time";
-      return timestamp.toLocaleString();
+    async deleteMessage(messageId) {
+      try {
+        await deleteDoc(doc(db, "messages", messageId));
+        this.fetchMessages();
+      } catch (error) {
+        console.error("Error deleting message:", error);
+      }
     },
   },
-
   mounted() {
-    this.fetchMessages(); // Correct lifecycle hook to fetch messages when the component is mounted
+    this.fetchMessages();
+    this.fetchNotifications();
+    this.fetchEventNotifications()
   },
 };
 </script>
 
 <style scoped>
-h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #333;
-  text-align: center;
+
+.blue-shadow {
+  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
-h2 {
-  margin-top: 2rem;
-  font-size: 1.5rem;
-  color: #555;
-  text-align: center;
-}
-
-form {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 1rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-input[type="text"] {
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: calc(100% - 1.5rem);
-  display: block;
-  font-size: 1rem;
-}
-
-button {
-  padding: 0.75rem 1.5rem;
-  margin: 0.5rem 0;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 1rem;
-  width: 100%;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 1rem auto;
-  max-width: 600px;
-}
-
-li {
-  background: #f9f9f9;
-  margin: 0.5rem 0;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-li strong {
-  color: #333;
-}
-
-li small {
-  color: gray;
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-}
-
-li button {
-  margin-top: 0.5rem;
-  background-color: #ff4d4d;
-}
-
-li button:hover {
-  background-color: #cc0000;
-}
-
-input[type="text"]:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 3px rgba(0, 123, 255, 0.5);
-}
-
-div {
-  text-align: center;
-}
-
-div.v-if {
-  margin: 1rem auto;
-  color: #666;
-}
-
-.reply-input {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #eef;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.reply-input input {
-  width: calc(100% - 2rem);
-  margin: 0;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.reply-input button {
-  margin-top: 0.5rem;
-  background-color: #28a745;
-}
-
-.reply-input button:hover {
-  background-color: #218838;
-}
-
-.reply-list li {
-  background: #eef9f1;
-  border: 1px solid #c3e6cb;
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-}
 </style>

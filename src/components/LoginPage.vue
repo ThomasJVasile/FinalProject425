@@ -1,59 +1,36 @@
 <template>
-  <!-- Main container for the login page -->
-  <div class="login-container">
-    <!-- Box containing the login form and other elements -->
-    <div class="login-box">
-      <!-- Title of the login section -->
-      <h1>Log In</h1>
-      <!-- Login form -->
-      <form @submit.prevent="handleLogin">
-        <!-- Label for the email input field -->
-        <label for="email">Email</label>
-        <!-- Email input field, bound to 'email' data property -->
-        <input
-          type="email"
-          id="email"
-          v-model="email"
-          placeholder="Enter your email"
-          required
-        />
+  <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;">
+    <v-card class="pa-5" max-width="400px" outlined>
+      <v-card-title class="text-center">
+        <v-typography variant="h5">Log In</v-typography>
+      </v-card-title>
 
-        <!-- Label for the password input field -->
-        <label for="password">Password</label>
-        <!-- Password input field, bound to 'password' data property -->
-        <input
-          type="password"
-          id="password"
-          v-model="password"
-          placeholder="Enter your password"
-          required
-        />
+      <v-form @submit.prevent="handleLogin">
+        <v-text-field v-model="email" label="Email" type="email" outlined dense required />
 
-        <!-- Submit button for the login form -->
-        <button type="submit" class="login-button">Log In</button>
-      </form>
+        <v-text-field v-model="password" label="Password" type="password" outlined dense required />
 
-      <!-- Error message displayed when there is an issue with login -->
-      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-      <!-- Success message displayed when login is successful -->
-      <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+        <v-btn type="submit" color="primary" block class="mt-4">Log In</v-btn>
+      </v-form>
 
-      <!-- Alternative login options -->
-      <div class="alt-login-options">
-        <!-- Divider text for visual separation -->
-        <p class="divider">OR</p>
-        <!-- Button to log in using Google -->
-        <button @click="loginWithGoogle" class="google-login">Continue with Google</button>
-        <!-- Button to log in using Apple -->
-        <button @click="loginWithApple" class="apple-login">Continue with Apple</button>
-      </div>
+      <v-alert v-if="errorMessage" type="error" class="mt-3" dismissible>
+        {{ errorMessage }}
+      </v-alert>
 
-      <!-- Link to the account creation page -->
-      <p class="create-account">
-        New here? <a href="/RegisterPage" class="create-account-link">Create an account</a>
-      </p>
-    </div>
-  </div>
+      <v-alert v-if="successMessage" type="success" class="mt-3" dismissible>
+        {{ successMessage }}
+      </v-alert>
+
+      <v-divider class="my-4">OR</v-divider>
+
+      <v-btn @click="loginWithGoogle" color="blue" block class="mt-3">Continue with Google</v-btn>
+      <v-btn @click="loginWithApple" color="black" block class="mt-3">Continue with Apple</v-btn>
+
+      <v-card-text class="text-center mt-4">
+        New here? <v-btn to="/RegisterPage" text>Create an account</v-btn>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -125,138 +102,19 @@ export default {
 </script>
 
 <style scoped>
-/* Main container styling for centering content */
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+.v-container {
   background-color: #f5f5f5;
 }
 
-/* Styling for the login box */
-.login-box {
+.v-card {
   background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
 }
 
-/* Form styling */
-form {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Input field styling */
-input {
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.v-btn {
   font-size: 16px;
 }
 
-/* Button styling for the login button */
-button {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-}
-
-/* Change button color on hover */
-button:hover {
-  background-color: #45a049;
-}
-
-/* Styling for error messages */
-.error-message {
-  color: red;
-  margin-top: 10px;
+.v-alert {
   font-size: 14px;
-}
-
-/* Styling for success messages */
-.success-message {
-  color: green;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-/* Styling for alternative login options */
-.alt-login-options {
-  margin-top: 20px;
-}
-
-/* Divider text styling */
-.alt-login-options .divider {
-  margin: 15px 0;
-  font-size: 12px;
-  color: #888;
-}
-
-/* Styling for alternative login buttons */
-.alt-login-options button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-/* Google login button styling */
-.alt-login-options .google-login {
-  background-color: #ffffff;
-  color: #000;
-  border: 1px solid #ccc;
-}
-
-/* Change Google button color on hover */
-.alt-login-options .google-login:hover {
-  background-color: #f1f1f1;
-}
-
-/* Apple login button styling */
-.alt-login-options .apple-login {
-  background-color: #000000;
-  color: #fff;
-}
-
-/* Change Apple button color on hover */
-.alt-login-options .apple-login:hover {
-  background-color: #333;
-}
-
-/* Styling for account creation link */
-.create-account {
-  margin-top: 20px;
-  font-size: 14px;
-}
-
-/* Link styling */
-.create-account-link {
-  color: #007bff;
-  text-decoration: none;
-}
-
-/* Change link style on hover */
-.create-account-link:hover {
-  text-decoration: underline;
-}
-
-/* Default font for the entire page */
-* {
-  font-family: Arial, sans-serif;
 }
 </style>
