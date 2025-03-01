@@ -1,3 +1,10 @@
+import { moderateImage } from "@/utils/imageModeration";
+import { moderateContent } from "@/utils/contentModeration";
+
+import { moderateImage } from "./utils/imageModeration";
+import { moderateContent } from "./utils/contentModeration";
+
+
 <template>
   <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;">
     <v-card class="pa-5" max-width="500px" outlined>
@@ -36,6 +43,9 @@ import { db, storage } from "@/firebase";
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { moderateImage } from "@/utils/imageModeration";
+import { moderateContent } from "@/utils/contentModeration";
+
 
 export default {
   data() {
@@ -69,10 +79,18 @@ export default {
   },
   methods: {
     async onFileChange(event) {
-      this.eventImage = event.target.files[0];
-      // Check if an image was selected
+      const file = event.target.files[0];
+      if (!file) return;
 
-    },
+      const isSafe = await moderateImage(file);
+      if (!isSafe) {
+          this.message = "This image is inappropriate and cannot be uploaded.";
+          this.eventImage = null;
+          return;
+      }
+
+      this.eventImage = file;
+},
 
     async GeoLocationAddress(address) {
       try {
@@ -102,7 +120,27 @@ export default {
         this.message = "You must be logged in to create an event.";
         return;
       }
+    //   const isSafe = await moderateContent(this.eventDescription);
+    //   if (!isSafe) {
+    //     this.message = "Your event description contains inappropriate content.";
+    //     return;
+    // }
 
+    //if i say this.moderateContent.... i get a warning 
+
+      // Check if the event title is appropriate
+      const isTitleSafe = await moderateContent(this.eventTitle);
+      if (!isTitleSafe) {
+        this.message = "Your event title contains inappropriate content.";
+        return;
+    }
+
+      // Check if the event description is appropriate
+      const isDescriptionSafe = await moderateContent(this.eventDescription);
+      if (!isDescriptionSafe) {
+        this.message = "Your event description contains inappropriate content.";
+        return;
+    }
       try {
         const auth = getAuth();
         const currentUser = auth.currentUser;
