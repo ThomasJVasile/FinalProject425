@@ -1,5 +1,5 @@
 export async function moderateImage(file) {
-    const API_KEY = "AIzaSyCnLXo-E5mBROorRzf4KgH0k_nTqo4EaU0"; 
+    const API_KEY = "89eb1f223e6b58304beb9ed876d3a421eb901676"; 
     const reader = new FileReader();
 
     return new Promise((resolve, reject) => {
