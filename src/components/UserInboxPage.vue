@@ -3,7 +3,7 @@
     <v-row>
       <!-- Sidebar -->
       <v-col cols="3">
-        <v-card class="pa-4">
+        <v-card class="pa-4 blue-shadow">
           <v-list>
             <v-list-item @click="activeForm = 'message'">Inbox</v-list-item>
             <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
@@ -16,8 +16,8 @@
       <v-col cols="9">
         <v-row v-if="activeForm === 'message'">
           <v-col cols="12">
-            <v-card class="pa-4">
-              <v-card-title class="text-h5">Send Message</v-card-title>
+            <v-card class="pa-4 blue-shadow">
+              <v-card-title class="text-h5 ">Send Message</v-card-title>
               <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
               <v-textarea v-model="content" label="Message Content" rows="4" />
               <v-btn color="success" @click="sendMessage">Send</v-btn>
@@ -26,8 +26,8 @@
         </v-row>
         <v-row>
           <!-- Messages Section -->
-          <v-col v-if="activeForm === 'message blue-shadow'" cols="12">
-            <v-card class="pa-4">
+          <v-col v-if="activeForm === 'message'" cols="12">
+            <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5">Inbox</v-card-title>
               <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
               <v-list>
@@ -83,7 +83,7 @@
           </v-col>
 
           <v-col v-if="activeForm === 'event-notifications'" cols="12">
-            <v-card class="pa-4">
+            <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5">Event Notifications</v-card-title>
               <v-list>
                 <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
@@ -106,7 +106,7 @@
 
           <!-- Notifications Section -->
           <v-col v-if="activeForm === 'notifications'" cols="12">
-            <v-card class="pa-4">
+            <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5">Event Requests</v-card-title>
               <v-list>
                 <v-list-item v-for="notification in notifications" :key="notification.id">
@@ -417,7 +417,7 @@ export default {
 <style scoped>
 
 .blue-shadow {
-  box-shadow: 0 4px 10px rgba(70, 88, 146, 0.4) !important;
+  box-shadow: 0 4px 10px rgba(45, 70, 155, 0.4) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 

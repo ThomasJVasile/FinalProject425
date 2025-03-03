@@ -9,7 +9,7 @@
           <v-card-title>Categories</v-card-title>
           <v-list>
             <v-list-item v-for="category in categories" :key="category">
-              <v-checkbox :label="category" v-model="selectedCategories" :value="category" />
+              <v-checkbox :label="category" v-model="selectedCategories" :value="category" class="custom-checkbox" />
             </v-list-item>
           </v-list>
         </v-card>
@@ -84,13 +84,13 @@ export default {
         // const matchesLocationQuery =
         //   (this.locationQuery === "" || event.eventLocation?.toLowerCase().includes(this.locationQuery.toLowerCase()));
 
-        const matchesCategory = this.selectedCategories.length === 0 || 
+        const matchesCategory = this.selectedCategories.length === 0 ||
           (event.categories && event.categories.some(category => this.selectedCategories.includes(category)));
 
         // return matchesSearchQuery && matchesLocationQuery && matchesCategory;
         return matchesSearchQuery && matchesCategory;
       });
-      
+
       // return this.events.filter(
       //   (event) =>
       //     (event.eventName || "").toLowerCase().includes(query) ||
@@ -132,6 +132,70 @@ export default {
 } */
 
 /* Blue shadow for forms */
+
+/* Scoped Styles for Custom Checkboxes */
+.custom-checkbox .v-input--selection-control__input {
+  border-radius: 4px !important;
+  background-color: #e0f7fa !important; /* Light blue background for checkboxes */
+  border: 2px solid #00796b !important; /* Dark teal border */
+  transition: all 0.3s ease !important;
+}
+
+/* When checked */
+.custom-checkbox .v-input--selection-control__input:checked {
+  background-color: #00796b !important; /* Dark teal background when checked */
+  border-color: #004d40 !important; /* Darker border when checked */
+}
+
+/* Focused state */
+.custom-checkbox .v-input--selection-control__input:focus {
+  box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.4) !important; /* Focused state with a greenish glow */
+}
+
+/* Ripple effect when clicked */
+.custom-checkbox .v-input--selection-control__ripple {
+  background-color: #004d40 !important; /* Darker ripple effect */
+}
+
+/* Hover effect */
+.custom-checkbox .v-input--selection-control__input:hover {
+  background-color: #b2dfdb !important; /* Lighter blue on hover */
+}
+
+/* Label style */
+.custom-checkbox .v-label {
+  color: #004d40 !important; /* Dark teal label color */
+  font-weight: bold !important; /* Bold label for emphasis */
+}
+
+/* Custom checkbox indicator */
+.custom-checkbox .v-input--selection-control__indicator {
+  border-radius: 4px !important; /* Rounded checkbox indicator */
+  background-color: #ffffff !important; /* White background for checkbox */
+  border: 2px solid #00796b !important; /* Border color */
+}
+
+/* Checked state indicator */
+.custom-checkbox .v-input--selection-control__input:checked + .v-input--selection-control__indicator {
+  background-color: #00796b !important; /* Background when checked */
+  border-color: #004d40 !important; /* Border when checked */
+}
+
+/* Custom checkmark */
+.custom-checkbox .v-input--selection-control__indicator:before {
+  content: '' !important; /* Hide the default checkmark */
+}
+
+/* Checked state checkmark */
+.custom-checkbox .v-input--selection-control__input:checked + .v-input--selection-control__indicator:before {
+  content: '✔' !important; /* Custom checkmark */
+  color: #ffffff !important; /* White color for the checkmark */
+  font-size: 16px !important; /* Checkmark size */
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
 
 .light-blue-shadow {
   box-shadow: 0 4px 10px rgba(86, 99, 139, 0.4) !important;
@@ -183,6 +247,7 @@ export default {
   overflow-x: hidden;
   padding-right: 10px;
 }
+
 
 /* Style the scrollbar itself */
 .scrollable-events::-webkit-scrollbar {

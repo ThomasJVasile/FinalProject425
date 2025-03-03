@@ -7,8 +7,8 @@
       <v-btn v-if="userName === 'Anonymous'" text to="/log-in">Log In</v-btn>
       <v-btn v-if="userName === 'Anonymous'" text to="/RegisterPage">Register</v-btn>
       <v-btn v-if="userName !== 'Anonymous'" text to="/create-event">Create Event</v-btn>
-
-      <v-menu v-model="menuVisible" offset-y>
+      
+      <v-menu v-model="menuVisible" :position="'bottom-start'" absolute :style="menuStyle">
         <template v-slot:activator="{ on, attrs }">
           <v-btn icon v-bind="attrs" v-on="on" @click="toggleMenu">
             <v-avatar v-if="avatarUrl" size="43">
@@ -66,6 +66,12 @@ export default {
       userName: "Anonymous",
       avatarUrl: null,
       menuVisible: false,
+      menuStyle: {
+        top: '3.3vw',  
+        right: '10px', 
+        left: '91vw',
+        zIndex: 9999,  
+      },
     };
   },
   methods: {
@@ -141,6 +147,4 @@ export default {
     9px 9px 5px rgba(49, 48, 48, 0.4);
   /* Soft outer glow */
 }
-
-
 </style>
