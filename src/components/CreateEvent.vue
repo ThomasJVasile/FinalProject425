@@ -69,7 +69,7 @@ export default {
     onAuthStateChanged(auth, (user) => {
       this.isAuthenticated = !!user;
     });
-    this.runTest()
+    // this.runTest()
   },
   methods: {
     async onFileChange(event) {
@@ -190,37 +190,37 @@ export default {
       this.eventImage = null;
       this.isRestricted = false; // Reset restriction status
     },
-    runTest() {
-      console.log("Running unit test for GeoLocationAddress...");
-      global.fetch = async function (url) {
-        if (url.includes("San Francisco")) {
-          return {
-            json: async () => ({
-              status: "OK",  // Valid status indicating the geocoding request was successful
-              results: [{}]  // Just an empty object to simulate that there is a result
-            })
-          };
-        } else if (url.includes("Non-existent Location")) {
-          return {
-            json: async () => ({
-              status: "ZERO_RESULTS",  // Status indicating no results were found
-              results: []  // No re
-            })
-          };
-        }
-      };
-      this.GeoLocationAddress("San Francisco, CA").then(result => {
-        console.log("Test passed for valid address:", result);
-      }).catch(error => {
-        console.error("Test failed for valid address:", error);
-      });
+    // runTest() {
+    //   console.log("Running unit test for GeoLocationAddress...");
+    //   global.fetch = async function (url) {
+    //     if (url.includes("San Francisco")) {
+    //       return {
+    //         json: async () => ({
+    //           status: "OK",  // Valid status indicating the geocoding request was successful
+    //           results: [{}]  // Just an empty object to simulate that there is a result
+    //         })
+    //       };
+    //     } else if (url.includes("Non-existent Location")) {
+    //       return {
+    //         json: async () => ({
+    //           status: "ZERO_RESULTS",  // Status indicating no results were found
+    //           results: []  // No re
+    //         })
+    //       };
+    //     }
+    //   };
+    //   this.GeoLocationAddress("San Francisco, CA").then(result => {
+    //     console.log("Test passed for valid address:", result);
+    //   }).catch(error => {
+    //     console.error("Test failed for valid address:", error);
+    //   });
 
-      this.GeoLocationAddress("Non-existent Location").then(result => {
-        console.log("Test passed for invalid address:", result);
-      }).catch(error => {
-        console.error("Test failed for invalid address:", error.message);
-      });
-    },
+    //   this.GeoLocationAddress("Non-existent Location").then(result => {
+    //     console.log("Test passed for invalid address:", result);
+    //   }).catch(error => {
+    //     console.error("Test failed for invalid address:", error.message);
+    //   });
+    // },
   },
 };
 </script>
