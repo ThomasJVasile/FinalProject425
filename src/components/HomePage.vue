@@ -107,13 +107,13 @@ export default {
         // const matchesLocationQuery =
         //   (this.locationQuery === "" || event.eventLocation?.toLowerCase().includes(this.locationQuery.toLowerCase()));
 
-        const matchesCategory = this.selectedCategories.length === 0 || 
+        const matchesCategory = this.selectedCategories.length === 0 ||
           (event.categories && event.categories.some(category => this.selectedCategories.includes(category)));
 
         // return matchesSearchQuery && matchesLocationQuery && matchesCategory;
         return matchesSearchQuery && matchesCategory;
       });
-      
+
       // return this.events.filter(
       //   (event) =>
       //     (event.eventName || "").toLowerCase().includes(query) ||
@@ -237,7 +237,6 @@ export default {
   padding: 20px;
 } */
 
-/* Blue shadow for forms */
 
 .light-blue-shadow {
   box-shadow: 0 4px 10px rgba(86, 99, 139, 0.4) !important;
@@ -289,6 +288,7 @@ export default {
   overflow-x: hidden;
   padding-right: 10px;
 }
+
 
 /* Style the scrollbar itself */
 .scrollable-events::-webkit-scrollbar {
