@@ -322,7 +322,6 @@ export default {
 </style> -->
 
 
-
 <template>
   <v-container fluid class="px-2">
     <v-row>
@@ -346,7 +345,11 @@ export default {
         <v-text-field v-model="searchQuery" label="Search for events" solo dense class="mb-3"></v-text-field>
         <v-row dense>
           <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
-            <v-card class="event-card blue-shadow">
+            <v-card 
+              class="event-card blue-shadow" 
+              @click="goToEventDetail(event.id)" 
+              style="cursor: pointer;"
+            >
               <v-img v-if="event.imageUrl" :src="event.imageUrl" height="150px"></v-img>
               <v-card-title>{{ event.eventName }}</v-card-title>
               <v-card-subtitle>Owner: {{ event.ownerName || "Unknown Owner" }}</v-card-subtitle>
@@ -408,6 +411,11 @@ export default {
       console.error("Error fetching events:", error);
     }
   },
+  methods: {
+    goToEventDetail(id) {
+      this.$router.push(`/eventDetailPage/${id}`);
+    }
+  }
 };
 </script>
 
@@ -417,7 +425,7 @@ export default {
 }
 
 .sidebar {
-  width: 250px ;
+  width: 250px;
   padding: 5px;
 }
 
