@@ -8,7 +8,7 @@ import UserInboxPage from "./components/UserInboxPage.vue";
 import UserProfilePage from "@/components/UserProfilePage.vue";
 import EventsPage from "./components/EventsPage.vue";
 import SettingsPage from "./components/SettingsPage.vue";
-import FriendRequestFeature from "@/components/FriendRequestFeature.vue";
+import FriendRequest from "@/components/FriendRequest.vue";
 
 const routes = [
   { path: "/homepage", name: "HomePage", component: HomePage },
@@ -20,7 +20,7 @@ const routes = [
   { path: "/UserProfilePage", name: "UserProfilePage", component: UserProfilePage },
   { path: "/EventsPage", name: "EventsPage", component: EventsPage },
   { path: "/SettingsPage", name: "SettingsPage", component: SettingsPage },
-  { path: "/friend-requests", name: "FriendRequests", component: FriendRequestFeature },
+  { path: "/friend-requests", name: "FriendRequests", component: FriendRequest },
   { path: "/", redirect: "/homepage" },
 ];
 
