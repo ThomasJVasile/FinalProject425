@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <v-container class="home-page" fluid>
     <v-row>
       <v-col cols="12" md="3">
@@ -146,15 +146,20 @@ export default {
       if (event.key === "Shift") {
         this.toggleVoiceSearch();
       } else if (event.key === "`") {
-        this.isSpeaking = true;
+        this.isSpeaking = !this.isSpeaking;
         // console.log("Shift key pressed - Speech enabled.");
+        console.log("Text-to-speech toggled:", this.isSpeaking);
+        if (!this.isSpeaking) {
+          // Cancel any ongoing speech
+          window.speechSynthesis.cancel();
+      }
       }
     },
 
     handleKeyRelease(event) {
       if (event.key === "Shift") {
         // Stop text-to-speech when Shift is released
-        this.isSpeaking = false;
+        //this.isSpeaking = false;
       }
     },
 
@@ -319,35 +324,50 @@ export default {
   background: #1814e0;
   /* Even darker gray on hover */
 }
-</style> -->
+</style>
+
+
+
+
+
+
+
+<!-- 
+
+
+
 
 
 <template>
   <v-container fluid class="px-2">
     <v-row>
-      <!-- Sidebar (Categories) -->
+      
       <v-col cols="12" sm="3" class="sidebar">
-        <v-card class="blue-shadow">
+        <v-card class="blue-shadow" aria-label="Event filters">
           <v-card-title class="text-center">Filter by Location</v-card-title>
-          <v-text-field v-model="locationQuery" label="Enter city or town" solo dense></v-text-field>
+          <v-text-field v-model="locationQuery" label="Enter city or town" solo dense aria-label="Enter a location to filter events"></v-text-field>
 
           <v-card-title class="text-center">Categories</v-card-title>
-          <v-list dense>
+          <v-list dense aria-label="Category filters">
             <v-list-item v-for="category in categories" :key="category">
-              <v-checkbox v-model="selectedCategories" :label="category" :value="category" class="small-checkbox"/>
+              <v-checkbox v-model="selectedCategories" :label="category" :value="category" class="small-checkbox" />
             </v-list-item>
           </v-list>
         </v-card>
       </v-col>
 
-      <!-- Event Cards -->
+     
       <v-col cols="12" sm="9">
         <v-text-field v-model="searchQuery" label="Search for events" solo dense class="mb-3"></v-text-field>
         <v-row dense>
           <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
             <v-card 
-              class="event-card blue-shadow" 
-              @click="goToEventDetail(event.id)" 
+              class="event-card blue-shadow"
+              tabindex="0"
+              @click="goToEventDetail(event.id)"
+              @keypress.enter="goToEventDetail(event.id)"
+              @mouseover="speakEventDetails(event)"
+              aria-label="Event details"
               style="cursor: pointer;"
             >
               <v-img v-if="event.imageUrl" :src="event.imageUrl" height="150px"></v-img>
@@ -390,10 +410,7 @@ export default {
 
         const matchesCategory =
           this.selectedCategories.length === 0 ||
-          (event.categories &&
-            event.categories.some((category) =>
-              this.selectedCategories.includes(category)
-            ));
+          (event.categories && event.categories.some((category) => this.selectedCategories.includes(category)));
 
         return matchesSearchQuery && matchesCategory;
       });
@@ -414,8 +431,21 @@ export default {
   methods: {
     goToEventDetail(id) {
       this.$router.push(`/eventDetailPage/${id}`);
-    }
-  }
+    },
+    speakEventDetails(event) {
+      const message = `
+        Event: ${event.eventName}. 
+        Owner: ${event.ownerName || "Unknown owner"}. 
+        Location: ${event.eventLocation || "Not specified"}. 
+        Description: ${event.eventDescription || "No description provided"}.
+        Number of attendees: ${event.AttendanceCount}.
+      `;
+      const speech = new SpeechSynthesisUtterance(message);
+      speech.lang = "en-US";
+      speech.rate = 1;
+      window.speechSynthesis.speak(speech);
+    },
+  },
 };
 </script>
 
@@ -456,4 +486,4 @@ export default {
 .v-list-item {
   padding: 1px 0 !important;
 }
-</style>
+</style> -->
