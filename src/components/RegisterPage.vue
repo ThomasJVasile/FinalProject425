@@ -1,6 +1,6 @@
 <template>
   <v-container class="fill-height d-flex justify-center align-center">
-    <v-card class="pa-5" elevation="10" max-width="500">
+    <v-card class="pa-5" elevation="10">
       <v-card-title class="text-center">
         <v-icon class="mr-2">mdi-account-plus</v-icon>
         Register Now
@@ -117,5 +117,11 @@ export default {
   align-items: center;
   font-weight: bold;
 }
+
+.wider-card {
+  max-width: 650px !important; 
+  width: 100%;
+}
+
 </style>
 
