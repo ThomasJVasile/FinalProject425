@@ -178,19 +178,34 @@ export default {
 
         const userId = route.params.userId;
         
+        // Get current user's name
+        const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const currentUserData = currentUserDoc.data();
+        const senderName = currentUserData.firstName && currentUserData.lastName 
+          ? `${currentUserData.firstName} ${currentUserData.lastName}`
+          : currentUser.displayName || 'Anonymous';
+
         // Create friend request
         await addDoc(collection(db, 'friendRequests'), {
           fromUserId: currentUser.uid,
           toUserId: userId,
           status: 'pending',
           timestamp: serverTimestamp(),
-          fromUserName: currentUser.displayName || 'Anonymous',
+          fromUserName: senderName,
           toUserName: profileData.value.firstName + ' ' + profileData.value.lastName
         });
 
         friendRequestSent.value = true;
+        
+        // Show success message using toast if available
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.success('Friend request sent!');
+        }
       } catch (error) {
         console.error('Error sending friend request:', error);
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.error('Failed to send friend request. Please try again.');
+        }
       }
     };
 
