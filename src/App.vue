@@ -247,6 +247,7 @@ export default {
         await signOut(auth);
         this.userName = "Anonymous";
         this.avatarUrl = null;
+        this.$router.push('/log-in');
       } catch (error) {
         console.error("Sign out error: ", error);
       }
