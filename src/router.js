@@ -6,9 +6,11 @@ import RegisterPage from "./components/RegisterPage.vue";
 import EventDetailPage from "./components/EventDetailPage.vue"; 
 import UserInboxPage from "./components/UserInboxPage.vue";
 import UserProfilePage from "@/components/UserProfilePage.vue";
+import PublicProfilePage from "@/components/PublicProfilePage.vue";
 import EventsPage from "./components/EventsPage.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import FriendRequest from "@/components/FriendRequest.vue";
+import UserSearch from "@/components/UserSearch.vue";
 
 const routes = [
   { path: "/homepage", name: "HomePage", component: HomePage },
@@ -18,9 +20,11 @@ const routes = [
   { path: "/RegisterPage", name: "RegisterPage", component: RegisterPage },
   { path: "/UserInboxPage", name: "UserInboxPage", component: UserInboxPage },
   { path: "/UserProfilePage", name: "UserProfilePage", component: UserProfilePage },
+  { path: "/profile/:userId", name: "PublicProfile", component: PublicProfilePage },
   { path: "/EventsPage", name: "EventsPage", component: EventsPage },
   { path: "/SettingsPage", name: "SettingsPage", component: SettingsPage },
   { path: "/friend-requests", name: "FriendRequests", component: FriendRequest },
+  { path: "/search-users", name: "UserSearch", component: UserSearch },
   { path: "/", redirect: "/homepage" },
 ];
 

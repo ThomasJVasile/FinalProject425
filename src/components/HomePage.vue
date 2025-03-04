@@ -36,7 +36,14 @@
                   <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
                   <v-card-title>{{ event.eventName }}</v-card-title>
                   <v-card-subtitle>
-                    Owner: {{ event.ownerName || "Unknown Owner" }}
+                    Created by: 
+                    <router-link 
+                      :to="'/profile/' + event.createdBy" 
+                      class="creator-link"
+                      @click.stop
+                    >
+                      {{ event.ownerName || "Anonymous" }}
+                    </router-link>
                   </v-card-subtitle>
                   <v-card-subtitle>
                     Location: {{ event.eventLocation || "location" }}
@@ -319,6 +326,17 @@ export default {
   background: #1814e0;
   /* Even darker gray on hover */
 }
+
+.creator-link {
+  color: #1877f2;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.creator-link:hover {
+  text-decoration: underline;
+  color: #166fe5;
+}
 </style> -->
 
 
@@ -352,7 +370,16 @@ export default {
             >
               <v-img v-if="event.imageUrl" :src="event.imageUrl" height="150px"></v-img>
               <v-card-title>{{ event.eventName }}</v-card-title>
-              <v-card-subtitle>Owner: {{ event.ownerName || "Unknown Owner" }}</v-card-subtitle>
+              <v-card-subtitle>
+                Created by: 
+                <router-link 
+                  :to="'/profile/' + event.createdBy" 
+                  class="creator-link"
+                  @click.stop
+                >
+                  {{ event.ownerName || "Anonymous" }}
+                </router-link>
+              </v-card-subtitle>
               <v-card-subtitle>Location: {{ event.eventLocation || "Location Unknown" }}</v-card-subtitle>
               <v-card-text>
                 <div>{{ event.eventDescription }}</div>
@@ -455,5 +482,16 @@ export default {
 /* Reduce category checkbox size */
 .v-list-item {
   padding: 1px 0 !important;
+}
+
+.creator-link {
+  color: #1877f2;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.creator-link:hover {
+  text-decoration: underline;
+  color: #166fe5;
 }
 </style>
