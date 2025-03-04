@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit"
+    "test:unit": "jest",
+    "test": "jest"
   },
   "dependencies": {
     "@fawmi/vue-google-maps": "^0.9.79",
