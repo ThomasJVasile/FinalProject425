@@ -67,7 +67,7 @@ export default {
       avatarUrl: null,
       menuVisible: false,
       menuStyle: {
-        top: '6.3vw',  
+        top: '3vw',  
         right: '10px', 
         left: '91vw',
         zIndex: 9999,  
