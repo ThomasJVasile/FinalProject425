@@ -1,6 +1,6 @@
 <template>
   <v-container class="d-flex justify-center">
-    <v-card v-if="event" class="pa-4" max-width="500">
+    <v-card v-if="event" class="main box" max-width="1500">
       <v-card-title class="text-center">
         <h1>{{ event.eventName }}</h1>
       </v-card-title>
@@ -54,7 +54,7 @@
       </v-row>
     </v-card>
 
-    <v-card v-else class="pa-4">
+    <v-card v-else class="main box">
       <v-card-title class="text-center">
         <h1>Loading... Please wait a moment</h1>
       </v-card-title>
@@ -293,5 +293,43 @@ export default {
 
 .delete-button:hover {
   background-color: #e60000;
+}
+
+/* demo to make it look bigger  */
+.event-container {
+  max-width: 1000px; 
+  margin: auto;
+  padding: 20px;
+}
+
+.v-card {
+  width: 100%; 
+  max-width: 900px; 
+}
+
+.avatar-img {
+  object-fit: cover;
+  width: 80px !important; 
+  height: 80px !important;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.event-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+.map-container {
+  width: 100%;
+  height: 350px !important;
+  margin-top: 20px;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
 }
 </style>
