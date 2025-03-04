@@ -117,6 +117,8 @@ export default {
 
     async createEvent() {
       if (!this.isAuthenticated) {
+        console.log("❌❌❌❌❌❌ User is not authenticated. Cannot create event.");
+
         this.message = "You must be logged in to create an event.";
         return;
       }
@@ -131,6 +133,7 @@ export default {
       // Check if the event title is appropriate
       const isTitleSafe = await moderateContent(this.eventTitle);
       if (!isTitleSafe) {
+        console.log(`❌❌❌❌❌❌ Title "${this.eventTitle}" contains inappropriate content.`);
         this.message = "Your event title contains inappropriate content.";
         return;
     }
@@ -138,6 +141,7 @@ export default {
       // Check if the event description is appropriate
       const isDescriptionSafe = await moderateContent(this.eventDescription);
       if (!isDescriptionSafe) {
+        console.log(`❌❌❌❌❌❌ Description contains inappropriate content.`);
         this.message = "Your event description contains inappropriate content.";
         return;
     }
@@ -163,6 +167,7 @@ export default {
         }
 
         const getLocation = await this.GeoLocationAddress(this.eventLocation);
+        console.log(`✅✅✅✅✅ Event location resolved:`, getLocation);
 
         const newEvent = {
           eventName: this.eventTitle,
@@ -181,9 +186,11 @@ export default {
         };
 
         await addDoc(collection(db, "events"), newEvent);
+        console.log("✅✅✅✅✅✅ Event created successfully!", newEvent);
         this.message = "Event created successfully!";
         this.resetForm();
       } catch (error) {
+        console.log("❌❌ Error creating event:❌❌❌❌❌", error);
         this.message = "Failed to create event. Try again.";
         console.error("Error creating event:", error);
       }

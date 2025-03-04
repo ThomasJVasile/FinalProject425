@@ -2,14 +2,15 @@
   <v-container class="home-page" fluid>
     <v-row>
       <v-col cols="12" md="3">
-        <v-card class="sidebar blue-shadow">
+        <v-card class="sidebar blue-shadow" aria-label="Event filters">
 
           <v-card-title>Filter by Location</v-card-title>
-          <v-text-field v-model="locationQuery" label="Enter city or town" solo></v-text-field>
+          <v-text-field v-model="locationQuery" label="Enter city or town" solo aria-label="Enter a location to filter events"></v-text-field>
           <v-card-title>Categories</v-card-title>
+          <v-list aria-label="Category filters"></v-list>
           <v-list>
             <v-list-item v-for="category in categories" :key="category">
-              <v-checkbox :label="category" v-model="selectedCategories" :value="category" />
+              <v-checkbox :label="category" v-model="selectedCategories" :value="category" aria-labelledby="category"/>
             </v-list-item>
           </v-list>
         </v-card>
@@ -26,7 +27,12 @@
           <div class="scrollable-events">
             <v-row>
               <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
-                <v-card class="event-card light-blue-shadow" @click="goToEventDetail(event.id)">
+                <v-card class="event-card light-blue-shadow"
+                tabindex="0"
+                @keypress.enter="goToEventDetail(event.id)"
+                @click="goToEventDetail(event.id)"
+                @mouseover="speakEventDetails(event)"
+                aria-label="Event details">
                   <v-img v-if="event.imageUrl" :src="event.imageUrl" height="200px"></v-img>
                   <v-card-title>{{ event.eventName }}</v-card-title>
                   <v-card-subtitle>
@@ -54,9 +60,13 @@
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
+
 export default {
   data() {
     return {
+      isListening: false, // Tracks whether speech recognition is active
+      recognition: null, // Store recognition instance
+      isSpeaking : false,
       events: [],
       searchQuery: "",
       categories: [
@@ -73,6 +83,19 @@ export default {
       selectedCategories: [],
     };
   },
+
+  mounted() {
+    // Add event listener when component is mounted
+    window.addEventListener("keydown", this.handleKeyPress);
+    window.addEventListener("keyup", this.handleKeyRelease);
+  },
+
+  beforeUnmount() {
+    // Remove event listener to prevent memory leaks
+    window.removeEventListener("keydown", this.handleKeyPress);
+    window.removeEventListener("keyup", this.handleKeyRelease);
+  },
+
   computed: {
     filteredEvents() {
       const query = this.searchQuery.toLowerCase();
@@ -84,13 +107,13 @@ export default {
         // const matchesLocationQuery =
         //   (this.locationQuery === "" || event.eventLocation?.toLowerCase().includes(this.locationQuery.toLowerCase()));
 
-        const matchesCategory = this.selectedCategories.length === 0 || 
+        const matchesCategory = this.selectedCategories.length === 0 ||
           (event.categories && event.categories.some(category => this.selectedCategories.includes(category)));
 
         // return matchesSearchQuery && matchesLocationQuery && matchesCategory;
         return matchesSearchQuery && matchesCategory;
       });
-      
+
       // return this.events.filter(
       //   (event) =>
       //     (event.eventName || "").toLowerCase().includes(query) ||
@@ -117,7 +140,90 @@ export default {
       console.error("Error fetching events:", error);
     }
   },
-  methods: {
+  methods:   
+  {
+    handleKeyPress(event) {
+      if (event.key === "Shift") {
+        this.toggleVoiceSearch();
+      } else if (event.key === "`") {
+        this.isSpeaking = true;
+        // console.log("Shift key pressed - Speech enabled.");
+      }
+    },
+
+    handleKeyRelease(event) {
+      if (event.key === "Shift") {
+        // Stop text-to-speech when Shift is released
+        this.isSpeaking = false;
+      }
+    },
+
+
+    toggleVoiceSearch() {
+      if (this.isListening) {
+        this.stopVoiceSearch();
+      } else {
+        this.startVoiceSearch();
+      }
+    },
+
+    startVoiceSearch() {
+      if (!('webkitSpeechRecognition' in window)) {
+      alert("Your browser does not support speech recognition.");
+      return;
+  }
+
+    this.recognition = new window.webkitSpeechRecognition();
+    this.recognition.lang = "en-US";
+    this.recognition.continuous = true;
+    this.recognition.interimResults = false;
+
+    this.recognition.onresult = (event) => {
+      this.searchQuery = event.results[0][0].transcript;
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error("Speech recognition error", event);
+      this.isListening = false;
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+    };
+
+    this.recognition.start();
+    this.isListening = true;
+    console.log("Voice search activated");
+  },
+
+    stopVoiceSearch() {
+      if (this.recognition) {
+        this.recognition.stop();
+        this.isListening = false;
+        console.log("Voice search deactivated");
+      }
+    },
+
+    speakEventDetails(event) {
+      if (!this.isSpeaking) {
+        console.log("Skipping speech: Shift not held.");
+        return;
+  }
+
+      const message = `
+        Event: ${event.eventName}. 
+        Owner: ${event.ownerName || "Unknown owner"}. 
+        Location: ${event.eventLocation || "Not specified"}. 
+        Description: ${event.eventDescription || "No description provided"}.
+        Number of attendees: ${event.AttendanceCount}.
+      `;
+
+      const speech = new SpeechSynthesisUtterance(message);
+      speech.lang = "en-US";
+      speech.rate = 1;
+      window.speechSynthesis.speak(speech);
+},
+
     goToEventDetail(id) {
       this.$router.push(`/eventDetailPage/${id}`);
     },
@@ -131,7 +237,6 @@ export default {
   padding: 20px;
 } */
 
-/* Blue shadow for forms */
 
 .light-blue-shadow {
   box-shadow: 0 4px 10px rgba(86, 99, 139, 0.4) !important;
@@ -183,6 +288,7 @@ export default {
   overflow-x: hidden;
   padding-right: 10px;
 }
+
 
 /* Style the scrollbar itself */
 .scrollable-events::-webkit-scrollbar {
