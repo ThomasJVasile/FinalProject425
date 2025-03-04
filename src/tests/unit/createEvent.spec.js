@@ -6,6 +6,7 @@ describe("CreateEvent.vue", () => {
 
   beforeEach(() => {
     wrapper = shallowMount(CreateEvent);
+        
   });
 
   it("should not create event if the user is not authenticated", async () => {
