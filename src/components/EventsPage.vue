@@ -1,7 +1,7 @@
 <!--This is a page to display what the user have created and joined -->
 <template>
   <div class="events-page">
-    <!-- Back Arrow -->
+    <!-- Back Arrow - Takes you back to your profile -->
     <div class="back-arrow" @click="$router.push('/UserProfilePage')">
       <i class="fas fa-arrow-left"></i>
       <span>Back to Profile</span>
@@ -11,7 +11,7 @@
       <!-- Title -->
       <h1>My Events</h1>
 
-      <!-- Event Type Tabs -->
+      <!-- Event Type Tabs - Switch between events you created and joined -->
       <div class="event-tabs">
         <button 
           :class="['tab-button', { active: activeTab === 'created' }]"
@@ -27,7 +27,7 @@
         </button>
       </div>
 
-      <!-- Search Bar -->
+      <!-- Search Bar - Find specific events by name or description -->
       <input
         type="text"
         v-model="searchQuery"
@@ -35,13 +35,14 @@
         class="search-bar"
       />
 
-      <!-- List of Events -->
+      <!-- List of Events - Shows all your events with details and interactions -->
       <div class="event-list">
         <div
           v-for="event in filteredEvents"
           :key="event.id"
           class="event-card"
         >
+          <!-- Event Image - Shows event picture if available -->
           <img
             v-if="event.imageUrl"
             :src="event.imageUrl"
@@ -49,6 +50,8 @@
             alt="Event image"
           />
           <div v-else class="event-img-placeholder">No Image</div>
+          
+          <!-- Event Details - Name, creator, description, and attendance -->
           <div class="event-info">
             <h2>{{ event.eventName }}</h2>
             <div class="event-creator">
@@ -60,7 +63,7 @@
             <p>{{ event.eventDescription }}</p>
             <p>People attending: {{ event.AttendanceCount }}</p>
             
-            <!-- Reactions Section -->
+            <!-- Reactions - Like and comment buttons -->
             <div class="event-reactions">
               <button 
                 class="reaction-btn" 
@@ -79,7 +82,7 @@
               </button>
             </div>
 
-            <!-- Comments Section -->
+            <!-- Comments Section - View and add comments -->
             <div v-if="activeCommentEvent === event.id" class="comments-section">
               <div class="comments-list">
                 <div v-for="comment in event.comments" :key="comment.id" class="comment">
@@ -105,7 +108,7 @@
             </div>
           </div>
         </div>
-        <!-- No Events Message -->
+        <!-- No Events Message - Shows when you haven't created/joined any events -->
         <div v-if="filteredEvents.length === 0" class="no-events">
           <i class="fas fa-calendar-times"></i>
           <p>{{ activeTab === 'created' ? 'You haven\'t created any events yet.' : 'You haven\'t joined any events yet.' }}</p>
@@ -116,27 +119,31 @@
 </template>
 
 <script>
-import { db } from "@/firebase"; // Firebase Firestore instance
-import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore"; // Firestore query methods
-import { getAuth } from "firebase/auth"; // Firebase Authentication
+// Import Firebase stuff we need
+import { db } from "@/firebase"; // For database operations
+import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore"; // For querying and updating data
+import { getAuth } from "firebase/auth"; // For user authentication
 
 export default {
+  // Component data - keeps track of events, search, and UI state
   data() {
     return {
-      createdEvents: [], // List of events created by the user
-      joinedEvents: [], // List of events joined by the user
-      searchQuery: "", // Search query for filtering events
-      activeTab: 'created', // Default tab
-      activeCommentEvent: null, // Track which event's comments are visible
-      newComment: "", // Store new comment text
+      createdEvents: [], // Events you've made yourself
+      joinedEvents: [], // Events you're participating in
+      searchQuery: "", // What you're searching for
+      activeTab: 'created', // Which tab is selected (created/joined)
+      activeCommentEvent: null, // Which event's comments are showing
+      newComment: "", // Text for a new comment
     };
   },
+
+  // Computed properties - filter and organize our events
   computed: {
-    // Returns the appropriate event list based on active tab
+    // Gets the right list of events based on which tab you're on
     currentEvents() {
       return this.activeTab === 'created' ? this.createdEvents : this.joinedEvents;
     },
-    // Filters the events based on the search query
+    // Filters events based on what you're searching for
     filteredEvents() {
       const query = this.searchQuery.toLowerCase();
       return this.currentEvents.filter(
@@ -146,7 +153,10 @@ export default {
       );
     },
   },
+
+  // Methods - all the things we can do with events
   methods: {
+    // Checks if you've liked an event
     isEventLiked(eventId) {
       const event = [...this.createdEvents, ...this.joinedEvents]
         .find(e => e.id === eventId);
@@ -154,6 +164,7 @@ export default {
       return event?.likes?.includes(currentUser.uid) || false;
     },
 
+    // Handles liking/unliking an event
     async toggleLike(eventId) {
       try {
         const currentUser = getAuth().currentUser;
@@ -164,7 +175,7 @@ export default {
           .find(e => e.id === eventId);
 
         if (this.isEventLiked(eventId)) {
-          // Unlike
+          // Unlike - remove your like
           await updateDoc(eventRef, {
             likes: arrayRemove(currentUser.uid)
           });
@@ -172,7 +183,7 @@ export default {
             event.likes = event.likes.filter(uid => uid !== currentUser.uid);
           }
         } else {
-          // Like
+          // Like - add your like
           await updateDoc(eventRef, {
             likes: arrayUnion(currentUser.uid)
           });
@@ -185,11 +196,13 @@ export default {
       }
     },
 
+    // Shows/hides comments for an event
     showComments(eventId) {
       this.activeCommentEvent = this.activeCommentEvent === eventId ? null : eventId;
       this.newComment = "";
     },
 
+    // Adds a new comment to an event
     async addComment(eventId) {
       try {
         const currentUser = getAuth().currentUser;
@@ -204,11 +217,12 @@ export default {
           timestamp: serverTimestamp()
         };
 
+        // Save to database
         await updateDoc(eventRef, {
           comments: arrayUnion(comment)
         });
 
-        // Update local state
+        // Update local display
         const event = [...this.createdEvents, ...this.joinedEvents]
           .find(e => e.id === eventId);
         if (event) {
@@ -221,12 +235,14 @@ export default {
       }
     },
 
+    // Makes timestamps look nice
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     },
 
+    // Gets all events you've created
     async fetchCreatedEvents(userUid) {
       try {
         const eventsQuery = query(
@@ -250,6 +266,7 @@ export default {
       }
     },
 
+    // Gets all events you've joined
     async fetchJoinedEvents(userUid) {
       try {
         const eventsQuery = query(
@@ -273,6 +290,8 @@ export default {
       }
     },
   },
+
+  // When the component is created, fetch all events
   async created() {
     try {
       const auth = getAuth();
@@ -280,6 +299,7 @@ export default {
 
       if (user) {
         const userUid = user.uid;
+        // Load both created and joined events at the same time
         await Promise.all([
           this.fetchCreatedEvents(userUid),
           this.fetchJoinedEvents(userUid)
@@ -295,6 +315,7 @@ export default {
 </script>
 
 <style scoped>
+/* Basic page layout */
 * {
   font-family: Arial, sans-serif;
 }
@@ -308,6 +329,7 @@ export default {
   flex-grow: 1;
 }
 
+/* Tab styling */
 .event-tabs {
   display: flex;
   gap: 1rem;
@@ -338,6 +360,7 @@ export default {
   background: #f0f2f5;
 }
 
+/* Search bar styling */
 .search-bar {
   width: 100%;
   padding: 10px;
@@ -347,12 +370,14 @@ export default {
   font-size: 1rem;
 }
 
+/* Event cards grid layout */
 .event-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
 }
 
+/* Individual event card styling */
 .event-card {
   background: white;
   border-radius: 8px;
@@ -366,6 +391,7 @@ export default {
   transform: translateY(-2px);
 }
 
+/* Event image styling */
 .event-img {
   width: 100%;
   height: 150px;
@@ -383,6 +409,7 @@ export default {
   color: #888;
 }
 
+/* Event information styling */
 .event-info {
   padding: 15px;
 }
@@ -399,6 +426,7 @@ export default {
   color: #666;
 }
 
+/* Back button styling */
 .back-arrow {
   display: flex;
   align-items: center;
@@ -418,6 +446,7 @@ export default {
   font-size: 1.2rem;
 }
 
+/* Empty state styling */
 .no-events {
   grid-column: 1 / -1;
   text-align: center;
@@ -438,6 +467,7 @@ export default {
   font-size: 1rem;
 }
 
+/* Reactions section styling */
 .event-reactions {
   display: flex;
   gap: 1rem;
@@ -471,6 +501,7 @@ export default {
   font-size: 1.1rem;
 }
 
+/* Comments section styling */
 .comments-section {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -509,6 +540,7 @@ export default {
   color: #1a1a1a;
 }
 
+/* Comment input styling */
 .comment-input {
   display: flex;
   gap: 0.5rem;
@@ -546,6 +578,7 @@ export default {
   background: #166fe5;
 }
 
+/* Event creator link styling */
 .event-creator {
   margin-bottom: 10px;
 }
@@ -563,6 +596,7 @@ export default {
   text-decoration: underline;
 }
 
+/* User link styling */
 .user-link {
   color: #1877f2;
   text-decoration: none;
