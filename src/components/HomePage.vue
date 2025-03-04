@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <v-container class="home-page" fluid>
     <v-row>
       <v-col cols="12" md="3">
@@ -253,9 +253,13 @@ export default {
   box-shadow: 0 6px 14px rgba(0, 0, 255, 0.6) !important;
 }
 
+.v-container {
+  padding: 10px !important; 
+}
+
 .sidebar {
-  padding: 20px;
-  width: 350px;
+  padding: 10px;
+  width: 250px;
 }
 
 .content {
@@ -314,5 +318,134 @@ export default {
 .scrollable-events::-webkit-scrollbar-thumb:hover {
   background: #1814e0;
   /* Even darker gray on hover */
+}
+</style> -->
+
+
+
+<template>
+  <v-container fluid class="px-2">
+    <v-row>
+      <!-- Sidebar (Categories) -->
+      <v-col cols="12" sm="3" class="sidebar">
+        <v-card class="blue-shadow">
+          <v-card-title class="text-center">Filter by Location</v-card-title>
+          <v-text-field v-model="locationQuery" label="Enter city or town" solo dense></v-text-field>
+
+          <v-card-title class="text-center">Categories</v-card-title>
+          <v-list dense>
+            <v-list-item v-for="category in categories" :key="category">
+              <v-checkbox v-model="selectedCategories" :label="category" :value="category" class="small-checkbox"/>
+            </v-list-item>
+          </v-list>
+        </v-card>
+      </v-col>
+
+      <!-- Event Cards -->
+      <v-col cols="12" sm="9">
+        <v-text-field v-model="searchQuery" label="Search for events" solo dense class="mb-3"></v-text-field>
+        <v-row dense>
+          <v-col v-for="event in filteredEvents" :key="event.id" cols="12" sm="6" md="4">
+            <v-card class="event-card blue-shadow">
+              <v-img v-if="event.imageUrl" :src="event.imageUrl" height="150px"></v-img>
+              <v-card-title>{{ event.eventName }}</v-card-title>
+              <v-card-subtitle>Owner: {{ event.ownerName || "Unknown Owner" }}</v-card-subtitle>
+              <v-card-subtitle>Location: {{ event.eventLocation || "Location Unknown" }}</v-card-subtitle>
+              <v-card-text>
+                <div>{{ event.eventDescription }}</div>
+                <div>People attending: {{ event.AttendanceCount }}</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { db } from "@/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
+export default {
+  data() {
+    return {
+      searchQuery: "",
+      locationQuery: "",
+      selectedCategories: [],
+      events: [],
+      categories: ["Cars", "Sports", "Writing", "Learning", "Games", "Jobs", "Parties", "Crafts", "Dogs"],
+    };
+  },
+  computed: {
+    filteredEvents() {
+      const query = this.searchQuery.toLowerCase();
+      return this.events.filter((event) => {
+        const matchesSearchQuery =
+          (event.eventName || "").toLowerCase().includes(query) ||
+          (event.ownerName || "").toLowerCase().includes(query);
+
+        const matchesCategory =
+          this.selectedCategories.length === 0 ||
+          (event.categories &&
+            event.categories.some((category) =>
+              this.selectedCategories.includes(category)
+            ));
+
+        return matchesSearchQuery && matchesCategory;
+      });
+    },
+  },
+  async created() {
+    try {
+      const querySnapshot = await getDocs(collection(db, "events"));
+      this.events = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        AttendanceCount: doc.data().participants ? doc.data().participants.length : 0,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  },
+};
+</script>
+
+<style scoped>
+.v-container {
+  padding: 10px !important; 
+}
+
+.sidebar {
+  width: 250px ;
+  padding: 5px;
+}
+
+/* Adjust event card size */
+.event-card {
+  padding: 10px !important;
+  margin: 5px !important;
+  width: 100%;
+}
+
+/* Reduce spacing between event cards */
+.v-row {
+  margin: 0 !important;
+}
+
+/* Make images responsive */
+.v-img {
+  object-fit: cover;
+  height: 150px !important; /* Reduce image height */
+}
+
+/* Reduce event card title size */
+.v-card-title {
+  font-size: 1rem !important;
+}
+
+/* Reduce category checkbox size */
+.v-list-item {
+  padding: 1px 0 !important;
 }
 </style>
