@@ -7,7 +7,7 @@ import { moderateContent } from "./utils/contentModeration";
 
 <template>
   <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;">
-    <v-card class="pa-5" max-width="500px" outlined>
+    <v-card class="pa-5" max-width="900px" outlined>
       <v-card-title class="text-center">
         <v-typography variant="h5">Create a New Event</v-typography>
       </v-card-title>
