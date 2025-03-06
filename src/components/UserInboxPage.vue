@@ -5,7 +5,7 @@
       <v-col cols="3">
         <v-card class="pa-4 blue-shadow">
           <v-list>
-            <v-list-item @click="activeForm = 'message'">Inbox</v-list-item>
+            <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
             <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
             <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
           </v-list>
@@ -14,6 +14,29 @@
 
       <!-- Main Content -->
       <v-col cols="9">
+        <v-row v-if="activeForm === 'message'">
+          <v-col cols="12">
+            <v-card class="pa-4 blue-shadow">
+              <v-col cols="2">
+                <v-card class="pa-4 blue-shadow">
+                  <v-list>
+                    <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
+                    <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
+                    <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
+                  </v-list>
+                </v-card>
+              </v-col>
+
+
+              <!-- <v-card-title class="text-h5 ">Send Message</v-card-title>
+              <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
+              <v-textarea v-model="content" label="Message Content" rows="4" />
+              <v-btn color="success" @click="sendMessage">Send</v-btn> -->
+            </v-card>
+          </v-col>
+        </v-row>
+
+
         <v-row v-if="activeForm === 'message'">
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
@@ -205,6 +228,13 @@ export default {
       } catch (error) {
         console.error("Error fetching event notifications:", error);
       }
+    },
+
+    async GetMessageHistory() {
+      // const CurrentUser = getAuth().currentUser;
+      // const ChatHistoryReference = collection(db, "MessageHistoryUserPair");
+      // const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser));
+      // const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser));
     },
 
     async dismissNotification(notificationId) {
@@ -415,10 +445,8 @@ export default {
 </script>
 
 <style scoped>
-
 .blue-shadow {
   box-shadow: 0 4px 10px rgba(45, 70, 155, 0.4) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
-
 </style>
