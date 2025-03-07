@@ -158,6 +158,7 @@
 import { db } from '@/firebase';
 import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { VueFire, VueFireAuth } from "vuefire";
 
 export default {
 
@@ -230,12 +231,31 @@ export default {
       }
     },
 
-    async GetMessageHistory() {
-      // const CurrentUser = getAuth().currentUser;
-      // const ChatHistoryReference = collection(db, "MessageHistoryUserPair");
-      // const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser));
-      // const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser));
-    },
+    // async GetMessageHistory() {
+    //   const CurrentUser = getAuth().currentUser;
+    //   const ChatHistoryReference = collection(db, "MessageHistoryUserPair");
+    //   const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser));
+    //   const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser));
+    //   const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
+    //     getDocs(UsersChatQueryOne),
+    //     getDocs(UsersChatQueryTwo)
+    //   ]);
+    //   const ChatHistoryDocuments = [...MessageHistorySnapOne, ...MessageHistorySnapTwo];
+      
+    //   if (ChatHistoryDocuments.length === 0) {
+    //     console.log("no chat histories found");
+    //     return [];
+    //   }
+
+    //   const ChatHistories = ChatHistoryDocuments.map((docSnap) => {
+    //       const Data = docSnap.data();
+    //       const OtherUserID = Data.UserOne === CurrentUser ? Data.UserOne : Data.UserTwo;
+    //       return { ChatID: docSnap.id, OtherUserID, messages: Data.messages};
+    //   });
+    //     console.log("Chat Histories: ", ChatHistories);
+    //     return ChatHistories;
+
+    // },
 
     async dismissNotification(notificationId) {
       try {
