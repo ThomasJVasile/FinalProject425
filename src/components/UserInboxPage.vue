@@ -18,7 +18,18 @@
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
               <v-col cols="2">
+                <v-list>
+                    <v-list-item v-for="history in messageHistory" :key="history.ChatID">
+                      <v-card class="pa-2 mb-2">
+                        <v-card-text>
+                          <strong>Chat with:</strong> {{ history.OtherUserID }}<br />
+                          <small>Messages Count: {{ history.length }}</small>
+                        </v-card-text>
+                      </v-card>
+                    </v-list-item>
+                  </v-list>
                 <v-card class="pa-4 blue-shadow">
+                  <!-- // SHOWING IT IN HERE -->
                   <v-list>
                     <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
                     <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
@@ -158,7 +169,7 @@
 import { db } from '@/firebase';
 import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { VueFire, VueFireAuth } from "vuefire";
+// import { useCollection } from "vuefire";
 
 export default {
 
@@ -172,6 +183,7 @@ export default {
       replyContent: '',
       notifications: [], // Assuming this is populated somewhere
       eventNotifications: [],
+      messageHistory: new Map(),
     };
   },
   computed: {
@@ -231,31 +243,51 @@ export default {
       }
     },
 
-    // async GetMessageHistory() {
-    //   const CurrentUser = getAuth().currentUser;
-    //   const ChatHistoryReference = collection(db, "MessageHistoryUserPair");
-    //   const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser));
-    //   const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser));
-    //   const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
-    //     getDocs(UsersChatQueryOne),
-    //     getDocs(UsersChatQueryTwo)
-    //   ]);
-    //   const ChatHistoryDocuments = [...MessageHistorySnapOne, ...MessageHistorySnapTwo];
-      
-    //   if (ChatHistoryDocuments.length === 0) {
-    //     console.log("no chat histories found");
-    //     return [];
-    //   }
+    GetMessageHistory() {
+      this.messageHistory = this.GetMessageHistoryCall();
+    },
 
-    //   const ChatHistories = ChatHistoryDocuments.map((docSnap) => {
-    //       const Data = docSnap.data();
-    //       const OtherUserID = Data.UserOne === CurrentUser ? Data.UserOne : Data.UserTwo;
-    //       return { ChatID: docSnap.id, OtherUserID, messages: Data.messages};
-    //   });
-    //     console.log("Chat Histories: ", ChatHistories);
-    //     return ChatHistories;
+    async GetMessageHistoryCall() {
+      const CurrentUser = getAuth().currentUser;
+      if (!CurrentUser) {
+        console.log("No user authenticated");
+        return [];
+      }
 
-    // },
+      const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
+
+      const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
+      const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+
+      try {
+        const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
+          getDocs(UsersChatQueryOne),
+          getDocs(UsersChatQueryTwo),
+        ]);
+
+        const ChatHistoryDocuments = [
+          ...MessageHistorySnapOne.docs,
+          ...MessageHistorySnapTwo.docs,
+        ];
+
+        if (ChatHistoryDocuments.length === 0) {
+          console.log("No chat histories found");
+          return [];
+        }
+
+        const ChatHistories = ChatHistoryDocuments.map((docSnap) => {
+          const Data = docSnap.data();
+          const OtherUserID = Data.UserOne === CurrentUser.uid ? Data.UserTwo : Data.UserOne;
+          return { ChatID: docSnap.id, OtherUserID, messages: Data.MessageHistory };
+        });
+
+        console.log("Chat Histories: ", ChatHistories);
+        return ChatHistories;
+      } catch (error) {
+        console.error("Error fetching message history:", error);
+        return [];
+      }
+    },
 
     async dismissNotification(notificationId) {
       try {
@@ -357,7 +389,10 @@ export default {
       } catch (error) {
         console.error("Error fetching event notifications:", error);
       }
+
     },
+
+
     async acceptRequest(notification) {
       try {
         // Update the request status
@@ -459,7 +494,8 @@ export default {
   mounted() {
     this.fetchMessages();
     this.fetchNotifications();
-    this.fetchEventNotifications()
+    this.fetchEventNotifications();
+    this.GetMessageHistory();
   },
 };
 </script>
