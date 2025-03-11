@@ -19,7 +19,7 @@
             <v-card class="pa-4 blue-shadow">
               <v-col cols="2">
                 <v-list>
-                    <v-list-item v-for="history in messageHistory" :key="history.ChatID">
+                    <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
                       <v-card class="pa-2 mb-2">
                         <v-card-text>
                           <strong>Chat with:</strong> {{ history.OtherUserID }}<br />
@@ -28,14 +28,7 @@
                       </v-card>
                     </v-list-item>
                   </v-list>
-                <v-card class="pa-4 blue-shadow">
-                  <!-- // SHOWING IT IN HERE -->
-                  <v-list>
-                    <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
-                    <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
-                    <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
-                  </v-list>
-                </v-card>
+                
               </v-col>
 
 
@@ -183,7 +176,7 @@ export default {
       replyContent: '',
       notifications: [], // Assuming this is populated somewhere
       eventNotifications: [],
-      messageHistory: new Map(),
+      MessageHistory: [],
     };
   },
   computed: {
@@ -243,8 +236,12 @@ export default {
       }
     },
 
-    GetMessageHistory() {
-      this.messageHistory = this.GetMessageHistoryCall();
+    async GetMessageHistory() {
+      this.MessageHistory = await this.GetMessageHistoryCall();
+      console.log("working???: ", this.MessageHistory);
+      // this.MessageHistory.forEach( chat => {
+      //   getDoc()
+      // });
     },
 
     async GetMessageHistoryCall() {
