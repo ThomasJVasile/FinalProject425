@@ -17,18 +17,20 @@
         <v-row v-if="activeForm === 'message'">
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
+              <v-card-title class="text-h5 ">Chat</v-card-title>
+              <v-list>
+                <!-- HERE -->
+              </v-list>
               <v-col cols="2">
                 <v-list>
+                  <v-card class="pa-4 blue-shadow">
                     <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                      <v-card class="pa-2 mb-2">
-                        <v-card-text>
-                          <strong>Chat with:</strong> {{ history.OtherUserID }}<br />
-                          <small>Messages Count: {{ history.length }}</small>
-                        </v-card-text>
-                      </v-card>
+                      <v-btn block color="primary">
+                        <strong></strong> {{ history.OtherUser.username }}<br />
+                      </v-btn>
                     </v-list-item>
-                  </v-list>
-                
+                  </v-card>
+                </v-list>
               </v-col>
 
 
@@ -250,34 +252,30 @@ export default {
         console.log("No user authenticated");
         return [];
       }
-
       const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
-
       const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
       const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
-
       try {
         const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
           getDocs(UsersChatQueryOne),
           getDocs(UsersChatQueryTwo),
         ]);
-
         const ChatHistoryDocuments = [
           ...MessageHistorySnapOne.docs,
           ...MessageHistorySnapTwo.docs,
         ];
-
         if (ChatHistoryDocuments.length === 0) {
           console.log("No chat histories found");
           return [];
         }
-
-        const ChatHistories = ChatHistoryDocuments.map((docSnap) => {
+        const ChatHistories = await Promise.all(ChatHistoryDocuments.map(async (docSnap) => {
           const Data = docSnap.data();
           const OtherUserID = Data.UserOne === CurrentUser.uid ? Data.UserTwo : Data.UserOne;
-          return { ChatID: docSnap.id, OtherUserID, messages: Data.MessageHistory };
-        });
 
+          const OtherUserReference = doc(db, "users", OtherUserID);
+          const OtherUserSnap = await getDoc(OtherUserReference);
+          return { ChatID: docSnap.id, OtherUser: OtherUserSnap.data(), messages: Data.MessageHistory };
+        }));
         console.log("Chat Histories: ", ChatHistories);
         return ChatHistories;
       } catch (error) {
