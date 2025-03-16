@@ -21,7 +21,7 @@
               <v-list>
                 <!-- HERE -->
               </v-list>
-              <v-col cols="2">
+              <!-- <v-col cols="2">
                 <v-list>
                   <v-card class="pa-4 blue-shadow">
                     <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
@@ -31,7 +31,7 @@
                     </v-list-item>
                   </v-card>
                 </v-list>
-              </v-col>
+              </v-col> -->
 
 
               <!-- <v-card-title class="text-h5 ">Send Message</v-card-title>
@@ -241,9 +241,6 @@ export default {
     async GetMessageHistory() {
       this.MessageHistory = await this.GetMessageHistoryCall();
       console.log("working???: ", this.MessageHistory);
-      // this.MessageHistory.forEach( chat => {
-      //   getDoc()
-      // });
     },
 
     async GetMessageHistoryCall() {
@@ -268,16 +265,45 @@ export default {
           console.log("No chat histories found");
           return [];
         }
-        const ChatHistories = await Promise.all(ChatHistoryDocuments.map(async (docSnap) => {
+        let MessageIDs = new Set();
+        let OtherUserIDs = new Set();
+
+        const ChatHistories = await Promise.all(ChatHistoryDocuments.map(async (docSnap) => {   // Get all MessageHistoryPairs from database containg user's ID.
           const Data = docSnap.data();
           const OtherUserID = Data.UserOne === CurrentUser.uid ? Data.UserTwo : Data.UserOne;
 
-          const OtherUserReference = doc(db, "users", OtherUserID);
-          const OtherUserSnap = await getDoc(OtherUserReference);
-          return { ChatID: docSnap.id, OtherUser: OtherUserSnap.data(), messages: Data.MessageHistory };
+          if (Data.MessageHistory) {
+            Data.MessageHistory.forEach((MessageIDReference) => MessageIDs.add(MessageIDReference));  // Here we are adding every message foreign key to an array for batch fetch.
+          }
+          OtherUserIDs.add(OtherUserID);  // same batch fetching for other user records.
+
+          return { ChatID: docSnap.id, MessageIDs: Data.MessageHistory, OtherUserID };
         }));
-        console.log("Chat Histories: ", ChatHistories);
-        return ChatHistories;
+
+        const UserQuery = query(collection(db, "users"), where("__name__", "in", Array.from(OtherUserIDs)));
+        const UserDocs = await getDocs(UserQuery);
+        const UsersMap = {};
+        UserDocs.forEach((doc) => {
+          UsersMap[doc.id] = doc.data();
+        });
+
+        let MessagesMap = {};
+        if (MessageIDs.size > 0) {
+          const MessageQuery = query(collection(db, "messages"), where("__name__", "in", Array.from(MessageIDs)));
+          const MessageDocs = await getDocs(MessageQuery);
+          MessageDocs.forEach((doc) => {
+            MessagesMap[doc.id] = doc.data();
+          });
+        }
+
+        const FinalChatHistories = ChatHistories.map((chat) => ({
+          ChatId: chat.ChatID,
+          OtherUser: UsersMap[chat.OtherUserId] || null,
+          messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
+        }));
+
+        console.log("Chat Histories: ", FinalChatHistories);
+        return FinalChatHistories;
       } catch (error) {
         console.error("Error fetching message history:", error);
         return [];
