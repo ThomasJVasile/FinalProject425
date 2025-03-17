@@ -18,32 +18,43 @@
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5 ">Chat</v-card-title>
-              <v-list>
-                <!-- HERE -->
-              </v-list>
-              <!-- <v-col cols="2">
-                <v-list>
-                  <v-card class="pa-4 blue-shadow">
-                    <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                      <v-btn block color="primary">
-                        <strong></strong> {{ history.OtherUser.username }}<br />
-                      </v-btn>
-                    </v-list-item>
+              <v-row>
+                <v-col cols="3">
+                  <v-list>
+                    <v-card class="pa-4 blue-shadow">
+                      <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
+                        <v-btn block color="primary">
+                          <strong></strong> {{ history.OtherUser.username }}<br />
+                        </v-btn>
+                      </v-list-item>
+                    </v-card>
+                  </v-list>
+                </v-col>
+
+                <v-col cols="9">
+                  <v-card class="pa-4 blue-shadow" height="400px">
+                    <v-card-text>
+                      <!-- Messages will go here -->
+                    </v-card-text>
+                    <v-divider></v-divider>
+
+                     <!--want to add the box here for each chat message  -->
+
+                    <!-- Message Input & Send Button -->
+                    <v-card-actions class="pa-4">
+                      <v-text-field v-model="newMessage" label="Type a message..." dense outlined hide-details class="flex-grow-1"></v-text-field>
+                      <v-btn color="primary" @click="sendMessage">Send</v-btn>
+                    </v-card-actions>
                   </v-card>
-                </v-list>
-              </v-col> -->
+                </v-col>
 
-
-              <!-- <v-card-title class="text-h5 ">Send Message</v-card-title>
-              <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
-              <v-textarea v-model="content" label="Message Content" rows="4" />
-              <v-btn color="success" @click="sendMessage">Send</v-btn> -->
+              </v-row>
             </v-card>
           </v-col>
         </v-row>
 
 
-        <v-row v-if="activeForm === 'message'">
+        <!-- <v-row v-if="activeForm === 'message'">
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5 ">Send Message</v-card-title>
@@ -52,7 +63,7 @@
               <v-btn color="success" @click="sendMessage">Send</v-btn>
             </v-card>
           </v-col>
-        </v-row>
+        </v-row> -->
         <v-row>
           <!-- Messages Section -->
           <v-col v-if="activeForm === 'message'" cols="12">
@@ -287,7 +298,7 @@ export default {
           UsersMap[doc.id] = doc.data();
         });
 
-        let MessagesMap = {};
+        let MessagesMap = {};   // Batch fetching of all messages in message history
         if (MessageIDs.size > 0) {
           const MessageQuery = query(collection(db, "messages"), where("__name__", "in", Array.from(MessageIDs)));
           const MessageDocs = await getDocs(MessageQuery);
@@ -298,7 +309,7 @@ export default {
 
         const FinalChatHistories = ChatHistories.map((chat) => ({
           ChatId: chat.ChatID,
-          OtherUser: UsersMap[chat.OtherUserId] || null,
+          OtherUser: UsersMap[chat.OtherUserID] || null,
           messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
         }));
 
