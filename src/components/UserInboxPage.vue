@@ -23,12 +23,13 @@
                   <v-list>
                     <v-card class="pa-4 blue-shadow">
                       <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                        <v-btn block color="primary">
-                          <strong></strong> {{ history.OtherUser.username }}<br />
+                        <v-btn block color="primary" @click="activeChat = 'enabled', History = history">
+                        <!-- <v-btn block color="primary" @click="DisplayChatHistory(history, history.OtherUser)"> -->
+                          <strong>{{ history.OtherUser.username }}</strong>
                         </v-btn>
                       </v-list-item>
                     </v-card>
-                  </v-list>
+                  </v-list> 
                 </v-col>
 
                 <v-col cols="9">
@@ -36,8 +37,13 @@
                     <v-card-text>
                       <!-- Messages will go here -->
                     </v-card-text>
-                    <v-divider></v-divider>
-
+                    <v-row v-if="activeChat === 'enabled'">
+                      <v-list>
+                        <v-list-item v-for="message in History.messages" :key="message.id">
+                          {{ message.content }}
+                        </v-list-item>
+                      </v-list>
+                    </v-row>
                      <!--want to add the box here for each chat message  -->
 
                     <!-- Message Input & Send Button -->
@@ -182,6 +188,10 @@ export default {
   data() {
     return {
       activeForm: 'message', // Default view
+      
+      activeChat: 'none',
+      History: [],
+      
       content: '',
       ReceiverUsername: '',
       messages: [],
@@ -321,6 +331,10 @@ export default {
       }
     },
 
+    // async DisplayChatHistory(history, OtherUser) {
+
+    // },
+
     async dismissNotification(notificationId) {
       try {
         const notificationRef = doc(db, "EventNotification", notificationId);
@@ -348,9 +362,6 @@ export default {
       }
     },
 
-    // async viewEventDetails(eventId) {
-
-    // },
 
     async sendMessage() {
       if (!this.content || !this.ReceiverUsername) {
