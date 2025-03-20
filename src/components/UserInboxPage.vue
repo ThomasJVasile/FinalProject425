@@ -23,32 +23,38 @@
                   <v-list>
                     <v-card class="pa-4 blue-shadow">
                       <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                        <v-btn block color="primary" @click="activeChat = 'enabled', History = history">
-                        <!-- <v-btn block color="primary" @click="DisplayChatHistory(history, history.OtherUser)"> -->
+                        <v-btn block color="primary"
+                          @click="activeChat = 'enabled', ActiveHistory = history, ActiveChatReceiver = history.OtherUserID">
+                          <!-- <v-btn block color="primary" @click="DisplayChatHistory(history, history.OtherUser)"> -->
                           <strong>{{ history.OtherUser.username }}</strong>
                         </v-btn>
                       </v-list-item>
                     </v-card>
-                  </v-list> 
+                  </v-list>
                 </v-col>
 
                 <v-col cols="9">
-                  <v-card class="pa-4 blue-shadow" height="400px">
-                    <v-card-text>
-                      <!-- Messages will go here -->
-                    </v-card-text>
+                  <v-card class="pa-4 blue-shadow" height="400px" width="100%">
+                   
                     <v-row v-if="activeChat === 'enabled'">
-                      <v-list>
-                        <v-list-item v-for="message in History.messages" :key="message.id">
-                          {{ message.content }}
+                      <v-list style="max-height: 300px; overflow-y: auto; ">
+                        <v-list-item v-for="message in ActiveHistory.messages" :key="message.id">
+
+                          <v-card class="ma-2 blue-shadow" elevation="2">
+                            <v-card-text>
+                              {{ message.content }}
+                            </v-card-text>
+                          </v-card>
+
                         </v-list-item>
                       </v-list>
                     </v-row>
-                     <!--want to add the box here for each chat message  -->
+                    <!--want to add the box here for each chat message  -->
 
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="pa-4">
-                      <v-text-field v-model="newMessage" label="Type a message..." dense outlined hide-details class="flex-grow-1"></v-text-field>
+                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
+                        class="flex-grow-1"></v-text-field>
                       <v-btn color="primary" @click="sendMessage">Send</v-btn>
                     </v-card-actions>
                   </v-card>
@@ -188,10 +194,12 @@ export default {
   data() {
     return {
       activeForm: 'message', // Default view
-      
+
       activeChat: 'none',
-      History: [],
-      
+      ActiveHistory: {},
+      ActiveChatReceiver: 'none',
+      NewChatMessage: '',
+
       content: '',
       ReceiverUsername: '',
       messages: [],
@@ -320,6 +328,7 @@ export default {
         const FinalChatHistories = ChatHistories.map((chat) => ({
           ChatId: chat.ChatID,
           OtherUser: UsersMap[chat.OtherUserID] || null,
+          OtherUserID: chat.OtherUserID,
           messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
         }));
 
@@ -364,25 +373,14 @@ export default {
 
 
     async sendMessage() {
-      if (!this.content || !this.ReceiverUsername) {
-        alert("Please provide both a receiver username and a message.");
+      if (!this.NewChatMessage) {
+        alert("Please provide a message.");
         return;
       }
 
       try {
-        // Get the ReceiverID from username
-        const userSnapshot = await getDocs(
-          query(collection(db, "users"), where("username", "==", this.ReceiverUsername))
-        );
 
-        if (userSnapshot.empty) {
-          alert("User not found.");
-          return;
-        }
-
-        const receiverDoc = userSnapshot.docs[0];
-        const ReceiverID = receiverDoc.id; // Get ReceiverID based on username
-
+        const ReceiverID = this.ActiveChatReceiver;
         const SenderID = getAuth().currentUser?.uid; // Get the SenderID (current logged-in user)
 
         if (!SenderID) {
@@ -391,16 +389,22 @@ export default {
         }
 
         // Create a new message document
-        await addDoc(collection(db, 'messages'), {
+        const NewMessageReference = await addDoc(collection(db, 'messages'), {
           SenderID,
           ReceiverID,
-          content: this.content.trim(),
+          content: this.NewChatMessage.trim(),
           timestamp: serverTimestamp(),
         });
+        const ChatHistoryPairReference = doc(db, "ChatHistoryUserPair", this.ActiveHistory.ChatId); // Add the chat record ID to the chat pair chat record array ID
+        await updateDoc(ChatHistoryPairReference, {
+          MessageHistory: arrayUnion(NewMessageReference.id)
+        });
 
-        // Clear the form
-        this.content = '';
-        this.ReceiverUsername = '';
+        this.ActiveHistory.messages.push(NewMessageReference.id)
+        console.log("this is the message: ", NewMessageReference);
+        console.log("this is the chatID: ", this.ActiveHistory.ChatId);
+
+        this.NewChatMessage = '';
         this.fetchMessages();
       } catch (error) {
         console.error("Error sending message:", error);
