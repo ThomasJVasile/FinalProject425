@@ -17,8 +17,17 @@
         <v-row v-if="activeForm === 'message'">
           <v-col cols="12">
             <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5 ">Chat</v-card-title>
+              <v-card-title class="text-h5">Chat</v-card-title>
               <v-row>
+                <v-row>
+
+                  <v-col cols="3">
+                    <v-text-field v-model="NewChatRecipientUsername" label="username"></v-text-field>
+                    <v-text-field v-model="NewChatFirstMessage" label="message"></v-text-field>
+                    <v-btn @click="CreateNewChat()">Create New Chat</v-btn>
+                  </v-col>
+
+                </v-row>
                 <v-col cols="3">
                   <v-list>
                     <v-card class="pa-4 blue-shadow">
@@ -35,7 +44,7 @@
 
                 <v-col cols="9">
                   <v-card class="pa-4 blue-shadow" height="400px" width="100%">
-                   
+
                     <v-row v-if="activeChat === 'enabled'">
                       <v-list style="max-height: 300px; overflow-y: auto; ">
                         <v-list-item v-for="message in ActiveHistory.messages" :key="message.id">
@@ -199,6 +208,8 @@ export default {
       ActiveHistory: {},
       ActiveChatReceiver: 'none',
       NewChatMessage: '',
+      NewChatRecipientUsername: '',
+      NewChatFirstMessage: '',
 
       content: '',
       ReceiverUsername: '',
@@ -270,6 +281,53 @@ export default {
     async GetMessageHistory() {
       this.MessageHistory = await this.GetMessageHistoryCall();
       console.log("working???: ", this.MessageHistory);
+    },
+
+    async CreateNewChat() {
+      try {
+        const SenderID = getAuth().currentUser?.uid;
+        const GetUserQuery = query(collection(db, "users"), where("username", "==", this.NewChatRecipientUsername));
+        const QuerySnapshot = await getDocs(GetUserQuery);
+        const UserDocument = QuerySnapshot.docs[0];
+                                                                      // Search to see if a message history pair already exists.
+        const GetMessagePairDocumentsQuery1 = query(collection(db, "ChatHistoryUserPair"), where("UserOne", "==", SenderID), where("UserTwo", "==", UserDocument.id));      
+        const GetMessagePairDocumentsQuery2 = query(collection(db, "ChatHistoryUserPair"), where("UserTwo", "==", SenderID), where("UserOne", "==", UserDocument.id));
+        const [Query1, Query2] = await Promise.all([getDocs(GetMessagePairDocumentsQuery1), getDocs(GetMessagePairDocumentsQuery2)]);
+        const QueryResult = [...Query1.docs, ...Query2.docs];
+
+        if (QueryResult.length > 0) {     // Occurs if a chat history already exists inside the database.
+          console.log("A chat history already exists: ", QueryResult[0].data()); 
+          return;
+        }
+                
+        const FirstChatMessageReference = await addDoc(collection(db, "messages"), {
+          SenderID,
+          ReceiverID: UserDocument.id,
+          content: this.NewChatFirstMessage,
+          timestamp: serverTimestamp(),
+        });
+
+
+        // // const NewMessageReference = await addDoc(collection(db, 'messages'), {
+        //   SenderID,
+        //   ReceiverID,
+        //   content: this.NewChatMessage.trim(),
+        //   timestamp: serverTimestamp(),
+        // });
+        
+        
+        const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
+          UserOne: SenderID,
+          UserTwo: UserDocument.id,
+          MessageHistory: [FirstChatMessageReference.id]
+        });
+
+        console.log("new message:::: ", UserDocumentReference);
+        console.log("username:::: ", UserDocument.data());
+
+      } catch (error) {
+        console.error("Some sort of error in CreateNewChat()", error);
+      }
     },
 
     async GetMessageHistoryCall() {
