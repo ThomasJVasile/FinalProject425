@@ -19,56 +19,55 @@
             <v-card class="pa-4 blue-shadow">
               <v-card-title class="text-h5">Chat</v-card-title>
               <v-row>
-                <v-row>
-
-                  <v-col cols="3">
-                    <v-text-field v-model="NewChatRecipientUsername" label="username"></v-text-field>
-                    <v-text-field v-model="NewChatFirstMessage" label="message"></v-text-field>
-                    <v-btn @click="CreateNewChat()">Create New Chat</v-btn>
-                  </v-col>
-
-                </v-row>
+                <!-- Chat List (Left Panel) -->
                 <v-col cols="3">
-                  <v-list>
-                    <v-card class="pa-4 blue-shadow">
+                  <v-card class="pa-4 blue-shadow">
+                    <v-list>
                       <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
                         <v-btn block color="primary"
-                          @click="activeChat = 'enabled', ActiveHistory = history, ActiveChatReceiver = history.OtherUserID">
-                          <!-- <v-btn block color="primary" @click="DisplayChatHistory(history, history.OtherUser)"> -->
+                          @click="async () => {activeChat = 'enabled'; ActiveHistory = history; await SortMessages(); ActiveChatReceiver = history.OtherUserID}">
                           <strong>{{ history.OtherUser.username }}</strong>
                         </v-btn>
                       </v-list-item>
-                    </v-card>
-                  </v-list>
-                </v-col>
-
-                <v-col cols="9">
-                  <v-card class="pa-4 blue-shadow" height="400px" width="100%">
-
-                    <v-row v-if="activeChat === 'enabled'">
-                      <v-list style="max-height: 300px; overflow-y: auto; ">
-                        <v-list-item v-for="message in ActiveHistory.messages" :key="message.id">
-
-                          <v-card class="ma-2 blue-shadow" elevation="2">
-                            <v-card-text>
-                              {{ message.content }}
-                            </v-card-text>
-                          </v-card>
-
-                        </v-list-item>
-                      </v-list>
-                    </v-row>
-                    <!--want to add the box here for each chat message  -->
-
-                    <!-- Message Input & Send Button -->
-                    <v-card-actions class="pa-4">
-                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
-                        class="flex-grow-1"></v-text-field>
-                      <v-btn color="primary" @click="sendMessage">Send</v-btn>
-                    </v-card-actions>
+                    </v-list>
                   </v-card>
                 </v-col>
 
+                <!-- Chat Messages (Center Panel) -->
+                <v-col cols="6">
+                  <v-card class="pa-4 blue-shadow" height="500px" width="100%">
+                    <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
+                      <v-col cols="12" class="d-flex flex-column">
+                        <v-list style="flex-grow: 1; max-height: 400px; overflow-y: auto;">
+                          <v-list-item v-for="message in ActiveHistory.messages" 
+                          :key="message.id"
+                          :class="{'d-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0}">
+                          
+                          <v-card class="ma-2 blue-shadow" elevation="2">
+                              <v-card-text>{{ message.content }}</v-card-text>
+                            </v-card>
+                          </v-list-item>
+                        </v-list>
+
+                        <!-- Message Input & Send Button -->
+                        <v-card-actions class="pa-4">
+                          <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
+                            class="flex-grow-1"></v-text-field>
+                          <v-btn color="primary" @click="sendMessage">Send</v-btn>
+                        </v-card-actions>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+                </v-col>
+
+                <!-- New Chat Form (Right Panel) -->
+                <v-col cols="3">
+                  <v-card class="pa-4 blue-shadow">
+                    <v-text-field v-model="NewChatRecipientUsername" label="Username"></v-text-field>
+                    <v-text-field v-model="NewChatFirstMessage" label="Message"></v-text-field>
+                    <v-btn block color="primary" @click="CreateNewChat()">Create New Chat</v-btn>
+                  </v-card>
+                </v-col>
               </v-row>
             </v-card>
           </v-col>
@@ -210,6 +209,8 @@ export default {
       NewChatMessage: '',
       NewChatRecipientUsername: '',
       NewChatFirstMessage: '',
+      MyMessages: [],
+      TheirMessages: [],
 
       content: '',
       ReceiverUsername: '',
@@ -283,23 +284,43 @@ export default {
       console.log("working???: ", this.MessageHistory);
     },
 
+    async SortMessages() {
+      try {
+        const MyID = getAuth().currentUser?.uid;
+        this.ActiveHistory.messages.forEach(message => {
+          if (message.SenderID === MyID) {
+            message.IsMine = 1;
+          }
+          else {
+            message.IsMine = 0;
+          }
+        })
+      console.log("Messages check: ", this.ActiveHistory);
+      
+      } catch (error) {
+        console.log("SortMessages() Failed: ", error);
+        return;
+      }
+
+    },
+
     async CreateNewChat() {
       try {
         const SenderID = getAuth().currentUser?.uid;
         const GetUserQuery = query(collection(db, "users"), where("username", "==", this.NewChatRecipientUsername));
         const QuerySnapshot = await getDocs(GetUserQuery);
         const UserDocument = QuerySnapshot.docs[0];
-                                                                      // Search to see if a message history pair already exists.
-        const GetMessagePairDocumentsQuery1 = query(collection(db, "ChatHistoryUserPair"), where("UserOne", "==", SenderID), where("UserTwo", "==", UserDocument.id));      
+        // Search to see if a message history pair already exists.
+        const GetMessagePairDocumentsQuery1 = query(collection(db, "ChatHistoryUserPair"), where("UserOne", "==", SenderID), where("UserTwo", "==", UserDocument.id));
         const GetMessagePairDocumentsQuery2 = query(collection(db, "ChatHistoryUserPair"), where("UserTwo", "==", SenderID), where("UserOne", "==", UserDocument.id));
         const [Query1, Query2] = await Promise.all([getDocs(GetMessagePairDocumentsQuery1), getDocs(GetMessagePairDocumentsQuery2)]);
         const QueryResult = [...Query1.docs, ...Query2.docs];
 
         if (QueryResult.length > 0) {     // Occurs if a chat history already exists inside the database.
-          console.log("A chat history already exists: ", QueryResult[0].data()); 
+          console.log("A chat history already exists: ", QueryResult[0].data());
           return;
         }
-                
+
         const FirstChatMessageReference = await addDoc(collection(db, "messages"), {
           SenderID,
           ReceiverID: UserDocument.id,
@@ -314,8 +335,8 @@ export default {
         //   content: this.NewChatMessage.trim(),
         //   timestamp: serverTimestamp(),
         // });
-        
-        
+
+
         const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
           UserOne: SenderID,
           UserTwo: UserDocument.id,
