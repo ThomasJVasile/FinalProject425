@@ -24,10 +24,17 @@
                   <v-card class="pa-4 blue-shadow">
                     <v-list>
                       <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                        <v-btn block color="primary"
-                          @click="async () => {activeChat = 'enabled'; ActiveHistory = history; await SortMessages(); ActiveChatReceiver = history.OtherUserID}">
-                          <strong>{{ history.OtherUser.username }}</strong>
-                        </v-btn>
+                        <div :key="ChatKey">
+                          <v-btn block color="primary" @click="async () => {
+                            activeChat = 'enabled';
+                            ActiveHistory = history;
+                            // await SortMessages();
+                            ActiveChatReceiver = history.OtherUserID;
+                            ListenForNewMessages();
+                          }">
+                            <strong>{{ history.OtherUser.username }}</strong>
+                          </v-btn>
+                        </div>
                       </v-list-item>
                     </v-list>
                   </v-card>
@@ -39,11 +46,10 @@
                     <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
                       <v-col cols="12" class="d-flex flex-column">
                         <v-list style="flex-grow: 1; max-height: 400px; overflow-y: auto;">
-                          <v-list-item v-for="message in ActiveHistory.messages" 
-                          :key="message.id"
-                          :class="{'d-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0}">
-                          
-                          <v-card class="ma-2 blue-shadow" elevation="2">
+                          <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                            :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+
+                            <v-card class="ma-2 blue-shadow" elevation="2">
                               <v-card-text>{{ message.content }}</v-card-text>
                             </v-card>
                           </v-list-item>
@@ -193,7 +199,7 @@
 
 <script>
 import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 // import { useCollection } from "vuefire";
 
@@ -211,6 +217,7 @@ export default {
       NewChatFirstMessage: '',
       MyMessages: [],
       TheirMessages: [],
+      ChatKey: 0,
 
       content: '',
       ReceiverUsername: '',
@@ -295,8 +302,8 @@ export default {
             message.IsMine = 0;
           }
         })
-      console.log("Messages check: ", this.ActiveHistory);
-      
+        console.log("Messages check: ", this.ActiveHistory);
+
       } catch (error) {
         console.log("SortMessages() Failed: ", error);
         return;
@@ -328,15 +335,6 @@ export default {
           timestamp: serverTimestamp(),
         });
 
-
-        // // const NewMessageReference = await addDoc(collection(db, 'messages'), {
-        //   SenderID,
-        //   ReceiverID,
-        //   content: this.NewChatMessage.trim(),
-        //   timestamp: serverTimestamp(),
-        // });
-
-
         const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
           UserOne: SenderID,
           UserTwo: UserDocument.id,
@@ -360,6 +358,7 @@ export default {
       const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
       const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
       const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+
       try {
         const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
           getDocs(UsersChatQueryOne),
@@ -398,6 +397,7 @@ export default {
         let MessagesMap = {};   // Batch fetching of all messages in message history
         if (MessageIDs.size > 0) {
           const MessageQuery = query(collection(db, "messages"), where("__name__", "in", Array.from(MessageIDs)));
+
           const MessageDocs = await getDocs(MessageQuery);
           MessageDocs.forEach((doc) => {
             MessagesMap[doc.id] = doc.data();
@@ -419,9 +419,31 @@ export default {
       }
     },
 
-    // async DisplayChatHistory(history, OtherUser) {
+    async ListenForNewMessages() {
+      try {
+        if (!this.ActiveHistory || !this.ActiveHistory.ChatId) {
+          return;
+        }
+        const ChatReference = doc(db, "ChatHistoryUserPair", this.ActiveHistory.ChatId);
+        onSnapshot(ChatReference, async (docSnap) => {
+          if (docSnap.exists()) {
+            const ChatData = docSnap.data();
+            if (ChatData.MessageHistory) {
+              const MessageQuery = query(collection(db, "messages"), where("__name__", "in", ChatData.MessageHistory));
+              const MessageSnap = await getDocs(MessageQuery);
+              this.ActiveHistory.messages = MessageSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              console.log("UPDATED CHAT:: ", this.ActiveHistory);
+              this.ChatKey++;
+              this.SortMessages();
+            }
+          }
+        });
+      } catch (error) {
+        console.log("error during ListenForNewMessages()", error);
+        return;
+      }
 
-    // },
+    },
 
     async dismissNotification(notificationId) {
       try {
@@ -449,7 +471,6 @@ export default {
         console.error("Error dismissing notification:", error);
       }
     },
-
 
     async sendMessage() {
       if (!this.NewChatMessage) {
@@ -490,7 +511,6 @@ export default {
       }
     },
 
-
     async fetchNotifications() {
       try {
         const currentUser = getAuth().currentUser;
@@ -517,7 +537,6 @@ export default {
       }
 
     },
-
 
     async acceptRequest(notification) {
       try {
@@ -548,6 +567,7 @@ export default {
         console.error("Error accepting request:", error);
       }
     },
+
     async rejectRequest(notification) {
       try {
         await deleteDoc(doc(db, "RequestJoin", notification.id));
@@ -608,6 +628,7 @@ export default {
         console.error("Error fetching messages:", error);
       }
     },
+
     async deleteMessage(messageId) {
       try {
         await deleteDoc(doc(db, "messages", messageId));
@@ -616,6 +637,7 @@ export default {
         console.error("Error deleting message:", error);
       }
     },
+
   },
   mounted() {
     this.fetchMessages();
