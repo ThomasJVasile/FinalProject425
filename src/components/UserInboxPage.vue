@@ -1,199 +1,192 @@
 <template>
-  <v-container>
-    <v-row>
+  <!-- Toggle Button -->
+  <v-btn icon class="ma-2" @click="drawer = !drawer">
+    <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
+  </v-btn>
+
+  <v-container fluid class="d-flex">
       <!-- Sidebar -->
-      <v-col cols="3">
-        <v-card class="pa-4 blue-shadow">
-          <v-list>
-            <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
-            <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
-            <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
-          </v-list>
-        </v-card>
-      </v-col>
+      <v-navigation-drawer v-model="drawer" :permanent="false" app width="250">
+        <v-list>
+          <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
+          <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
+          <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
+        </v-list>
+      </v-navigation-drawer>
 
       <!-- Main Content -->
-      <v-col cols="9">
-        <v-row v-if="activeForm === 'message'">
-          <v-col cols="12">
-            <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5">Chat</v-card-title>
-              <v-row>
-                <!-- Chat List (Left Panel) -->
-                <v-col cols="3">
-                  <v-card class="pa-4 blue-shadow">
-                    <v-list>
-                      <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                        <div :key="ChatKey">
-                          <v-btn block color="primary" @click="async () => {
-                            activeChat = 'enabled';
-                            ActiveHistory = history;
-                            // await SortMessages();
-                            ActiveChatReceiver = history.OtherUserID;
-                            ListenForNewMessages();
-                          }">
-                            <strong>{{ history.OtherUser.username }}</strong>
-                          </v-btn>
+      <v-main :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
+        <v-col cols="12">
+          <v-row v-if="activeForm === 'message'">
+            <v-col cols="12">
+              <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
+                <v-card-title class="text-h5">Chat</v-card-title>
+                <v-row>
+                  <!-- Chat List (Left Panel) -->
+                  <v-col cols="3">
+                    <v-card class="pa-4 blue-shadow">
+                      <v-list>
+                        <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
+                          <div :key="ChatKey">
+                            <v-btn block color="primary" @click="async () => {
+                              activeChat = 'enabled';
+                              ActiveHistory = history;
+                              // await SortMessages();
+                              ActiveChatReceiver = history.OtherUserID;
+                              ListenForNewMessages();
+                            }">
+                              <strong>{{ history.OtherUser.username }}</strong>
+                            </v-btn>
+                          </div>
+                        </v-list-item>
+                      </v-list>
+                    </v-card>
+                  </v-col>
+
+                  <!-- Chat Messages (Center Panel) -->
+                  <v-col cols="6">
+                    <v-card class="pa-4 blue-shadow" height="500px" width="100%">
+                      <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
+                        <v-col cols="12" class="d-flex flex-column">
+                          <v-list style="flex-grow: 1; max-height: 400px; overflow-y: auto;">
+                            <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                              :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+
+                              <v-card class="ma-2 blue-shadow" elevation="2">
+                                <v-card-text>{{ message.content }}</v-card-text>
+                              </v-card>
+                            </v-list-item>
+                          </v-list>
+
+                          <!-- Message Input & Send Button -->
+                          <v-card-actions class="pa-4">
+                            <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
+                              class="flex-grow-1"></v-text-field>
+                            <v-btn color="primary" @click="sendMessage">Send</v-btn>
+                          </v-card-actions>
+                        </v-col>
+                      </v-row>
+                    </v-card>
+                  </v-col>
+
+                  <!-- New Chat Form (Right Panel) -->
+                  <v-col cols="3">
+                    <v-card class="pa-4 blue-shadow">
+                      <v-text-field v-model="NewChatRecipientUsername" label="Username"></v-text-field>
+                      <v-text-field v-model="NewChatFirstMessage" label="Message"></v-text-field>
+                      <v-btn block color="primary" @click="CreateNewChat()">Create New Chat</v-btn>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-row>
+            <!-- Messages Section -->
+            <v-col v-if="activeForm === 'message'" cols="12">
+              <v-card class="pa-4 blue-shadow">
+                <v-card-title class="text-h5">Inbox</v-card-title>
+                <v-text-field v-model="searchQuery" label="Search Messages"
+                  @input="searchMessagesFromDB"></v-text-field>
+                <v-list>
+                  <v-list-item v-for="message in messages" :key="message.id">
+                    <v-card class="pa-3 mb-2">
+                      <v-card-subtitle>
+                        <strong>From:</strong> {{ message.senderUsername }} <br />
+                        <strong>To:</strong> {{ message.ReceiverUsername }}
+                      </v-card-subtitle>
+                      <v-card-text>
+                        {{ message.content }}
+                        <br />
+                        <small>{{ message.timestamp }}</small>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn color="primary" @click="message.expanded = !message.expanded">
+                          {{ message.expanded ? "Hide History" : "View History" }}
+                        </v-btn>
+                        <v-btn color="success" @click="initiateReply(message)">
+                          {{ message.replying ? "Cancel" : "Reply" }}
+                        </v-btn>
+                        <v-btn color="error" @click="deleteMessage(message.id)">Delete</v-btn>
+                      </v-card-actions>
+                      <v-expand-transition>
+                        <div v-if="message.replying" class="pa-3">
+                          <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
+                            dense></v-text-field>
+                          <v-btn color="success" @click="sendReply(message)">Send</v-btn>
                         </div>
-                      </v-list-item>
-                    </v-list>
-                  </v-card>
-                </v-col>
+                      </v-expand-transition>
+                      <v-expand-transition>
+                        <div v-if="message.expanded">
+                          <v-list dense>
+                            <v-list-item
+                              v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
+                              :key="oldMessage.id">
+                              <v-card class="pa-2">
+                                <v-card-text>
+                                  <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
+                                  <br />
+                                  <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
+                                    'Unknown Date' }}</small>
+                                </v-card-text>
+                              </v-card>
+                            </v-list-item>
+                          </v-list>
+                        </div>
+                      </v-expand-transition>
+                    </v-card>
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </v-col>
 
-                <!-- Chat Messages (Center Panel) -->
-                <v-col cols="6">
-                  <v-card class="pa-4 blue-shadow" height="500px" width="100%">
-                    <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
-                      <v-col cols="12" class="d-flex flex-column">
-                        <v-list style="flex-grow: 1; max-height: 400px; overflow-y: auto;">
-                          <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
-                            :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-
-                            <v-card class="ma-2 blue-shadow" elevation="2">
-                              <v-card-text>{{ message.content }}</v-card-text>
-                            </v-card>
-                          </v-list-item>
-                        </v-list>
-
-                        <!-- Message Input & Send Button -->
-                        <v-card-actions class="pa-4">
-                          <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
-                            class="flex-grow-1"></v-text-field>
-                          <v-btn color="primary" @click="sendMessage">Send</v-btn>
-                        </v-card-actions>
-                      </v-col>
-                    </v-row>
-                  </v-card>
-                </v-col>
-
-                <!-- New Chat Form (Right Panel) -->
-                <v-col cols="3">
-                  <v-card class="pa-4 blue-shadow">
-                    <v-text-field v-model="NewChatRecipientUsername" label="Username"></v-text-field>
-                    <v-text-field v-model="NewChatFirstMessage" label="Message"></v-text-field>
-                    <v-btn block color="primary" @click="CreateNewChat()">Create New Chat</v-btn>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
-        </v-row>
-
-
-        <!-- <v-row v-if="activeForm === 'message'">
-          <v-col cols="12">
-            <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5 ">Send Message</v-card-title>
-              <v-text-field v-model="ReceiverUsername" label="Receiver Username" />
-              <v-textarea v-model="content" label="Message Content" rows="4" />
-              <v-btn color="success" @click="sendMessage">Send</v-btn>
-            </v-card>
-          </v-col>
-        </v-row> -->
-        <v-row>
-          <!-- Messages Section -->
-          <v-col v-if="activeForm === 'message'" cols="12">
-            <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5">Inbox</v-card-title>
-              <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
-              <v-list>
-                <v-list-item v-for="message in messages" :key="message.id">
-                  <v-card class="pa-3 mb-2">
-                    <v-card-subtitle>
-                      <strong>From:</strong> {{ message.senderUsername }} <br />
-                      <strong>To:</strong> {{ message.ReceiverUsername }}
-                    </v-card-subtitle>
-                    <v-card-text>
-                      {{ message.content }}
-                      <br />
-                      <small>{{ message.timestamp }}</small>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn color="primary" @click="message.expanded = !message.expanded">
-                        {{ message.expanded ? "Hide History" : "View History" }}
-                      </v-btn>
-                      <v-btn color="success" @click="initiateReply(message)">
-                        {{ message.replying ? "Cancel" : "Reply" }}
-                      </v-btn>
-                      <v-btn color="error" @click="deleteMessage(message.id)">Delete</v-btn>
-                    </v-card-actions>
-                    <v-expand-transition>
-                      <div v-if="message.replying" class="pa-3">
-                        <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
-                          dense></v-text-field>
-                        <v-btn color="success" @click="sendReply(message)">Send</v-btn>
-                      </div>
-                    </v-expand-transition>
-                    <v-expand-transition>
-                      <div v-if="message.expanded">
-                        <v-list dense>
-                          <v-list-item
-                            v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
-                            :key="oldMessage.id">
-                            <v-card class="pa-2">
-                              <v-card-text>
-                                <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
-                                <br />
-                                <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
-                                  'Unknown Date' }}</small>
-                              </v-card-text>
-                            </v-card>
-                          </v-list-item>
-                        </v-list>
-                      </div>
-                    </v-expand-transition>
-                  </v-card>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
-
-          <v-col v-if="activeForm === 'event-notifications'" cols="12">
-            <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5">Event Notifications</v-card-title>
-              <v-list>
-                <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
-                  <v-card class="pa-3 mb-2">
-                    <v-card-text>
-                      <strong>Event:</strong> {{ eventNotification.eventName }}<br />
-                      <strong>Message:</strong> {{ eventNotification.message }}<br />
-                      <small>{{ eventNotification.timestamp }}</small>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn>
-                      <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
+            <v-col v-if="activeForm === 'event-notifications'" cols="12">
+              <v-card class="pa-4 blue-shadow">
+                <v-card-title class="text-h5">Event Notifications</v-card-title>
+                <v-list>
+                  <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
+                    <v-card class="pa-3 mb-2">
+                      <v-card-text>
+                        <strong>Event:</strong> {{ eventNotification.eventName }}<br />
+                        <strong>Message:</strong> {{ eventNotification.message }}<br />
+                        <small>{{ eventNotification.timestamp }}</small>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn>
+                        <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </v-col>
 
 
-          <!-- Notifications Section -->
-          <v-col v-if="activeForm === 'notifications'" cols="12">
-            <v-card class="pa-4 blue-shadow">
-              <v-card-title class="text-h5">Event Requests</v-card-title>
-              <v-list>
-                <v-list-item v-for="notification in notifications" :key="notification.id">
-                  <v-card class="pa-3 mb-2">
-                    <v-card-text>
-                      {{ notification.content }}
-                      <br />
-                      <small>{{ notification.timestamp }}</small>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
-                      <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
+            <!-- Notifications Section -->
+            <v-col v-if="activeForm === 'notifications'" cols="12">
+              <v-card class="pa-4 blue-shadow">
+                <v-card-title class="text-h5">Event Requests</v-card-title>
+                <v-list>
+                  <v-list-item v-for="notification in notifications" :key="notification.id">
+                    <v-card class="pa-3 mb-2">
+                      <v-card-text>
+                        {{ notification.content }}
+                        <br />
+                        <small>{{ notification.timestamp }}</small>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
+                        <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-main>
+   
   </v-container>
 </template>
 
@@ -208,6 +201,7 @@ export default {
   data() {
     return {
       activeForm: 'message', // Default view
+      drawer: true,
 
       activeChat: 'none',
       ActiveHistory: {},
@@ -678,5 +672,24 @@ export default {
 .blue-shadow {
   box-shadow: 0 4px 10px rgba(45, 70, 155, 0.4) !important;
   transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Smooth transition when sidebar expands/collapses */
+.v-main {
+  transition: width 0.2s ease-in-out;
+}
+
+/* Adjust content width dynamically */
+.content-expanded {
+  width: 100%;
+  /* width: calc(100% - 250px); */
+  /* When sidebar is open */
+  /* margin-left: 250px; */
+}
+
+.content-collapsed {
+  width: 100%;
+  /* When sidebar is closed */
+  /* margin-left: 0; */
 }
 </style>
