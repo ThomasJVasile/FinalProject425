@@ -294,14 +294,23 @@ export default {
     async SortMessages() {
       try {
         const MyID = getAuth().currentUser?.uid;
-        this.ActiveHistory.messages.forEach(message => {
-          if (message.SenderID === MyID) {
-            message.IsMine = 1;
-          }
-          else {
-            message.IsMine = 0;
-          }
+        this.ActiveHistory.messages.sort((a, b) => {
+          return a.timestamp - b.timestamp;
         })
+        this.ActiveHistory.messages.forEach(message => {
+          message.IsMine = message.SenderID === MyID ? 1 : 0;
+        })
+
+
+        // this.ActiveHistory.messages.forEach(message => {
+        //   if (message.SenderID === MyID) {
+        //     message.IsMine = 1;
+        //   }
+        //   else {
+        //     message.IsMine = 0;
+        //   } 
+        // })
+
         console.log("Messages check: ", this.ActiveHistory);
 
       } catch (error) {
@@ -395,9 +404,10 @@ export default {
         });
 
         let MessagesMap = {};   // Batch fetching of all messages in message history
-        if (MessageIDs.size > 0) {
-          const MessageQuery = query(collection(db, "messages"), where("__name__", "in", Array.from(MessageIDs)));
-
+        const MessageIDList = Array.from(MessageIDs);
+        for (let i = 0; i < MessageIDList.length; i += 30) {  // BATCHES OF 30 BECAUSE OF 30 QUERY LIMIT IN FIRESTORE
+          const MessageBatch = MessageIDList.slice(i, i + 30);
+          const MessageQuery = query(collection(db, "messages"), where("__name__", "in", MessageBatch));
           const MessageDocs = await getDocs(MessageQuery);
           MessageDocs.forEach((doc) => {
             MessagesMap[doc.id] = doc.data();
@@ -429,9 +439,25 @@ export default {
           if (docSnap.exists()) {
             const ChatData = docSnap.data();
             if (ChatData.MessageHistory) {
-              const MessageQuery = query(collection(db, "messages"), where("__name__", "in", ChatData.MessageHistory));
-              const MessageSnap = await getDocs(MessageQuery);
-              this.ActiveHistory.messages = MessageSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              let MessagesMap = {};
+              const MessageIDList = ChatData.MessageHistory;
+
+              // FETCH MESSAGES IN BATCHES OF 30
+              for (let i = 0; i < MessageIDList.length; i += 30) {
+                const MessageBatch = MessageIDList.slice(i, i + 30);
+                const MessageQuery = query(collection(db, "messages"), where("__name__", "in", MessageBatch));
+                const MessageSnap = await getDocs(MessageQuery);
+                MessageSnap.forEach((doc) => {
+                  MessagesMap[doc.id] = doc.data();
+                });
+              }
+              this.ActiveHistory.messages = MessageIDList
+                .map((MessageID) => MessagesMap[MessageID] || null)
+                .filter((msg) => msg !== null);
+
+              // const MessageQuery = query(collection(db, "messages"), where("__name__", "in", ChatData.MessageHistory));
+              // const MessageSnap = await getDocs(MessageQuery);
+              // this.ActiveHistory.messages = MessageSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
               console.log("UPDATED CHAT:: ", this.ActiveHistory);
               this.ChatKey++;
               this.SortMessages();
