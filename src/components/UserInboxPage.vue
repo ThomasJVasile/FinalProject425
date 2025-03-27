@@ -11,12 +11,13 @@
           <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
           <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
           <v-list-item @click="activeForm = 'event-notifications'">Event Notifications</v-list-item>
+          <v-list-item @click="activeForm = 'inbox'">Inbox</v-list-item>
         </v-list>
       </v-navigation-drawer>
 
       <!-- Main Content -->
-      <v-main :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
-        <v-col cols="12">
+      <!-- <v-main :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }"> -->
+        <v-col cols="12" :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
           <v-row v-if="activeForm === 'message'">
             <v-col cols="12">
               <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
@@ -83,7 +84,7 @@
           </v-row>
           <v-row>
             <!-- Messages Section -->
-            <v-col v-if="activeForm === 'message'" cols="12">
+            <v-col v-if="activeForm === 'inbox'" cols="12">
               <v-card class="pa-4 blue-shadow">
                 <v-card-title class="text-h5">Inbox</v-card-title>
                 <v-text-field v-model="searchQuery" label="Search Messages"
@@ -185,7 +186,7 @@
             </v-col>
           </v-row>
         </v-col>
-      </v-main>
+      <!-- </v-main> -->
    
   </v-container>
 </template>
