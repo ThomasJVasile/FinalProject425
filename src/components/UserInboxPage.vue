@@ -1,12 +1,11 @@
 <template>
   <!-- Toggle Button -->
-  <v-btn icon class="ma-2 blue-shadow " @click="drawer = !drawer">
-    <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
-  </v-btn>
-
-  <v-container fluid class="d-flex ">
+  <v-container fluid class="d-flex fill-height animated-background">
+    <!-- <v-btn icon class="ma-2 blue-shadow " @click="drawer = !drawer">
+      <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
+    </v-btn> -->
     <!-- Sidebar -->
-    <v-navigation-drawer class="blue-shadow" v-model="drawer" :permanent="false" app width="250">
+    <v-navigation-drawer class="blue-shadow background-transparent" v-model="drawer" :permanent="false" app width="250">
       <v-list>
         <v-list-item @click="activeForm = 'message'">Chat</v-list-item>
         <v-list-item @click="activeForm = 'notifications'">Event Requests</v-list-item>
@@ -15,20 +14,23 @@
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Main Content -->
-    <!-- <v-main :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }"> -->
-    <v-col cols="12" :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
+    <v-col cols="12" class="fill-height d-flex flex-column background-transparent"
+    
+      :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
+      <v-btn icon class="ma-2 blue-shadow background-transparent" @click="drawer = !drawer">
+      <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
+    </v-btn>
       <v-row v-if="activeForm === 'message'">
-        <v-col cols="12">
-          <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
+        <v-col cols="12" >
+          <v-card class="pa-4 blue-shadow fill-height d-flex flex-column ">
             <v-card-title class="text-h5">Chat</v-card-title>
             <v-row>
               <!-- Chat List (Left Panel) -->
               <v-col cols="3">
-                <v-card class="pa-4 blue-shadow">
+                <v-card class="pa-4 blue-shadow ">
                   <v-list>
                     <v-list-item v-for="history in MessageHistory" :key="history.ChatID">
-                      <div :key="ChatKey" class="d-flex align-center">
+                      <div :key="ChatKey" class="d-flex align-center ">
 
                         <v-btn block color="primary" @click="async () => {
                           activeChat = 'enabled';
@@ -49,27 +51,33 @@
               </v-col>
 
               <!-- Chat Messages (Center Panel) -->
-              <v-col cols="6">
-                <v-card class="pa-4 blue-shadow" height="500px" width="100%">
+              <v-col cols="6" class="fill-height d-flex flex-column">
+                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
-                    <v-col cols="12" class="d-flex flex-column">
-                      <v-list style="flex-grow: 1; max-height: 400px; overflow-y: auto;">
-                        <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
-                          :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
 
-                          <v-card class="ma-2 blue-shadow" elevation="2">
-                            <v-card-text>{{ message.content }}</v-card-text>
-                          </v-card>
-                        </v-list-item>
-                      </v-list>
+                    <v-list class="flex-grow-1" style="height: 600px; overflow-y: auto;">
+                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                        :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
 
-                      <!-- Message Input & Send Button -->
-                      <v-card-actions class="pa-4">
-                        <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
-                          class="flex-grow-1"></v-text-field>
-                        <v-btn color="primary" @click="sendMessage">Send</v-btn>
-                      </v-card-actions>
-                    </v-col>
+                        <v-card class="pa-2 px-3 mb-1" :style="{
+                          backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF',
+                          borderRadius: '15px',
+                          padding: '10px'
+                        }" elevation="2">
+                          <!-- <v-card class="ma-2 blue-shadow" elevation="2"> -->
+                          <v-card-text>{{ message.content }}</v-card-text>
+
+                        </v-card>
+                      </v-list-item>
+                    </v-list>
+
+                    <!-- Message Input & Send Button -->
+                    <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
+                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
+                        class="flex-grow-1"></v-text-field>
+                      <v-btn color="primary" @click="sendMessage">Send</v-btn>
+                    </v-card-actions>
+
                   </v-row>
                 </v-card>
               </v-col>
@@ -86,7 +94,6 @@
           </v-card>
         </v-col>
       </v-row>
-      <v-row>
         <!-- Messages Section -->
         <v-col v-if="activeForm === 'inbox'" cols="12">
           <v-card class="pa-4 blue-shadow">
@@ -187,7 +194,6 @@
             </v-list>
           </v-card>
         </v-col>
-      </v-row>
     </v-col>
     <!-- </v-main> -->
 
@@ -673,6 +679,7 @@ export default {
 /* Adjust content width dynamically */
 .content-expanded {
   width: 100%;
+  height: 100%;
   /* width: calc(100% - 250px); */
   /* When sidebar is open */
   /* margin-left: 250px; */
@@ -680,7 +687,47 @@ export default {
 
 .content-collapsed {
   width: 100%;
+
   /* When sidebar is closed */
   /* margin-left: 0; */
+}
+
+
+/* .background-transparent {
+  background: rgb(155, 193, 230);
+  position: relative;
+  z-index: 1;
+} */
+
+.background-transparent {
+  background: rgba(255, 255, 255, 0);
+  position: relative;
+  z-index: 1;
+}
+
+.background-color-form {
+  background: rgb(177, 182, 255)
+}
+
+
+
+.animated-background {
+  background: linear-gradient(45deg, #688ac0, #afb3b0);
+  background-size: 400% 400%;
+  animation: gradientAnimation 5s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
