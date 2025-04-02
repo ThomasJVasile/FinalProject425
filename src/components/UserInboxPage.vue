@@ -11,8 +11,10 @@
         <v-list-item @click="activeForm = 'notifications'" class="button-border">Event Requests</v-list-item>
         <v-list-item @click="activeForm = 'event-notifications'" class="button-border">Event Notifications</v-list-item>
         <v-list-item @click="activeForm = 'inbox'" class="button-border">Inbox</v-list-item>
+        <v-list-item @click="activeForm = 'invites'" class="button-border">Invitations</v-list-item>
       </v-list>
     </v-navigation-drawer>
+
 
     <v-col cols="12" class="fill-height d-flex flex-column background-transparent"
       :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
@@ -25,7 +27,7 @@
             <v-card-title class="text-h5">Chat</v-card-title>
             <v-row>
               <!-- Chat List (Left Panel) -->
-              <v-col cols="3" >
+              <v-col cols="3">
                 <v-card class="pa-4 blue-shadow ">
                   <v-text-field v-model="searchQuery" label="Search" append-icon="mdi-magnify" single-line clearable
                     @input="FilterMessageHistory" class="search-bar" />
@@ -51,7 +53,7 @@
               </v-col>
 
               <!-- Chat Messages (Center Panel) -->
-              <v-col cols="6" class="fill-height d-flex flex-column">
+              <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
                 <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
 
@@ -74,7 +76,24 @@
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
                       <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
-                        class="flex-grow-1"></v-text-field>
+                        class="flex-grow-1">
+
+
+
+                        <v-menu v-model="emojiPickerVisible" bottom offset-y transition="slide-x-reverse-transition">
+                          <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" icon @click="emojiPickerVisible = !emojiPickerVisible">
+                              😀
+                            </v-btn>
+                          </template>
+
+                          <!-- Emoji Picker Component -->
+                          <emoji-picker @emojiClick="addEmoji" />
+                        </v-menu>
+
+
+
+                      </v-text-field>
                       <v-btn color="primary" @click="sendMessage">Send</v-btn>
                     </v-card-actions>
 
@@ -94,8 +113,15 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <v-col cols="12" name="invitations col line 18"
+        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" v-if="activeForm === 'invites'">
+        <v-card-title class="text-h5">Invitations</v-card-title>
+      </v-col>
+
       <!-- Messages Section -->
-      <v-col v-if="activeForm === 'inbox'" cols="12">
+      <v-col v-if="activeForm === 'inbox'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form"
+        cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Inbox</v-card-title>
           <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
@@ -151,7 +177,8 @@
         </v-card>
       </v-col>
 
-      <v-col v-if="activeForm === 'event-notifications'" cols="12">
+      <v-col v-if="activeForm === 'event-notifications'"
+        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Notifications</v-card-title>
           <v-list>
@@ -174,7 +201,8 @@
 
 
       <!-- Notifications Section -->
-      <v-col v-if="activeForm === 'notifications'" cols="12">
+      <v-col v-if="activeForm === 'notifications'"
+        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Requests</v-card-title>
           <v-list>
@@ -222,6 +250,7 @@ export default {
       MyMessages: [],
       TheirMessages: [],
       ChatKey: 0,
+
 
       content: '',
       ReceiverUsername: '',
@@ -722,7 +751,7 @@ export default {
 }
 
 .background-color-form {
-  background: rgb(218, 218, 218)
+  background: rgb(173, 194, 252)
 }
 
 .button-border {
