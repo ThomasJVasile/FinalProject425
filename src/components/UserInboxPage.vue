@@ -78,21 +78,17 @@
                       <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
                         class="flex-grow-1">
 
-
-
-                        <v-menu v-model="emojiPickerVisible" bottom offset-y transition="slide-x-reverse-transition">
-                          <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" icon @click="emojiPickerVisible = !emojiPickerVisible">
-                              😀
-                            </v-btn>
-                          </template>
-
-                          <!-- Emoji Picker Component -->
-                          <emoji-picker @emojiClick="addEmoji" />
-                        </v-menu>
-
-
-
+                        <template v-slot:append>
+                          <v-menu v-model="emojiPickerVisible" bottom offset-y>
+                            <template v-slot:activator="{ props }">
+                              <v-btn v-bind="props" icon @click.stop>
+                                😀
+                              </v-btn>
+                            </template>
+                            <!-- Emoji Picker -->
+                            <EmojiPicker :native="true" @select="onSelectEmoji" />
+                          </v-menu>
+                        </template>
                       </v-text-field>
                       <v-btn color="primary" @click="sendMessage">Send</v-btn>
                     </v-card-actions>
@@ -232,9 +228,15 @@
 import { db } from '@/firebase';
 import { collection, addDoc, getDocs, query, where, doc, getDoc, serverTimestamp, deleteDoc, updateDoc, arrayUnion, setDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import EmojiPicker from 'vue3-emoji-picker'
+import "vue3-emoji-picker/css";
 // import { useCollection } from "vuefire";
 
 export default {
+
+  components: {
+    EmojiPicker,
+  },
 
   data() {
     return {
@@ -251,6 +253,7 @@ export default {
       TheirMessages: [],
       ChatKey: 0,
 
+      emojiPickerVisible: false,
 
       content: '',
       ReceiverUsername: '',
@@ -264,6 +267,7 @@ export default {
     };
   },
   computed: {
+
     filteredMessages() {
       if (!this.searchQuery.trim()) return this.messages;
       return this.messages.filter(message =>
@@ -317,6 +321,16 @@ export default {
         console.log("Fetched event notifications:", this.eventNotifications);
       } catch (error) {
         console.error("Error fetching event notifications:", error);
+      }
+    },
+
+    onSelectEmoji(emoji) {
+
+      console.log("Selected Emoji:", emoji);
+      if (emoji && emoji.r) {
+        this.NewChatMessage += String.fromCodePoint(parseInt(emoji.u, 16));  // Append emoji to NewChatMessage
+      } else {
+        console.error("Emoji selection error:", emoji);
       }
     },
 
