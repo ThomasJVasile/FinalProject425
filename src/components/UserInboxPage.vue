@@ -68,8 +68,12 @@
                         }" elevation="2">
                           <!-- <v-card class="ma-2 blue-shadow" elevation="2"> -->
                           <v-card-text>{{ message.content }}</v-card-text>
+        
 
                         </v-card>
+                        <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
+                            {{ formatTimestamp(message.timestamp) }}
+                          </div>
                       </v-list-item>
                     </v-list>
 
@@ -281,6 +285,12 @@ export default {
       this.messages.forEach(msg => msg.replying = false);
       message.replying = true;
     },
+
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      return new Date(timestamp.seconds * 1000).toLocaleString();
+    },
+
     async sendReply(parentMessage) {
       if (!this.replyContent || typeof this.replyContent !== 'string' || !this.replyContent.trim()) {
         alert("Reply cannot be empty.");
@@ -447,6 +457,8 @@ export default {
           const MessageDocs = await getDocs(MessageQuery);
           MessageDocs.forEach((doc) => {
             MessagesMap[doc.id] = doc.data();
+            if (doc.data().seen === false) {
+          }
           });
         }
 
@@ -454,6 +466,7 @@ export default {
           ChatId: chat.ChatID,
           OtherUser: UsersMap[chat.OtherUserID] || null,
           OtherUserID: chat.OtherUserID,
+          UnseenCount: UnseenCount,
           messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
         }));
 
@@ -556,6 +569,7 @@ export default {
           ReceiverID,
           content: this.NewChatMessage.trim(),
           timestamp: serverTimestamp(),
+          seen: false,
         });
         const ChatHistoryPairReference = doc(db, "ChatHistoryUserPair", this.ActiveHistory.ChatId); // Add the chat record ID to the chat pair chat record array ID
         await updateDoc(ChatHistoryPairReference, {
