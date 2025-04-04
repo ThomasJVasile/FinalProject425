@@ -1,9 +1,6 @@
 <template>
   <!-- Toggle Button -->
   <v-container fluid class="d-flex fill-height animated-background">
-    <!-- <v-btn icon class="ma-2 blue-shadow " @click="drawer = !drawer">
-      <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
-    </v-btn> -->
     <!-- Sidebar -->
     <v-navigation-drawer class="blue-shadow background-color-form" v-model="drawer" :permanent="false" app width="250">
       <v-list>
@@ -15,12 +12,12 @@
       </v-list>
     </v-navigation-drawer>
 
-
-    <v-col cols="12" class="fill-height d-flex flex-column background-transparent"
-      :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer, }">
+    <!-- Main Content -->
+    <v-col cols="12" class="fill-height d-flex flex-column background-transparent" :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer }">
       <v-btn icon class="ma-2 blue-shadow background-transparent" @click="drawer = !drawer">
         <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
       </v-btn>
+      
       <v-row v-if="activeForm === 'message'">
         <v-col cols="12">
           <v-card class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form">
@@ -28,19 +25,12 @@
             <v-row>
               <!-- Chat List (Left Panel) -->
               <v-col cols="3">
-                <v-card class="pa-4 blue-shadow ">
-                  <v-text-field v-model="searchQuery" label="Search" append-icon="mdi-magnify" single-line clearable
-                    @input="FilterMessageHistory" class="search-bar" />
+                <v-card class="pa-4 blue-shadow">
+                  <v-text-field v-model="searchQuery" label="Search" append-icon="mdi-magnify" single-line clearable @input="FilterMessageHistory" class="search-bar" />
                   <v-list>
                     <v-list-item v-for="history in FilteredMessageHistory" :key="history.ChatID" class="pa-0 ma-0">
-                      <div :key="ChatKey" class="d-flex align-center ">
-                        <v-btn block color="primary" size="large" style="height: 45px;" @click="async () => {
-                          activeChat = 'enabled';
-                          ActiveHistory = history;
-                          // await SortMessages();
-                          ActiveChatReceiver = history.OtherUserID;
-                          ListenForNewMessages();
-                        }">
+                      <div :key="ChatKey" class="d-flex align-center">
+                        <v-btn block color="primary" size="large" style="height: 45px;" @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; ListenForNewMessages(); }">
                           <v-avatar v-if="history.OtherUser.avatarUrl" size="55" class="mr-3">
                             <v-img :src="history.OtherUser.avatarUrl" alt="User Avatar"></v-img>
                           </v-avatar>
@@ -55,39 +45,25 @@
               <!-- Chat Messages (Center Panel) -->
               <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
                 <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
-                  <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
-
+                  <v-row v-if="activeChat === 'enabled'" style="height: 100%;"> 
                     <v-list class="flex-grow-1" style="height: 600px; overflow-y: auto;">
-                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
-                        :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-
-                        <v-card class="pa-2 px-3 mb-1" :style="{
-                          backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF',
-                          borderRadius: '15px',
-                          padding: '10px'
-                        }" elevation="2">
-                          <!-- <v-card class="ma-2 blue-shadow" elevation="2"> -->
+                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id" :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+                        <v-card class="pa-2 px-3 mb-1" :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }" elevation="2">
                           <v-card-text>{{ message.content }}</v-card-text>
-        
-
                         </v-card>
                         <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
-                            {{ formatTimestamp(message.timestamp) }}
-                          </div>
+                          {{ formatTimestamp(message.timestamp) }}
+                        </div>
                       </v-list-item>
                     </v-list>
 
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
-                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
-                        class="flex-grow-1">
-
+                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details class="flex-grow-1">
                         <template v-slot:append>
                           <v-menu v-model="emojiPickerVisible" bottom offset-y>
                             <template v-slot:activator="{ props }">
-                              <v-btn v-bind="props" icon @click.stop>
-                                😀
-                              </v-btn>
+                              <v-btn v-bind="props" icon @click.stop> 😀 </v-btn>
                             </template>
                             <!-- Emoji Picker -->
                             <EmojiPicker :native="true" @select="onSelectEmoji" />
@@ -114,14 +90,13 @@
         </v-col>
       </v-row>
 
-      <v-col cols="12" name="invitations col line 18"
-        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" v-if="activeForm === 'invites'">
+      <!-- Other Sections -->
+      <v-col cols="12" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" v-if="activeForm === 'invites'">
         <v-card-title class="text-h5">Invitations</v-card-title>
       </v-col>
 
-      <!-- Messages Section -->
-      <v-col v-if="activeForm === 'inbox'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form"
-        cols="12">
+      <!-- Inbox Section -->
+      <v-col v-if="activeForm === 'inbox'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Inbox</v-card-title>
           <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
@@ -148,23 +123,19 @@
                 </v-card-actions>
                 <v-expand-transition>
                   <div v-if="message.replying" class="pa-3">
-                    <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
-                      dense></v-text-field>
+                    <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined" dense></v-text-field>
                     <v-btn color="success" @click="sendReply(message)">Send</v-btn>
                   </div>
                 </v-expand-transition>
                 <v-expand-transition>
                   <div v-if="message.expanded">
                     <v-list dense>
-                      <v-list-item
-                        v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
-                        :key="oldMessage.id">
+                      <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)" :key="oldMessage.id">
                         <v-card class="pa-2">
                           <v-card-text>
                             <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
                             <br />
-                            <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
-                              'Unknown Date' }}</small>
+                            <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() : 'Unknown Date' }}</small>
                           </v-card-text>
                         </v-card>
                       </v-list-item>
@@ -177,8 +148,8 @@
         </v-card>
       </v-col>
 
-      <v-col v-if="activeForm === 'event-notifications'"
-        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
+      <!-- Event Notifications Section -->
+      <v-col v-if="activeForm === 'event-notifications'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Notifications</v-card-title>
           <v-list>
@@ -199,10 +170,8 @@
         </v-card>
       </v-col>
 
-
-      <!-- Notifications Section -->
-      <v-col v-if="activeForm === 'notifications'"
-        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
+      <!-- Event Requests Section -->
+      <v-col v-if="activeForm === 'notifications'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Requests</v-card-title>
           <v-list>
@@ -223,8 +192,6 @@
         </v-card>
       </v-col>
     </v-col>
-    <!-- </v-main> -->
-
   </v-container>
 </template>
 
@@ -257,6 +224,8 @@ export default {
       TheirMessages: [],
       ChatKey: 0,
 
+      MyUserDocument: {},
+
       emojiPickerVisible: false,
 
       content: '',
@@ -270,8 +239,8 @@ export default {
       FilteredMessageHistory: [],
     };
   },
-  computed: {
 
+  computed: {
     filteredMessages() {
       if (!this.searchQuery.trim()) return this.messages;
       return this.messages.filter(message =>
@@ -280,6 +249,7 @@ export default {
       );
     },
   },
+
   methods: {
     initiateReply(message) {
       this.messages.forEach(msg => msg.replying = false);
@@ -334,8 +304,13 @@ export default {
       }
     },
 
-    onSelectEmoji(emoji) {
+    async GetMyUserDocument() {
+      const MyUserReference = doc(db, "users", getAuth().currentUser?.uid);
+      this.MyUserDocument = await getDoc(MyUserReference);
+      console.log("my user information: ", this.MyUserDocument.data());
+    },
 
+    onSelectEmoji(emoji) {
       console.log("Selected Emoji:", emoji);
       if (emoji && emoji.r) {
         this.NewChatMessage += String.fromCodePoint(parseInt(emoji.u, 16));  // Append emoji to NewChatMessage
@@ -351,6 +326,7 @@ export default {
     },
 
     async SortMessages() {
+      
       try {
         const MyID = getAuth().currentUser?.uid;
         this.ActiveHistory.messages.sort((a, b) => {
@@ -372,6 +348,11 @@ export default {
         const GetUserQuery = query(collection(db, "users"), where("username", "==", this.NewChatRecipientUsername));
         const QuerySnapshot = await getDocs(GetUserQuery);
         const UserDocument = QuerySnapshot.docs[0];
+        if (SenderID === UserDocument.id) {
+          console.log("no chat with self");
+          return;
+        }
+
         // Search to see if a message history pair already exists.
         const GetMessagePairDocumentsQuery1 = query(collection(db, "ChatHistoryUserPair"), where("UserOne", "==", SenderID), where("UserTwo", "==", UserDocument.id));
         const GetMessagePairDocumentsQuery2 = query(collection(db, "ChatHistoryUserPair"), where("UserTwo", "==", SenderID), where("UserOne", "==", UserDocument.id));
@@ -449,6 +430,7 @@ export default {
           UsersMap[doc.id] = doc.data();
         });
 
+        let UnseenMessagesCount = 0;
         let MessagesMap = {};   // Batch fetching of all messages in message history
         const MessageIDList = Array.from(MessageIDs);
         for (let i = 0; i < MessageIDList.length; i += 30) {  // BATCHES OF 30 BECAUSE OF 30 QUERY LIMIT IN FIRESTORE
@@ -458,7 +440,8 @@ export default {
           MessageDocs.forEach((doc) => {
             MessagesMap[doc.id] = doc.data();
             if (doc.data().seen === false) {
-          }
+              UnseenMessagesCount++;
+            }
           });
         }
 
@@ -466,7 +449,7 @@ export default {
           ChatId: chat.ChatID,
           OtherUser: UsersMap[chat.OtherUserID] || null,
           OtherUserID: chat.OtherUserID,
-          UnseenCount: UnseenCount,
+          UnseenCount: UnseenMessagesCount,
           messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
         }));
 
@@ -734,72 +717,23 @@ export default {
     this.fetchNotifications();
     this.fetchEventNotifications();
     this.GetMessageHistory();
+    this.GetMyUserDocument();
   },
 };
 </script>
 
 <style scoped>
+/* Smooth shadows for depth */
 .blue-shadow {
-  box-shadow: 0 4px 10px rgba(45, 70, 155, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 
-/* Smooth transition when sidebar expands/collapses */
-.v-main {
-  transition: width 0.2s ease-in-out;
-}
-
-/* Adjust content width dynamically */
-.content-expanded {
-  width: 100%;
-  height: 100%;
-  /* width: calc(100% - 250px); */
-  /* When sidebar is open */
-  /* margin-left: 250px; */
-}
-
-.content-collapsed {
-  width: 100%;
-
-  /* When sidebar is closed */
-  /* margin-left: 0; */
-}
-
-
-/* .background-transparent {
-  background: rgb(155, 193, 230);
-  position: relative;
-  z-index: 1;
-} */
-
-.background-transparent {
-  background: rgba(255, 255, 255, 0);
-  position: relative;
-  z-index: 1;
-}
-
-.background-color-form {
-  background: rgb(173, 194, 252)
-}
-
-.button-border {
-  border: 1px solid #ccc;
-  /* Light grey border */
-  border-radius: 4px;
-  /* Optional, for rounded corners */
-  margin-bottom: 5px;
-  /* Space between buttons */
-}
-
-.button-border:hover {
-  border-color: #0000002a;
-  /* Change border color on hover (optional) */
-}
-
+/* Background Gradient */
 .animated-background {
-  background: linear-gradient(45deg, #a3bde7, #a8ceb1);
+  background: linear-gradient(120deg, #2a2d50, #3e417d);
   background-size: 400% 400%;
-  animation: gradientAnimation 4s ease infinite;
+  animation: gradientAnimation 5s ease infinite;
 }
 
 @keyframes gradientAnimation {
@@ -814,5 +748,71 @@ export default {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Sidebar & Form Background */
+.background-color-form {
+  background: #32355b;
+  color: #fff;
+}
+
+/* Sidebar Buttons */
+.button-border {
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 10px;
+  background: #41457d;
+  color: #fff;
+  transition: 0.2s;
+}
+
+.button-border:hover {
+  background: #565b9a;
+  border-color: #fff;
+}
+
+/* Main Content Background */
+.background-transparent {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Chat Message Bubbles */
+.v-list-item {
+  margin-bottom: 5px;
+}
+
+.v-card-text {
+  color: #ffffff;
+}
+
+.v-card {
+  background-color: #2a2d50 !important;
+}
+
+.v-card[style*="backgroundColor: #DFFFD6"] { /* User Message */
+  background-color: #5cdb95 !important;
+  color: #05386b;
+}
+
+.v-card[style*="backgroundColor: #D6E6FF"] { /* Other User Message */
+  background-color: #8f94fb !important;
+  color: #ffffff;
+}
+
+/* Message Input Field */
+.v-text-field {
+  background: #1e1f3d;
+  color: #fff;
+  border-radius: 8px;
+}
+
+/* Buttons */
+.v-btn {
+  background: linear-gradient(45deg, #8e44ad, #3498db);
+  color: #fff !important;
+}
+
+.v-btn:hover {
+  background: linear-gradient(45deg, #6a1b9a, #1e88e5);
 }
 </style>
