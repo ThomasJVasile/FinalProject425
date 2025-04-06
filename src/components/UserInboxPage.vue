@@ -13,11 +13,12 @@
     </v-navigation-drawer>
 
     <!-- Main Content -->
-    <v-col cols="12" class="fill-height d-flex flex-column background-transparent" :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer }">
+    <v-col cols="12" class="fill-height d-flex flex-column background-transparent"
+      :class="{ 'content-expanded': !drawer, 'content-collapsed': drawer }">
       <v-btn icon class="ma-2 blue-shadow background-transparent" @click="drawer = !drawer">
         <v-icon>{{ drawer ? 'mdi-chevron-left' : 'mdi-menu' }}</v-icon>
       </v-btn>
-      
+
       <v-row v-if="activeForm === 'message'">
         <v-col cols="12">
           <v-card class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form">
@@ -26,15 +27,25 @@
               <!-- Chat List (Left Panel) -->
               <v-col cols="3">
                 <v-card class="pa-4 blue-shadow">
-                  <v-text-field v-model="searchQuery" label="Search" append-icon="mdi-magnify" single-line clearable @input="FilterMessageHistory" class="search-bar" />
+                  <v-text-field v-model="searchQuery" label="Search" append-icon="mdi-magnify" single-line clearable
+                    @input="FilterMessageHistory" class="search-bar" />
                   <v-list>
                     <v-list-item v-for="history in FilteredMessageHistory" :key="history.ChatID" class="pa-0 ma-0">
                       <div :key="ChatKey" class="d-flex align-center">
-                        <v-btn block color="primary" size="large" style="height: 45px;" @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; ListenForNewMessages(); }">
+                        <v-btn block color="primary" size="large" style="height: 45px;"
+                          @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; ListenForNewMessages(); }">
+
                           <v-avatar v-if="history.OtherUser.avatarUrl" size="55" class="mr-3">
                             <v-img :src="history.OtherUser.avatarUrl" alt="User Avatar"></v-img>
                           </v-avatar>
+
                           <strong>{{ history.OtherUser.username }}</strong>
+
+                          <v-badge v-if="history.UnseenCount > 0" :content="history.UnseenCount" color="red" overlap
+                            class="mr-2" bordered>
+                            <v-icon>mdi-bell</v-icon>
+                          </v-badge>
+
                         </v-btn>
                       </div>
                     </v-list-item>
@@ -45,10 +56,13 @@
               <!-- Chat Messages (Center Panel) -->
               <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
                 <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
-                  <v-row v-if="activeChat === 'enabled'" style="height: 100%;"> 
+                  <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
                     <v-list class="flex-grow-1" style="height: 600px; overflow-y: auto;">
-                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id" :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                        <v-card class="pa-2 px-3 mb-1" :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }" elevation="2">
+                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                        :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+                        <v-card class="pa-2 px-3 mb-1"
+                          :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
+                          elevation="2">
                           <v-card-text>{{ message.content }}</v-card-text>
                         </v-card>
                         <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
@@ -59,7 +73,8 @@
 
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
-                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details class="flex-grow-1">
+                      <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
+                        class="flex-grow-1">
                         <template v-slot:append>
                           <v-menu v-model="emojiPickerVisible" bottom offset-y>
                             <template v-slot:activator="{ props }">
@@ -91,12 +106,14 @@
       </v-row>
 
       <!-- Other Sections -->
-      <v-col cols="12" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" v-if="activeForm === 'invites'">
+      <v-col cols="12" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form"
+        v-if="activeForm === 'invites'">
         <v-card-title class="text-h5">Invitations</v-card-title>
       </v-col>
 
       <!-- Inbox Section -->
-      <v-col v-if="activeForm === 'inbox'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
+      <v-col v-if="activeForm === 'inbox'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form"
+        cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Inbox</v-card-title>
           <v-text-field v-model="searchQuery" label="Search Messages" @input="searchMessagesFromDB"></v-text-field>
@@ -123,19 +140,24 @@
                 </v-card-actions>
                 <v-expand-transition>
                   <div v-if="message.replying" class="pa-3">
-                    <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined" dense></v-text-field>
+                    <v-text-field v-model="replyContent" label="Type your reply..." variant="outlined"
+                      dense></v-text-field>
                     <v-btn color="success" @click="sendReply(message)">Send</v-btn>
                   </div>
                 </v-expand-transition>
                 <v-expand-transition>
                   <div v-if="message.expanded">
                     <v-list dense>
-                      <v-list-item v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)" :key="oldMessage.id">
+                      <v-list-item
+                        v-for="oldMessage in messageHistory.get(message.SenderID)?.filter(m => m.id !== message.id)"
+                        :key="oldMessage.id">
                         <v-card class="pa-2">
                           <v-card-text>
                             <strong>{{ oldMessage.senderUsername }}:</strong> {{ oldMessage.content }}
                             <br />
-                            <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() : 'Unknown Date' }}</small>
+                            <small>{{ oldMessage.timestamp ? new Date(oldMessage.timestamp).toLocaleString() :
+                              UnknownDate
+                            }}</small>
                           </v-card-text>
                         </v-card>
                       </v-list-item>
@@ -149,7 +171,8 @@
       </v-col>
 
       <!-- Event Notifications Section -->
-      <v-col v-if="activeForm === 'event-notifications'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
+      <v-col v-if="activeForm === 'event-notifications'"
+        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Notifications</v-card-title>
           <v-list>
@@ -171,7 +194,8 @@
       </v-col>
 
       <!-- Event Requests Section -->
-      <v-col v-if="activeForm === 'notifications'" class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
+      <v-col v-if="activeForm === 'notifications'"
+        class="pa-4 blue-shadow fill-height d-flex flex-column background-color-form" cols="12">
         <v-card class="pa-4 blue-shadow">
           <v-card-title class="text-h5">Event Requests</v-card-title>
           <v-list>
@@ -280,6 +304,7 @@ export default {
         console.error("Error sending reply:", error);
       }
     },
+
     async fetchEventNotifications() {
       try {
         const currentUser = getAuth().currentUser;
@@ -319,6 +344,10 @@ export default {
       }
     },
 
+    async UpdateSeenFlagChatHistory() {
+
+    },
+
     async GetMessageHistory() {
       this.MessageHistory = await this.GetMessageHistoryCall();
       this.FilterMessageHistory();
@@ -326,7 +355,7 @@ export default {
     },
 
     async SortMessages() {
-      
+
       try {
         const MyID = getAuth().currentUser?.uid;
         this.ActiveHistory.messages.sort((a, b) => {
@@ -395,6 +424,7 @@ export default {
       const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
       const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
 
+
       try {
         const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
           getDocs(UsersChatQueryOne),
@@ -410,15 +440,21 @@ export default {
         }
         let MessageIDs = new Set();
         let OtherUserIDs = new Set();
+        let MessageChatMap = {};
+        let UnseenMessagesCountMap = {};
 
         const ChatHistories = await Promise.all(ChatHistoryDocuments.map(async (docSnap) => {   // Get all MessageHistoryPairs from database containg user's ID.
           const Data = docSnap.data();
           const OtherUserID = Data.UserOne === CurrentUser.uid ? Data.UserTwo : Data.UserOne;
 
           if (Data.MessageHistory) {
-            Data.MessageHistory.forEach((MessageIDReference) => MessageIDs.add(MessageIDReference));  // Here we are adding every message foreign key to an array for batch fetch.
+            Data.MessageHistory.forEach((MessageIDReference) => {
+              MessageIDs.add(MessageIDReference),                   // Here we are adding every message foreign key to an array for batch fetch.
+                MessageChatMap[MessageIDReference] = docSnap.id
+            });
           }
           OtherUserIDs.add(OtherUserID);  // same batch fetching for other user records.
+          UnseenMessagesCountMap[docSnap.id] = 0;
 
           return { ChatID: docSnap.id, MessageIDs: Data.MessageHistory, OtherUserID };
         }));
@@ -426,11 +462,13 @@ export default {
         const UserQuery = query(collection(db, "users"), where("__name__", "in", Array.from(OtherUserIDs)));
         const UserDocs = await getDocs(UserQuery);
         const UsersMap = {};
+
+
         UserDocs.forEach((doc) => {
           UsersMap[doc.id] = doc.data();
         });
 
-        let UnseenMessagesCount = 0;
+
         let MessagesMap = {};   // Batch fetching of all messages in message history
         const MessageIDList = Array.from(MessageIDs);
         for (let i = 0; i < MessageIDList.length; i += 30) {  // BATCHES OF 30 BECAUSE OF 30 QUERY LIMIT IN FIRESTORE
@@ -438,9 +476,15 @@ export default {
           const MessageQuery = query(collection(db, "messages"), where("__name__", "in", MessageBatch));
           const MessageDocs = await getDocs(MessageQuery);
           MessageDocs.forEach((doc) => {
-            MessagesMap[doc.id] = doc.data();
-            if (doc.data().seen === false) {
-              UnseenMessagesCount++;
+            MessagesMap[doc.id] = { id: doc.id, ...doc.data() };
+            if (
+              doc.data().seen === false &&
+              doc.data().SenderID !== CurrentUser.uid
+            ) {
+              const chatId = MessageChatMap[doc.id];
+              if (chatId) {
+                UnseenMessagesCountMap[chatId]++;
+              }
             }
           });
         }
@@ -449,7 +493,7 @@ export default {
           ChatId: chat.ChatID,
           OtherUser: UsersMap[chat.OtherUserID] || null,
           OtherUserID: chat.OtherUserID,
-          UnseenCount: UnseenMessagesCount,
+          UnseenCount: UnseenMessagesCountMap[chat.ChatID] || 0,
           messages: chat.MessageIDs ? chat.MessageIDs.map((MessageIDReference) => MessagesMap[MessageIDReference] || null) : [],
         }));
 
@@ -789,12 +833,14 @@ export default {
   background-color: #2a2d50 !important;
 }
 
-.v-card[style*="backgroundColor: #DFFFD6"] { /* User Message */
+.v-card[style*="backgroundColor: #DFFFD6"] {
+  /* User Message */
   background-color: #5cdb95 !important;
   color: #05386b;
 }
 
-.v-card[style*="backgroundColor: #D6E6FF"] { /* Other User Message */
+.v-card[style*="backgroundColor: #D6E6FF"] {
+  /* Other User Message */
   background-color: #8f94fb !important;
   color: #ffffff;
 }
