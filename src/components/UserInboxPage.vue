@@ -33,7 +33,7 @@
                     <v-list-item v-for="history in FilteredMessageHistory" :key="history.ChatID" class="pa-0 ma-0">
                       <div :key="ChatKey" class="d-flex align-center">
                         <v-btn block color="primary" size="large" style="height: 45px;"
-                          @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; ListenForNewMessages(); }">
+                          @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; UpdateSeenFlagChatHistory(); ListenForNewMessages(); }">
 
                           <v-avatar v-if="history.OtherUser.avatarUrl" size="55" class="mr-3">
                             <v-img :src="history.OtherUser.avatarUrl" alt="User Avatar"></v-img>
@@ -345,7 +345,29 @@ export default {
     },
 
     async UpdateSeenFlagChatHistory() {
-
+      const ChatReference = doc(db, "ChatHistoryUserPair", this.ActiveHistory.ChatId);
+      const GetChat = await getDoc(ChatReference);
+      if (GetChat.exists()) {
+        const ChatData = GetChat.data();
+        const MessageIDArray = ChatData.MessageHistory;
+        const LastSeenOffset = ChatData.SeenOffset;
+        if (Array.isArray(MessageIDArray)) {
+          const MessagesToUpdate = MessageIDArray.slice(LastSeenOffset + 1);
+          for (const MessageID of MessagesToUpdate) {
+            const MessageReference = doc(db, "messages", MessageID);
+            await updateDoc(MessageReference, {
+              seen: true,
+              SeenAt: new Date()
+            })
+          }
+          await updateDoc(ChatReference, {
+            SeenOffset: MessageIDArray.length - 1
+          });
+        }
+      }
+      this.ActiveHistory.UnseenCount = 0;
+      this.ChatKey++;
+      this.SortMessages();
     },
 
     async GetMessageHistory() {
@@ -531,9 +553,6 @@ export default {
                 .map((MessageID) => MessagesMap[MessageID] || null)
                 .filter((msg) => msg !== null);
 
-              // const MessageQuery = query(collection(db, "messages"), where("__name__", "in", ChatData.MessageHistory));
-              // const MessageSnap = await getDocs(MessageQuery);
-              // this.ActiveHistory.messages = MessageSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
               console.log("UPDATED CHAT:: ", this.ActiveHistory);
               this.ChatKey++;
               this.SortMessages();
