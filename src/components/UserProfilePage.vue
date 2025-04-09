@@ -35,10 +35,18 @@
 
     <!-- Navigation Tabs -->
     <div class="profile-tabs">
+      <!-- LG: Reordered navigation tabs -->
+      <button class="tab-button" @click="goToPage('EventsPage')"><i class="fa fa-calendar"></i> Events</button>
+      <button class="tab-button" @click="goToPage('FriendRequests')"><i class="fa fa-user-friends"></i> Friends</button>
+      <button class="tab-button"><i class="fa fa-image"></i> Photos</button>
+      <button class="tab-button" @click="goToPage('SettingsPage')"><i class="fa fa-cog"></i> Settings</button>
+
+      <!-- 
       <button class="tab-button" @click="goToPage('FriendRequests')"><i class="fa fa-user-friends"></i> Friend Requests</button>
       <button class="tab-button" @click="goToPage('EventsPage')"><i class="fa fa-calendar"></i> My Events</button>
       <button class="tab-button"><i class="fa fa-image"></i> Photos</button>
       <button class="tab-button" @click="goToPage('SettingsPage')"><i class="fa fa-cog"></i> Settings</button>
+      -->
     </div>
 
     <!-- Main Content Area -->
