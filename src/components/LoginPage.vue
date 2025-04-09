@@ -52,6 +52,7 @@ export default {
     async handleLogin() {
       const auth = getAuth(); // Initialize Firebase authentication
       try {
+
         // Sign in using the email and password provided
         const userCredential = await signInWithEmailAndPassword(
           auth,
@@ -59,6 +60,17 @@ export default {
           this.password
         );
         const user = userCredential.user; // Get user details
+        await user.reload();
+
+        if (!user.emailVerified) {
+          console.log("Please verify your email before logging in.");
+          this.errorMessage = "Please verify your email to login.";
+          this.successMessage = "";
+          await auth.signOut(); // Optionally sign the user out after failed email verification
+          return;
+        }
+
+
         this.successMessage = `Welcome back, ${user.email}!`; // Set success message
         this.errorMessage = ""; // Clear any existing error messages
         console.log("Login successful:", user);
