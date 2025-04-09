@@ -199,13 +199,19 @@ export default {
           </v-list>
         </v-menu>
 
-        <v-btn icon v-if="userName !== 'Anonymous'" @click="GoToInbox">
+        <v-badge v-if="userName !== 'Anonymous' && NotificationCount > 0" :content="NotificationCount" color="red"
+          overlap bordered offset-x="8" offset-y="8">
+          <v-btn icon @click="GoToInbox">
+            <v-icon>mdi-email</v-icon>
+          </v-btn>
+        </v-badge>
+        <v-btn v-else-if="userName !== 'Anonymous'" icon @click="GoToInbox">
           <v-icon>mdi-email</v-icon>
         </v-btn>
       </v-container>
     </v-app-bar>
 
-    
+
     <v-main>
       <router-view />
     </v-main>
@@ -215,7 +221,7 @@ export default {
 <script>
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
 
 export default {
@@ -225,11 +231,12 @@ export default {
       userName: "Anonymous",
       avatarUrl: null,
       menuVisible: false,
+      NotificationCount: 0,
       menuStyle: {
-        top: '3.3vw',  
-        right: '10px', 
+        top: '3.3vw',
+        right: '10px',
         left: '91vw',
-        zIndex: 9999,  
+        zIndex: 9999,
       },
     };
   },
@@ -258,6 +265,66 @@ export default {
     goToProfile() {
       this.$router.push("/UserProfilePage");
     },
+
+    async GetNotificationCount() {
+      await this.GetNotificationCountCall();
+    },
+
+    async GetNotificationCountCall() {
+      const CurrentUser = getAuth().currentUser;
+      if (!CurrentUser) {
+        console.log("No user authenticated - GetNotificationCountCall()");
+        return 0;
+      }
+      const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
+      const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
+      const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+      try {
+        onSnapshot(UsersChatQueryOne, () => {
+          this.UpdateNotificationsCount();
+        });
+        onSnapshot(UsersChatQueryTwo, () => {
+          this.UpdateNotificationsCount();
+        });
+      } catch (error) {
+        console.error("Some error in GetNotificationCountCall(): ");
+        return 99;
+      }
+    },
+
+    async UpdateNotificationsCount() {
+      const CurrentUser = getAuth().currentUser;
+      if (!CurrentUser) {
+        console.log("No user authenticated - GetNotificationCountCall()");
+        return 0;
+      }
+      const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
+      const UsersChatQueryOne = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
+      const UsersChatQueryTwo = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+      try {
+        const [MessageHistorySnapOne, MessageHistorySnapTwo] = await Promise.all([
+          getDocs(UsersChatQueryOne),
+          getDocs(UsersChatQueryTwo),
+        ]);
+        const ChatHistoryDocuments = [
+          ...MessageHistorySnapOne.docs,
+          ...MessageHistorySnapTwo.docs,
+        ];
+        if (ChatHistoryDocuments.length === 0) {
+          console.log("No chat histories with this user - GetNotificationCountCall()");
+          return 99;
+        }
+        const ChatHistoriesArray = ChatHistoryDocuments.map(doc => doc.data());
+        let LocalNotificationCount = 0;
+        for (const Chat of ChatHistoriesArray) {
+          LocalNotificationCount += (Chat.MessageHistory.length - 1 - Chat.SeenOffset);
+        }
+        this.NotificationCount = LocalNotificationCount;
+      } catch (error) {
+        console.log("some error - UpdateNotificationsCount(): ", error);
+      }
+    },
+
   },
   mounted() {
     const auth = getAuth();
@@ -269,6 +336,7 @@ export default {
             const userData = userDoc.data();
             this.userName = `${userData.firstName} ${userData.lastName}`;
             this.avatarUrl = userData.avatarUrl || null;
+            this.GetNotificationCount();
           } else {
             console.error("User document does not exist.");
           }
@@ -301,6 +369,7 @@ export default {
   .app-logo {
     font-size: 20px !important;
   }
+
   .navbar {
     padding: 0 5px;
   }
