@@ -86,10 +86,6 @@ export default {
       } catch (error) {
         errorMessage.value = "Registration failed: " + error.message;
         successMessage.value = "";
-        email.value = "";
-        password.value="";
-        confirmpassword.value="";
-
       }
     };
 

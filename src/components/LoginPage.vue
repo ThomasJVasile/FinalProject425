@@ -66,7 +66,7 @@ export default {
           console.log("Please verify your email before logging in.");
           this.errorMessage = "Please verify your email to login.";
           this.successMessage = "";
-          await auth.signOut(); // Optionally sign the user out after failed email verification
+          await auth.signOut(); 
           return;
         }
 

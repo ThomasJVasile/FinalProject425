@@ -119,7 +119,7 @@ export default {
     });
   },
 };
-</script>
+</script> 
 
 <style scoped>
 ::v-deep(.v-toolbar-title) {

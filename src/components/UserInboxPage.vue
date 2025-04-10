@@ -556,6 +556,7 @@ export default {
 
               console.log("UPDATED CHAT:: ", this.ActiveHistory);
               this.ChatKey++;
+              this.GetMessageHistory();
               this.SortMessages();
             }
           }
@@ -789,13 +790,13 @@ export default {
 <style scoped>
 /* Smooth shadows for depth */
 .blue-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 
 /* Background Gradient */
 .animated-background {
-  background: linear-gradient(120deg, #2a2d50, #3e417d);
+  background: linear-gradient(120deg, #1e2a38, #283e51);
   background-size: 400% 400%;
   animation: gradientAnimation 5s ease infinite;
 }
@@ -804,11 +805,9 @@ export default {
   0% {
     background-position: 0% 50%;
   }
-
   50% {
     background-position: 100% 50%;
   }
-
   100% {
     background-position: 0% 50%;
   }
@@ -816,28 +815,28 @@ export default {
 
 /* Sidebar & Form Background */
 .background-color-form {
-  background: #32355b;
-  color: #fff;
+  background: #1f2f3d;
+  color: #e0f7fa;
 }
 
 /* Sidebar Buttons */
 .button-border {
-  border: 1px solid #555;
+  border: 1px solid #4b636e;
   border-radius: 6px;
   padding: 10px;
-  background: #41457d;
-  color: #fff;
+  background: #34515e;
+  color: #e0f2f1;
   transition: 0.2s;
 }
 
 .button-border:hover {
-  background: #565b9a;
+  background: #607d8b;
   border-color: #fff;
 }
 
 /* Main Content Background */
 .background-transparent {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Chat Message Bubbles */
@@ -850,35 +849,35 @@ export default {
 }
 
 .v-card {
-  background-color: #2a2d50 !important;
+  background-color: #263238 !important;
 }
 
 .v-card[style*="backgroundColor: #DFFFD6"] {
   /* User Message */
-  background-color: #5cdb95 !important;
-  color: #05386b;
+  background-color: #80cbc4 !important;
+  color: #004d40;
 }
 
 .v-card[style*="backgroundColor: #D6E6FF"] {
   /* Other User Message */
-  background-color: #8f94fb !important;
+  background-color: #b39ddb !important;
   color: #ffffff;
 }
 
 /* Message Input Field */
 .v-text-field {
-  background: #1e1f3d;
-  color: #fff;
+  background: #37474f;
+  color: #ffffff;
   border-radius: 8px;
 }
 
 /* Buttons */
 .v-btn {
-  background: linear-gradient(45deg, #8e44ad, #3498db);
-  color: #fff !important;
+  background: linear-gradient(45deg, #26a69a, #7e57c2);
+  color: #ffffff !important;
 }
 
 .v-btn:hover {
-  background: linear-gradient(45deg, #6a1b9a, #1e88e5);
+  background: linear-gradient(45deg, #00897b, #5e35b1);
 }
 </style>
