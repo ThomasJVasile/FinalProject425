@@ -373,7 +373,7 @@ export default {
     async GetMessageHistory() {
       this.MessageHistory = await this.GetMessageHistoryCall();
       this.FilterMessageHistory();
-      console.log("working???: ", this.MessageHistory);
+      console.log("FilteredMessageHistory: ", this.FilteredMessageHistory);
     },
 
     async SortMessages() {
@@ -409,27 +409,28 @@ export default {
         const GetMessagePairDocumentsQuery2 = query(collection(db, "ChatHistoryUserPair"), where("UserTwo", "==", SenderID), where("UserOne", "==", UserDocument.id));
         const [Query1, Query2] = await Promise.all([getDocs(GetMessagePairDocumentsQuery1), getDocs(GetMessagePairDocumentsQuery2)]);
         const QueryResult = [...Query1.docs, ...Query2.docs];
-
         if (QueryResult.length > 0) {     // Occurs if a chat history already exists inside the database.
           console.log("A chat history already exists: ", QueryResult[0].data());
           return;
         }
-
         const FirstChatMessageReference = await addDoc(collection(db, "messages"), {
           SenderID,
           ReceiverID: UserDocument.id,
           content: this.NewChatFirstMessage,
           timestamp: serverTimestamp(),
         });
-
         const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
           UserOne: SenderID,
           UserTwo: UserDocument.id,
           MessageHistory: [FirstChatMessageReference.id]
         });
-
-        console.log("new message:::: ", UserDocumentReference);
-        console.log("username:::: ", UserDocument.data());
+        console.log("new message: ", UserDocumentReference);
+        console.log("username: ", UserDocument.data());
+        await this.GetMessageHistory();
+        this.NewChatRecipientUsername = '';
+        this.NewChatFirstMessage = '';
+        this.activeChat = 'enabled'; 
+        this.ActiveHistory = this.FilteredMessageHistory.find(item => item.OtherUserID === UserDocument.id);
 
       } catch (error) {
         console.error("Some sort of error in CreateNewChat()", error);
