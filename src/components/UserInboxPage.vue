@@ -55,22 +55,24 @@
 
               <!-- Chat Messages (Center Panel) -->
               <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
-                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
+                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column" >
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
-                    <v-list class="flex-grow-1" style="height: 600px; overflow-y: auto;">
-                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
-                        :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                        <v-card class="pa-2 px-3 mb-1"
-                          :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
-                          elevation="2">
-                          <v-card-text>{{ message.content }}</v-card-text>
-                        </v-card>
-                        <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
-                          {{ formatTimestamp(message.timestamp) }}
-                        </div>
-                      </v-list-item>
-                    </v-list>
-
+                    <div ref="chatContainer" style="height: 600px; width:100%; overflow-y: auto;">
+                      <v-list style="display: flex; flex-direction: column; min-height: 100%;">
+                        <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                          :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+                          <v-card class="pa-2 px-3 mb-1"
+                            :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
+                            elevation="2">
+                            <v-card-text>{{ message.content }}</v-card-text>
+                          </v-card>
+                          <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
+                            {{ formatTimestamp(message.timestamp) }}
+                          </div>
+                        </v-list-item>
+                        <div style="margin-top: auto;"></div>
+                      </v-list>
+                    </div>
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
                       <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
@@ -280,6 +282,15 @@ export default {
       message.replying = true;
     },
 
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const container = this.$refs.chatContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    },
+
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
       return new Date(timestamp.seconds * 1000).toLocaleString();
@@ -374,10 +385,10 @@ export default {
       this.MessageHistory = await this.GetMessageHistoryCall();
       this.FilterMessageHistory();
       console.log("FilteredMessageHistory: ", this.FilteredMessageHistory);
+      this.scrollToBottom();
     },
 
     async SortMessages() {
-
       try {
         const MyID = getAuth().currentUser?.uid;
         this.ActiveHistory.messages.sort((a, b) => {
@@ -387,6 +398,7 @@ export default {
           message.IsMine = message.SenderID === MyID ? 1 : 0;
         })
         console.log("Messages check: ", this.ActiveHistory);
+        this.scrollToBottom();
       } catch (error) {
         console.log("SortMessages() Failed: ", error);
         return;
@@ -429,7 +441,7 @@ export default {
         await this.GetMessageHistory();
         this.NewChatRecipientUsername = '';
         this.NewChatFirstMessage = '';
-        this.activeChat = 'enabled'; 
+        this.activeChat = 'enabled';
         this.ActiveHistory = this.FilteredMessageHistory.find(item => item.OtherUserID === UserDocument.id);
 
       } catch (error) {
@@ -805,9 +817,11 @@ export default {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
