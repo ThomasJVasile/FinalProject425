@@ -46,6 +46,7 @@
       <button class="tab-button" @click="goToPage('EventsPage')"><i class="fa fa-calendar"></i> My Events</button>
       <button class="tab-button"><i class="fa fa-image"></i> Photos</button>
       <button class="tab-button" @click="goToPage('SettingsPage')"><i class="fa fa-cog"></i> Settings</button>
+      
       -->
     </div>
 
