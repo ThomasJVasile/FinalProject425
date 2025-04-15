@@ -61,12 +61,18 @@
                       <v-list style="display: flex; flex-direction: column; min-height: 100%;">
                         <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
                           :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                          <v-card class="pa-2 px-3 mb-1"
-                            :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
-                            elevation="2">
-                            <v-card-text>{{ message.content }}</v-card-text>
+                          <v-card class="pa-2 px-3 mb-1" :style="{
+                            backgroundColor: message.IsMine === 1 ? '#DFFFD6' : (message.SenderID === 'specialUserID' ? '#FFD700' : '#D6E6FF'),
+                            borderRadius: message.IsMine === 1 ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                            padding: '10px',
+                            maxWidth: '70%',
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+                            marginLeft: message.IsMine === 1 ? 'auto' : '0'
+                          }" elevation="2">
+                            <v-card-text style="word-wrap: break-word;">{{ message.content }}</v-card-text>
                           </v-card>
-                          <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
+                          <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;"
+                            :style="{ textAlign: message.IsMine === 1 ? 'right' : 'left' }">
                             {{ formatTimestamp(message.timestamp) }}
                           </div>
                         </v-list-item>
@@ -89,7 +95,6 @@
                       </v-text-field>
                       <v-btn color="primary" @click="sendMessage">Send</v-btn>
                     </v-card-actions>
-
                   </v-row>
                 </v-card>
               </v-col>
@@ -817,15 +822,15 @@ export default {
 <style scoped>
 /* Smooth shadows for depth */
 .blue-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 
 /* Background Gradient */
 .animated-background {
-  background: linear-gradient(120deg, #1e2a38, #283e51);
+  background: linear-gradient(120deg, #121212, #1e1e1e);
   background-size: 400% 400%;
-  animation: gradientAnimation 5s ease infinite;
+  animation: gradientAnimation 6s ease infinite;
 }
 
 @keyframes gradientAnimation {
@@ -844,28 +849,28 @@ export default {
 
 /* Sidebar & Form Background */
 .background-color-form {
-  background: #1f2f3d;
-  color: #e0f7fa;
+  background: #1a1a1a;
+  color: #cfd8dc;
 }
 
 /* Sidebar Buttons */
 .button-border {
-  border: 1px solid #4b636e;
+  border: 1px solid #37474f;
   border-radius: 6px;
   padding: 10px;
-  background: #34515e;
-  color: #e0f2f1;
+  background: #263238;
+  color: #cfd8dc;
   transition: 0.2s;
 }
 
 .button-border:hover {
-  background: #607d8b;
-  border-color: #fff;
+  background: #37474f;
+  border-color: #90a4ae;
 }
 
 /* Main Content Background */
 .background-transparent {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Chat Message Bubbles */
@@ -874,39 +879,59 @@ export default {
 }
 
 .v-card-text {
-  color: #ffffff;
+  color: #e0e0e0;
 }
 
 .v-card {
-  background-color: #263238 !important;
+  background-color: #212121 !important;
 }
 
 .v-card[style*="backgroundColor: #DFFFD6"] {
   /* User Message */
-  background-color: #80cbc4 !important;
-  color: #004d40;
+  background-color: #4caf50 !important;
+  color: #ffffff;
 }
 
 .v-card[style*="backgroundColor: #D6E6FF"] {
   /* Other User Message */
-  background-color: #b39ddb !important;
+  background-color: #42a5f5 !important;
   color: #ffffff;
 }
 
 /* Message Input Field */
 .v-text-field {
-  background: #37474f;
+  background: #2c2c2c;
   color: #ffffff;
   border-radius: 8px;
 }
 
 /* Buttons */
 .v-btn {
-  background: linear-gradient(45deg, #26a69a, #7e57c2);
+  background: linear-gradient(45deg, #1e88e5, #43a047);
   color: #ffffff !important;
 }
 
 .v-btn:hover {
-  background: linear-gradient(45deg, #00897b, #5e35b1);
+  background: linear-gradient(45deg, #1565c0, #2e7d32);
+}
+
+/* Badge Styling */
+.v-badge {
+  background-color: #d32f2f !important;
+  color: #ffffff !important;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #616161;
 }
 </style>
