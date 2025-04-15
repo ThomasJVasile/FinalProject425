@@ -55,22 +55,24 @@
 
               <!-- Chat Messages (Center Panel) -->
               <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
-                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
+                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column" >
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
-                    <v-list class="flex-grow-1" style="height: 600px; overflow-y: auto;">
-                      <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
-                        :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                        <v-card class="pa-2 px-3 mb-1"
-                          :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
-                          elevation="2">
-                          <v-card-text>{{ message.content }}</v-card-text>
-                        </v-card>
-                        <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
-                          {{ formatTimestamp(message.timestamp) }}
-                        </div>
-                      </v-list-item>
-                    </v-list>
-
+                    <div ref="chatContainer" style="height: 600px; width:100%; overflow-y: auto;">
+                      <v-list style="display: flex; flex-direction: column; min-height: 100%;">
+                        <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
+                          :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
+                          <v-card class="pa-2 px-3 mb-1"
+                            :style="{ backgroundColor: message.IsMine === 1 ? '#DFFFD6' : '#D6E6FF', borderRadius: '15px', padding: '10px' }"
+                            elevation="2">
+                            <v-card-text>{{ message.content }}</v-card-text>
+                          </v-card>
+                          <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;">
+                            {{ formatTimestamp(message.timestamp) }}
+                          </div>
+                        </v-list-item>
+                        <div style="margin-top: auto;"></div>
+                      </v-list>
+                    </div>
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
                       <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
@@ -280,6 +282,15 @@ export default {
       message.replying = true;
     },
 
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const container = this.$refs.chatContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    },
+
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
       return new Date(timestamp.seconds * 1000).toLocaleString();
@@ -373,11 +384,11 @@ export default {
     async GetMessageHistory() {
       this.MessageHistory = await this.GetMessageHistoryCall();
       this.FilterMessageHistory();
-      console.log("working???: ", this.MessageHistory);
+      console.log("FilteredMessageHistory: ", this.FilteredMessageHistory);
+      this.scrollToBottom();
     },
 
     async SortMessages() {
-
       try {
         const MyID = getAuth().currentUser?.uid;
         this.ActiveHistory.messages.sort((a, b) => {
@@ -387,6 +398,7 @@ export default {
           message.IsMine = message.SenderID === MyID ? 1 : 0;
         })
         console.log("Messages check: ", this.ActiveHistory);
+        this.scrollToBottom();
       } catch (error) {
         console.log("SortMessages() Failed: ", error);
         return;
@@ -409,27 +421,28 @@ export default {
         const GetMessagePairDocumentsQuery2 = query(collection(db, "ChatHistoryUserPair"), where("UserTwo", "==", SenderID), where("UserOne", "==", UserDocument.id));
         const [Query1, Query2] = await Promise.all([getDocs(GetMessagePairDocumentsQuery1), getDocs(GetMessagePairDocumentsQuery2)]);
         const QueryResult = [...Query1.docs, ...Query2.docs];
-
         if (QueryResult.length > 0) {     // Occurs if a chat history already exists inside the database.
           console.log("A chat history already exists: ", QueryResult[0].data());
           return;
         }
-
         const FirstChatMessageReference = await addDoc(collection(db, "messages"), {
           SenderID,
           ReceiverID: UserDocument.id,
           content: this.NewChatFirstMessage,
           timestamp: serverTimestamp(),
         });
-
         const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
           UserOne: SenderID,
           UserTwo: UserDocument.id,
           MessageHistory: [FirstChatMessageReference.id]
         });
-
-        console.log("new message:::: ", UserDocumentReference);
-        console.log("username:::: ", UserDocument.data());
+        console.log("new message: ", UserDocumentReference);
+        console.log("username: ", UserDocument.data());
+        await this.GetMessageHistory();
+        this.NewChatRecipientUsername = '';
+        this.NewChatFirstMessage = '';
+        this.activeChat = 'enabled';
+        this.ActiveHistory = this.FilteredMessageHistory.find(item => item.OtherUserID === UserDocument.id);
 
       } catch (error) {
         console.error("Some sort of error in CreateNewChat()", error);
@@ -555,6 +568,7 @@ export default {
 
               console.log("UPDATED CHAT:: ", this.ActiveHistory);
               this.ChatKey++;
+              this.GetMessageHistory();
               this.SortMessages();
             }
           }
@@ -788,13 +802,13 @@ export default {
 <style scoped>
 /* Smooth shadows for depth */
 .blue-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 
 /* Background Gradient */
 .animated-background {
-  background: linear-gradient(120deg, #2a2d50, #3e417d);
+  background: linear-gradient(120deg, #1e2a38, #283e51);
   background-size: 400% 400%;
   animation: gradientAnimation 5s ease infinite;
 }
@@ -815,28 +829,28 @@ export default {
 
 /* Sidebar & Form Background */
 .background-color-form {
-  background: #32355b;
-  color: #fff;
+  background: #1f2f3d;
+  color: #e0f7fa;
 }
 
 /* Sidebar Buttons */
 .button-border {
-  border: 1px solid #555;
+  border: 1px solid #4b636e;
   border-radius: 6px;
   padding: 10px;
-  background: #41457d;
-  color: #fff;
+  background: #34515e;
+  color: #e0f2f1;
   transition: 0.2s;
 }
 
 .button-border:hover {
-  background: #565b9a;
+  background: #607d8b;
   border-color: #fff;
 }
 
 /* Main Content Background */
 .background-transparent {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Chat Message Bubbles */
@@ -849,35 +863,35 @@ export default {
 }
 
 .v-card {
-  background-color: #2a2d50 !important;
+  background-color: #263238 !important;
 }
 
 .v-card[style*="backgroundColor: #DFFFD6"] {
   /* User Message */
-  background-color: #5cdb95 !important;
-  color: #05386b;
+  background-color: #80cbc4 !important;
+  color: #004d40;
 }
 
 .v-card[style*="backgroundColor: #D6E6FF"] {
   /* Other User Message */
-  background-color: #8f94fb !important;
+  background-color: #b39ddb !important;
   color: #ffffff;
 }
 
 /* Message Input Field */
 .v-text-field {
-  background: #1e1f3d;
-  color: #fff;
+  background: #37474f;
+  color: #ffffff;
   border-radius: 8px;
 }
 
 /* Buttons */
 .v-btn {
-  background: linear-gradient(45deg, #8e44ad, #3498db);
-  color: #fff !important;
+  background: linear-gradient(45deg, #26a69a, #7e57c2);
+  color: #ffffff !important;
 }
 
 .v-btn:hover {
-  background: linear-gradient(45deg, #6a1b9a, #1e88e5);
+  background: linear-gradient(45deg, #00897b, #5e35b1);
 }
 </style>

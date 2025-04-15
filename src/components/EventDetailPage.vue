@@ -1,6 +1,6 @@
 <template>
   <v-container class="d-flex justify-center">
-    <v-card v-if="event" class="main box" max-width="1500">
+    <v-card v-if="event" class="main box" max-width="500">
       <v-card-title class="text-center">
         <h1>{{ event.eventName }}</h1>
       </v-card-title>
