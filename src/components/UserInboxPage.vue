@@ -55,7 +55,7 @@
 
               <!-- Chat Messages (Center Panel) -->
               <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
-                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column" >
+                <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
                     <div ref="chatContainer" style="height: 600px; width:100%; overflow-y: auto;">
                       <v-list style="display: flex; flex-direction: column; min-height: 100%;">
@@ -363,16 +363,31 @@ export default {
         const MessageIDArray = ChatData.MessageHistory;
         const LastSeenOffset = ChatData.SeenOffset;
         if (Array.isArray(MessageIDArray)) {
+          const CurrentUser = getAuth().currentUser;
           const MessagesToUpdate = MessageIDArray.slice(LastSeenOffset + 1);
-          for (const MessageID of MessagesToUpdate) {
+          let NewSeenOffset = LastSeenOffset;
+
+          for (let i = 0; i < MessagesToUpdate.length; i++) {
+            const MessageID = MessagesToUpdate[i];
             const MessageReference = doc(db, "messages", MessageID);
-            await updateDoc(MessageReference, {
-              seen: true,
-              SeenAt: new Date()
-            })
+            const MessageSnap = await getDoc(MessageReference);
+
+            if (MessageSnap.exists()) {
+              const messageData = MessageSnap.data();
+              const SenderID = messageData.SenderID;
+
+              if (SenderID !== CurrentUser.uid) {
+                await updateDoc(MessageReference, {
+                  seen: true,
+                  SeenAt: new Date()
+                });
+                NewSeenOffset = LastSeenOffset + i + 1;   // dont offset if the message is from the current user
+              }
+            }
           }
+
           await updateDoc(ChatReference, {
-            SeenOffset: MessageIDArray.length - 1
+            SeenOffset: NewSeenOffset
           });
         }
       }

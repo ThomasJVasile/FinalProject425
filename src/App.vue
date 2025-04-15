@@ -314,16 +314,40 @@ export default {
           console.log("No chat histories with this user - GetNotificationCountCall()");
           return 99;
         }
+
         const ChatHistoriesArray = ChatHistoryDocuments.map(doc => doc.data());
+        console.log("ChatHistoriesArray - UpdateNotificationsCount()", ChatHistoriesArray);
+
+        let UnseenMessageIDs = [];
+
         let LocalNotificationCount = 0;
         for (const Chat of ChatHistoriesArray) {
           LocalNotificationCount += (Chat.MessageHistory.length - 1 - Chat.SeenOffset);
+          const UnseenIDs = Chat.MessageHistory.slice(Chat.SeenOffset + 1);
+          UnseenMessageIDs.push(...UnseenIDs);
         }
+
+        const UnseenMessages = await Promise.all(
+          UnseenMessageIDs.map(id => getDoc(doc(db, "messages", id)))
+        );
+        const UnseenMessagesData = UnseenMessages.map(docSnap => docSnap.data());
+
+
+        for (const message of UnseenMessagesData) {
+          if (message.SenderID === CurrentUser.uid) {
+            LocalNotificationCount--;
+          }
+        }
+
+        console.log("Unseen Messages - UpdateNotificationsCount()", UnseenMessagesData);
+        console.log("LocalNotificationCount: ", LocalNotificationCount);
         this.NotificationCount = LocalNotificationCount;
       } catch (error) {
         console.log("some error - UpdateNotificationsCount(): ", error);
       }
     },
+
+
 
   },
   mounted() {
