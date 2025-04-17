@@ -76,7 +76,14 @@ const vuetify = createVuetify({
   },
 });
 
-createApp(App).use(router).use(vuetify).use(EmojiPicker).mount('#app'); 
+// createApp(App).use(router).use(vuetify).use(EmojiPicker).mount('#app'); 
 
-App.component('EmojiPicker', EmojiPicker);
+// App.component('EmojiPicker', EmojiPicker);
+
+const app = createApp(App);
+app.use(router);
+app.use(vuetify);
+app.use(EmojiPicker);
+app.component('EmojiPicker', EmojiPicker); // ✅ register component on app
+app.mount('#app');
 //lalise
