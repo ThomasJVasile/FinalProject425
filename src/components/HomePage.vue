@@ -76,17 +76,47 @@ export default {
     ]);
     const selectedCategories = ref([]);
 
+    // const groupedEvents = computed(() => {
+    //   const groups = {};
+    //   for (const event of events.value) {
+    //     const cats = event.categories || ["Other"];
+    //     for (const cat of cats) {
+    //       if (!groups[cat]) groups[cat] = [];
+    //       groups[cat].push(event);
+    //     }
+    //   }
+    //   return groups;
+    // });
     const groupedEvents = computed(() => {
-      const groups = {};
-      for (const event of events.value) {
-        const cats = event.categories || ["Other"];
-        for (const cat of cats) {
-          if (!groups[cat]) groups[cat] = [];
-          groups[cat].push(event);
-        }
+  const groups = {};
+
+  const query = searchQuery.value.toLowerCase();
+  const location = locationQuery.value.toLowerCase();
+  const selected = selectedCategories.value;
+
+  for (const event of events.value) {
+    const matchesSearch =
+      event.eventName?.toLowerCase().includes(query) ||
+      event.ownerName?.toLowerCase().includes(query);
+
+    const matchesLocation =
+      !location || event.eventLocation?.toLowerCase().includes(location);
+
+    const matchesCategory =
+      selected.length === 0 || (event.categories && event.categories.some(cat => selected.includes(cat)));
+
+    if (matchesSearch && matchesLocation && matchesCategory) {
+      const cats = event.categories || ["Other"];
+      for (const cat of cats) {
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(event);
       }
-      return groups;
-    });
+    }
+  }
+
+  return groups;
+});
+
 
     const goToEventDetail = (id) => {
       window.location.href = `/eventDetailPage/${id}`;
