@@ -126,6 +126,11 @@ import {
 } from 'firebase/firestore';
 
 export default {
+  created() {
+  const userId = this.$route.params.userId;
+  console.log("Viewing public profile for user:", userId);
+},
+
   setup() {
     // Set up reactive data for the profile
     const route = useRoute();
@@ -229,6 +234,9 @@ export default {
         }
       }
     };
+
+    //thoams route to user public profile page form event detail when they click on woners name
+   
 
     // Load profile data when component mounts
     onMounted(loadUserProfile);

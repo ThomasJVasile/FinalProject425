@@ -13,7 +13,14 @@
           <v-avatar v-if="ownerAvatar" size="50">
             <img :src="ownerAvatar" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
           </v-avatar>
-          <p>{{ ownerName }}</p>
+          <!-- <p>{{ ownerName }}</p> -->
+          <router-link
+            :to="`/profile/${event.createdBy}`"
+            style="text-decoration: none; color: #1976d2; font-weight: bold;"
+          >
+            {{ ownerName }}
+          </router-link>
+
         </v-col>
 
         <v-col cols="12" class="text-center">
