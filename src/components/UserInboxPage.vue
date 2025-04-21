@@ -54,7 +54,7 @@
               </v-col>
 
               <!-- Chat Messages (Center Panel) -->
-              <v-col cols="6" class="fill-height d-flex flex-column" v-if="activeChat === 'enabled'">
+              <v-col cols="6" class="fill-height d-flex flex-column">
                 <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
                     <div ref="chatContainer" style="height: 600px; width:100%; overflow-y: auto;">
@@ -95,6 +95,10 @@
                       </v-text-field>
                       <v-btn color="primary" @click="sendMessage">Send</v-btn>
                     </v-card-actions>
+                  </v-row>
+                  <v-row v-else style="height: 100%; justify-content: center; align-items: center;">
+                    <v-img :src="require('@/assets/placeholder.png')" alt="No Active Chat"
+                       contain></v-img>
                   </v-row>
                 </v-card>
               </v-col>
@@ -191,7 +195,7 @@
                   <small>{{ eventNotification.timestamp }}</small>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn>
+                  <!-- <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn> -->
                   <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
                 </v-card-actions>
               </v-card>
@@ -700,7 +704,7 @@ export default {
         await updateDoc(doc(db, "RequestJoin", notification.id), { status: "accepted" });
 
         // Fetch event document to update UserIDs
-        const eventDocRef = doc(db, "events", notification.EventID); // Corrected EventID reference
+        const eventDocRef = doc(db, "events", notification.EventID);
         const eventDocSnap = await getDoc(eventDocRef); // Get the actual document snapshot
 
 
