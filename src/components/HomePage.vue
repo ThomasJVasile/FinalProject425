@@ -84,56 +84,6 @@ export default {
     ]);
     const selectedCategories = ref([]);
 
-    // const groupedEvents = computed(() => {
-    //   const groups = {};
-    //   for (const event of events.value) {
-    //     const cats = event.categories || ["Other"];
-    //     for (const cat of cats) {
-    //       if (!groups[cat]) groups[cat] = [];
-    //       groups[cat].push(event);
-    //     }
-    //   }
-    //   return groups;
-    // });
-
-
-
-//     const groupedEvents = computed(() => {
-//   const groups = {};
-
-//   const query = searchQuery.value.toLowerCase();
-//   const location = locationQuery.value.toLowerCase();
-//   const selected = selectedCategories.value;
-
-//   for (const event of events.value) {
-//     const matchesSearch =
-//       event.eventName?.toLowerCase().includes(query) ||
-//       event.ownerName?.toLowerCase().includes(query);
-
-//     const matchesLocation =
-//       !location || event.eventLocation?.toLowerCase().includes(location);
-
-//     const matchesCategory =
-//       selected.length === 0 || (event.categories && event.categories.some(cat => selected.includes(cat)));
-
-//     if (matchesSearch && matchesLocation && matchesCategory) {
-//       const cats = event.categories || ["Other"];
-//       for (const cat of cats) {
-//         if (!groups[cat]) groups[cat] = [];
-//         groups[cat].push(event);
-//       }
-//     }
-//   }
-
-//   return groups;
-// });
-
-
-
-
-
-
-
 
 const groupedEvents = computed(() => {
   const groups = {};
@@ -198,34 +148,7 @@ const groupedEvents = computed(() => {
     const goToEventDetail = (id) => {
       window.location.href = `/eventDetailPage/${id}`;
     };
-
-    // const loadMapWithMarkers = () => {
-    //   const map = new google.maps.Map(document.getElementById("map"), {
-    //     center: { lat: 39.5, lng: -98.35 },
-    //     zoom: 4,
-    //   });
-
-    //   events.value.forEach((event) => {
-    //     if (event.latitude && event.longitude) {
-    //       const marker = new google.maps.Marker({
-    //         position: {
-    //           lat: event.latitude,
-    //           lng: event.longitude,
-    //         },
-    //         map,
-    //         title: event.eventName,
-    //       });
-
-    //       const infoWindow = new google.maps.InfoWindow({
-    //         content: `<strong>${event.eventName}</strong>`
-    //       });
-
-    //       marker.addListener("click", () => {
-    //         infoWindow.open(map, marker);
-    //       });
-    //     }
-    //   });
-    // };
+  
 
     const loadMapWithMarkers = () => {
   const map = new google.maps.Map(document.getElementById("map"), {
@@ -245,9 +168,14 @@ const groupedEvents = computed(() => {
           title: event.eventName,
         });
 
+        // const infoWindow = new google.maps.InfoWindow({
+        //   content: `<strong>${event.eventName}</strong>`
+        // });
+
         const infoWindow = new google.maps.InfoWindow({
-          content: `<strong>${event.eventName}</strong>`
+          content: `<strong><a href="/eventDetailPage/${event.id}" style="text-decoration: none; color: #2b78e4;">${event.eventName}</a></strong>`
         });
+
 
         marker.addListener("click", () => {
           infoWindow.open(map, marker);
