@@ -81,7 +81,13 @@
   <v-list two-line v-else>
     <v-list-item v-for="(comment, index) in comments" :key="index">
       <v-list-item-content>
-        <v-list-item-title>{{ comment.username }}</v-list-item-title>
+        <!-- <v-list-item-title>{{ comment.username }}</v-list-item-title> -->
+        <router-link
+          :to="`/profile/${comment.uid}`"
+          style="text-decoration: none; color: #1976d2; font-weight: bold;"
+        >
+          {{ comment.username }}
+        </router-link>
         <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
