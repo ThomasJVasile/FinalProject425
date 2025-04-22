@@ -58,6 +58,39 @@
           </google-map>
           <!-- <Marker v-if="markerOptions" :options="markerOptions" /> -->
         </v-col>
+
+        <v-col cols="12" class="text-center mt-4">
+  <h3>Comments</h3>
+
+  <v-textarea
+    v-model="newComment"
+    label="Write a comment..."
+    auto-grow
+    outlined
+    class="mb-2"
+  ></v-textarea>
+
+  <v-btn color="primary" @click="submitComment">Post Comment</v-btn>
+
+  <v-divider class="my-4"></v-divider>
+
+  <div v-if="comments.length === 0">
+    <p>No comments yet. Be the first to ask something!</p>
+  </div>
+
+  <v-list two-line v-else>
+    <v-list-item v-for="(comment, index) in comments" :key="index">
+      <v-list-item-content>
+        <v-list-item-title>{{ comment.username }}</v-list-item-title>
+        <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
+      </v-list-item-content>
+    </v-list-item>
+  </v-list>
+</v-col>
+
+
+
+
       </v-row>
     </v-card>
 
@@ -71,7 +104,7 @@
 
 <script>
 import { db } from "@/firebase";
-import { arrayUnion, doc, getDoc, updateDoc, deleteDoc, collection, setDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, getDocs, updateDoc, deleteDoc, collection, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { GoogleMap, Marker } from "vue3-google-map";
 
@@ -90,6 +123,9 @@ export default {
       eventImageUrl: null,
       isOwner: false,
       markerOptions: null,
+      comments: [],
+      newComment: "",
+
     };
   },
   async created() {
@@ -146,8 +182,55 @@ export default {
     } catch (error) {
       console.error("Error fetching event details:", error);
     }
+    await this.fetchComments();
+
   },
   methods: {
+    async submitComment() {
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    this.message = "You must be logged in to post a comment.";
+    this.hideMessageAfterDelay();
+    return;
+  }
+
+  if (!this.newComment.trim()) return;
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+    const username = userDoc.exists() ? userDoc.data().username : "Anonymous";
+
+    const eventId = this.$route.params.id;
+    const commentRef = doc(collection(db, "events", eventId, "comments"));
+
+    await setDoc(commentRef, {
+      uid: currentUser.uid,
+      username,
+      text: this.newComment.trim(),
+      timestamp: new Date(),
+    });
+
+    this.newComment = "";
+    this.fetchComments(); // reload comments after posting
+  } catch (error) {
+    console.error("Error posting comment:", error);
+  }
+},
+
+async fetchComments() {
+  const eventId = this.$route.params.id;
+  const commentsSnapshot = await getDocs(collection(db, "events", eventId, "comments"));
+
+  this.comments = commentsSnapshot.docs
+    .map((doc) => doc.data())
+    .sort((a, b) => b.timestamp - a.timestamp); // newest first
+},
+
+//comments ^^^
+
+
+
     hideMessageAfterDelay() {
       setTimeout(() => {
         this.message = ""; // Clear message
