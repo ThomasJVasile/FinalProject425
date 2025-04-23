@@ -42,6 +42,7 @@
 
       <div class="basic-info">
         <h1>{{ firstName || lastName ? firstName + " " + lastName : username || "Guest" }}</h1>
+        <div class="username" v-if="username">@{{ username }}</div>
         <div class="location" v-if="userLocation">
           <i class="fas fa-map-marker-alt"></i>
           <span>{{ userLocation }}</span>
@@ -419,5 +420,11 @@ export default {
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   color: #1877f2;
+}
+
+.username {
+  color: #65676b;
+  font-size: 0.9rem;
+  margin: 4px 0;
 }
 </style>
