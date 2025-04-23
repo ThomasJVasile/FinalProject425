@@ -1,109 +1,162 @@
 <template>
-  <nav>
-    <div class="nav-left">
-      <router-link to="/homepage" class="nav-link">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-      </router-link>
-      <router-link to="/create-event" class="nav-link">
-        <i class="fas fa-plus-circle"></i>
-        <span>Create Event</span>
-      </router-link>
-      <router-link to="/search-users" class="nav-link">
-        <i class="fas fa-search"></i>
-        <span>Find People</span>
-      </router-link>
-      <router-link to="/friend-requests" class="nav-link">
-        <i class="fas fa-user-friends"></i>
-        <span>Friend Requests</span>
-      </router-link>
-    </div>
-    <div class="nav-right" v-if="user">
-      <router-link to="/UserProfilePage" class="nav-link user-profile">
-        <span>{{ user.displayName || user.email }}</span>
-        <i class="fas fa-user-circle"></i>
-      </router-link>
-    </div>
-  </nav>
+<v-app-bar app color="primary" dark>
+  <!-- LEFT: App title and buttons -->
+  <v-toolbar-title class="app-logo">Get Together</v-toolbar-title>
+  <v-spacer></v-spacer>
+  <v-btn text to="/homepage">Home</v-btn>
+  <v-btn text to="/create-event">Create Event</v-btn>
+
+  <!-- RIGHT: Avatar + Menu (directly inside app-bar, NOT wrapped in v-container) -->
+  <v-menu v-model="menuVisible" offset-y>
+    <template #activator="{ props }">
+      <v-btn icon v-bind="props">
+
+
+        <v-avatar v-if="avatarUrl" size="43">
+          <img :src="avatarUrl" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
+        </v-avatar>
+        <v-icon v-else>mdi-account-circle</v-icon>
+      </v-btn>
+    </template>
+    <v-list>
+      <v-list-item>
+        <v-list-item-title>{{ userName }}</v-list-item-title>
+      </v-list-item>
+      <v-divider></v-divider>
+      <v-list-item @click="goToProfile">
+        <v-icon>mdi-account</v-icon>
+        <v-list-item-title>View Profile</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="signOut">
+        <v-icon>mdi-logout</v-icon>
+        <v-list-item-title>Sign Out</v-list-item-title>
+      </v-list-item>
+    </v-list>
+  </v-menu>
+</v-app-bar>
+
 </template>
 
 <script>
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { ref, onMounted } from 'vue';
+import { onAuthStateChanged, signOut, getAuth } from "firebase/auth";
+import { doc, getDoc, getDocs, collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase";
 
 export default {
-  name: 'NavBar',
-  setup() {
-    const user = ref(null);
+  name: "NavBar",
+  data() {
+    return {
+      userName: "Anonymous",
+      avatarUrl: null,
+      menuVisible: false,
+      NotificationCount: 0,
+    };
+  },
+  methods: {
+    toggleMenu() {
+      this.menuVisible = !this.menuVisible;
+    },
+    closeMenu() {
+      this.menuVisible = false;
+    },
+    async signOut() {
+      try {
+        await signOut(getAuth());
+        this.userName = "Anonymous";
+        this.avatarUrl = null;
+        this.$router.push('/log-in');
+      } catch (error) {
+        console.error("Sign out error:", error);
+      }
+    },
+    GoToInbox() {
+      this.$router.push("/UserInboxPage");
+    },
+    goToProfile() {
+      this.$router.push("/UserProfilePage");
+    },
+    async GetNotificationCount() {
+      const CurrentUser = getAuth().currentUser;
+      if (!CurrentUser) return;
+
+      const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
+      const q1 = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
+      const q2 = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+
+      onSnapshot(q1, () => this.UpdateNotificationsCount());
+      onSnapshot(q2, () => this.UpdateNotificationsCount());
+    },
+    async UpdateNotificationsCount() {
+      const CurrentUser = getAuth().currentUser;
+      if (!CurrentUser) return;
+
+      const ChatHistoryReference = collection(db, "ChatHistoryUserPair");
+      const q1 = query(ChatHistoryReference, where("UserOne", "==", CurrentUser.uid));
+      const q2 = query(ChatHistoryReference, where("UserTwo", "==", CurrentUser.uid));
+
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      const allChats = [...snap1.docs, ...snap2.docs].map(doc => doc.data());
+
+      let count = 0;
+      let unseenIds = [];
+
+      for (const chat of allChats) {
+        count += (chat.MessageHistory.length - 1 - chat.SeenOffset);
+        unseenIds.push(...chat.MessageHistory.slice(chat.SeenOffset + 1));
+      }
+
+      const unseen = await Promise.all(unseenIds.map(id => getDoc(doc(db, "messages", id))));
+      for (const m of unseen.map(doc => doc.data())) {
+        if (m.SenderID === CurrentUser.uid) count--;
+      }
+
+      this.NotificationCount = count;
+    },
+  },
+  mounted() {
     const auth = getAuth();
-
-    onMounted(() => {
-      onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          user.value = currentUser;
-        } else {
-          user.value = null;
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          this.userName = `${data.firstName} ${data.lastName}`;
+          this.avatarUrl = data.avatarUrl || null;
+          this.GetNotificationCount();
         }
-      });
+      }
     });
-
-    return { user };
-  }
+  },
 };
 </script>
 
 <style scoped>
-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  background-color: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-left {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.nav-right {
+.navbar {
   display: flex;
   align-items: center;
+  padding: 0 15px;
 }
 
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  text-decoration: none;
-  color: #1a1a1a;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+.app-logo {
+  font-weight: bold;
+  font-size: 20px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.nav-link:hover {
-  background-color: #f0f2f5;
-  color: #1877f2;
-}
+@media (max-width: 768px) {
+  .app-logo {
+    font-size: 18px !important;
+  }
 
-.nav-link i {
-  font-size: 1.2rem;
-}
+  .navbar {
+    padding: 0 5px;
+  }
 
-.user-profile {
-  background-color: #f0f2f5;
-  border-radius: 20px;
-  padding: 8px 16px;
-}
-
-.user-profile:hover {
-  background-color: #e4e6eb;
+  .v-btn {
+    min-width: 36px;
+    padding: 0 8px;
+  }
 }
 </style>
-  
