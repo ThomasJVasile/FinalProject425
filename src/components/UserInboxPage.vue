@@ -97,20 +97,26 @@
                     </v-card-actions>
                   </v-row>
                   <v-row v-else style="height: 100%; justify-content: center; align-items: center;">
-                    <v-img :src="require('@/assets/placeholder.png')" alt="No Active Chat"
-                       contain></v-img>
+                    <v-img :src="require('@/assets/placeholder.png')" alt="No Active Chat" contain></v-img>
                   </v-row>
                 </v-card>
               </v-col>
 
               <!-- New Chat Form (Right Panel) -->
-              <v-col cols="3">
+                <v-col cols="3">
                 <v-card class="pa-4 blue-shadow">
-                  <v-text-field v-model="NewChatRecipientUsername" label="Username"></v-text-field>
+                  <v-autocomplete 
+                  v-model="UsernameSearch" 
+                  :items="friends.map(friend => friend.username)" 
+                  label="Username" 
+                  hide-no-data 
+                  hide-selected 
+                  solo 
+                  />
                   <v-text-field v-model="NewChatFirstMessage" label="Message"></v-text-field>
                   <v-btn block color="primary" @click="CreateNewChat()">Create New Chat</v-btn>
                 </v-card>
-              </v-col>
+                </v-col>
             </v-row>
           </v-card>
         </v-col>
@@ -261,6 +267,12 @@ export default {
 
       MyUserDocument: {},
 
+      UserSuggestions: [],
+      IsLoadingSuggestions: false,
+      UsernameSearch: '',
+
+      friends: [],
+
       emojiPickerVisible: false,
 
       content: '',
@@ -286,6 +298,39 @@ export default {
   },
 
   methods: {
+    
+    async GetFriends() {
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) return [];
+
+      const FriendShipsReference = collection(db, "friendships");
+      const FriendShipsQuery = query(FriendShipsReference, where("users", 'array-contains', currentUser.uid));
+      const QuerySnapshot = await getDocs(FriendShipsQuery);
+      const FriendShipsDocuments = QuerySnapshot.docs.map(doc => doc.data());
+      const FriendIDs = new Set();
+      FriendShipsDocuments.forEach(doc => {
+        doc.users.forEach(userID => {
+          if (userID !== currentUser.uid) {
+            FriendIDs.add(userID);
+          }
+        });
+      });
+      const FriendIDsArray = Array.from(FriendIDs);
+      if (FriendIDsArray.length > 0) {
+        const FriendIDsQuery = query(collection(db, "users"), where("__name__", "in", FriendIDsArray));
+        const FriendIDsQuerySnapshot = await getDocs(FriendIDsQuery);
+        const FriendIDsDocuments = FriendIDsQuerySnapshot.docs.map(doc => doc.data());
+        this.friends = FriendIDsDocuments.map(doc => ({
+          id: doc.id,
+          ...doc,
+        }));
+        console.log("FriendIDsDocuments: ", this.friends);
+      } else {
+        console.log("No friends found.");
+      }
+
+    },
+    
     initiateReply(message) {
       this.messages.forEach(msg => msg.replying = false);
       message.replying = true;
@@ -819,6 +864,7 @@ export default {
     this.fetchEventNotifications();
     this.GetMessageHistory();
     this.GetMyUserDocument();
+    this.GetFriends();
   },
 };
 </script>
@@ -826,13 +872,13 @@ export default {
 <style scoped>
 /* Smooth shadows for depth */
 .blue-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   transition: box-shadow 0.3s ease-in-out;
 }
 
 /* Background Gradient */
 .animated-background {
-  background: linear-gradient(120deg, #121212, #1e1e1e);
+  background: linear-gradient(120deg, #f5f5f5, #e0e0e0);
   background-size: 400% 400%;
   animation: gradientAnimation 6s ease infinite;
 }
@@ -853,28 +899,28 @@ export default {
 
 /* Sidebar & Form Background */
 .background-color-form {
-  background: #1a1a1a;
-  color: #cfd8dc;
+  background: #ffffff;
+  color: #424242;
 }
 
 /* Sidebar Buttons */
 .button-border {
-  border: 1px solid #37474f;
+  border: 1px solid #bdbdbd;
   border-radius: 6px;
   padding: 10px;
-  background: #263238;
-  color: #cfd8dc;
+  background: #f5f5f5;
+  color: #424242;
   transition: 0.2s;
 }
 
 .button-border:hover {
-  background: #37474f;
-  border-color: #90a4ae;
+  background: #e0e0e0;
+  border-color: #9e9e9e;
 }
 
 /* Main Content Background */
 .background-transparent {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Chat Message Bubbles */
@@ -883,45 +929,45 @@ export default {
 }
 
 .v-card-text {
-  color: #e0e0e0;
+  color: #424242;
 }
 
 .v-card {
-  background-color: #212121 !important;
+  background-color: #f9f9f9 !important;
 }
 
 .v-card[style*="backgroundColor: #DFFFD6"] {
   /* User Message */
-  background-color: #4caf50 !important;
-  color: #ffffff;
+  background-color: #c8e6c9 !important;
+  color: #1b5e20;
 }
 
 .v-card[style*="backgroundColor: #D6E6FF"] {
   /* Other User Message */
-  background-color: #42a5f5 !important;
-  color: #ffffff;
+  background-color: #bbdefb !important;
+  color: #0d47a1;
 }
 
 /* Message Input Field */
 .v-text-field {
-  background: #2c2c2c;
-  color: #ffffff;
+  background: #ffffff;
+  color: #424242;
   border-radius: 8px;
 }
 
 /* Buttons */
 .v-btn {
-  background: linear-gradient(45deg, #1e88e5, #43a047);
+  background: linear-gradient(45deg, #64b5f6, #81c784);
   color: #ffffff !important;
 }
 
 .v-btn:hover {
-  background: linear-gradient(45deg, #1565c0, #2e7d32);
+  background: linear-gradient(45deg, #42a5f5, #66bb6a);
 }
 
 /* Badge Styling */
 .v-badge {
-  background-color: #d32f2f !important;
+  background-color: #f44336 !important;
   color: #ffffff !important;
 }
 
@@ -931,11 +977,11 @@ export default {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: #bdbdbd;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #616161;
+  background: #9e9e9e;
 }
 </style>
