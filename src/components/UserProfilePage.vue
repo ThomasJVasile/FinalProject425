@@ -9,7 +9,7 @@
             :src="profilePicture" 
             alt="Profile Picture" 
             class="profile-image" 
-            @error="handleImageError"
+            @error="profilePicture = null"
           />
           <svg 
             v-else 
@@ -23,18 +23,21 @@
               fill="#65676b"
             />
           </svg>
-          <label for="profile-upload" class="camera-icon">
+          <button 
+            class="camera-button"
+            @click="$refs.fileInput.click()"
+            title="Update profile picture"
+          >
             <i class="fa fa-camera"></i>
-          </label>
+          </button>
           <input 
-            id="profile-upload" 
+            ref="fileInput"
             type="file" 
             accept="image/*" 
-            @change="onFileChange" 
+            @change="handleFileSelect" 
             class="file-input"
           />
         </div>
-        <button v-if="selectedFile" @click="uploadProfilePicture" class="upload-button">Save</button>
       </div>
 
       <div class="basic-info">
@@ -162,46 +165,37 @@ export default {
   },
 
   methods: {
-    onFileChange(event) {
-      this.selectedFile = event.target.files[0]; 
-    },
+    // Handle file selection and upload
+    async handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    async uploadProfilePicture() {
-      if (!this.selectedFile) {
-        this.message = "Please select a file to upload.";
-        return;
-      }
+      try {
+        // Upload file to Firebase Storage
+        const avatarRef = storageRef(
+          storage,
+          `user-avatars/${this.user.uid}_${file.name}`
+        );
 
-      const auth = getAuth();
-      const user = auth.currentUser;
+        const snapshot = await uploadBytes(avatarRef, file);
+        const avatarUrl = await getDownloadURL(snapshot.ref);
 
-      if (user) {
-        try {
-          // Upload file to Firebase Storage
-          const avatarRef = storageRef(
-            storage,
-            `user-avatars/${user.uid}_${this.selectedFile.name}`
-          );
+        // Update Firestore with new profile picture URL
+        await updateDoc(doc(db, "users", this.user.uid), {
+          avatarUrl: avatarUrl,
+        });
 
-          const snapshot = await uploadBytes(avatarRef, this.selectedFile);
-          const avatarUrl = await getDownloadURL(snapshot.ref);
+        // Update Firebase Auth user profile
+        await this.user.updateProfile({
+          photoURL: avatarUrl,
+        });
 
-          // Update Firestore with new profile picture URL
-          await updateDoc(doc(db, "users", user.uid), {
-            avatarUrl: avatarUrl,
-          });
-
-          // Update Firebase Auth user profile
-          await user.updateProfile({
-            photoURL: avatarUrl,
-          });
-
-          this.profilePicture = avatarUrl; 
-          this.message = "Profile picture updated successfully!";
-        } catch (error) {
-          console.error("Error uploading profile picture:", error);
-          this.message = "Failed to upload profile picture. Please try again.";
-        }
+        // Update local state
+        this.profilePicture = avatarUrl;
+        this.message = "Profile picture updated successfully!";
+      } catch (error) {
+        console.error("Error uploading profile picture:", error);
+        this.message = "Failed to upload profile picture. Please try again.";
       }
     },
 
@@ -383,46 +377,37 @@ export default {
   background: #e4e6eb;
 }
 
-.camera-icon {
+/* Camera button styling */
+.camera-button {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: white;
+  bottom: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  padding: 8px;
+  background: rgba(31, 41, 55, 0.7); /* bg-gray-800/70 */
+  border: none;
   cursor: pointer;
-  font-size: 18px;
-  color: #333;
-  border: 2px solid #ddd;
-  z-index: 2;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
-.profile-circle:hover .camera-icon {
-  opacity: 1;
+.camera-button:hover {
+  background: rgba(55, 65, 81, 0.8); /* hover:bg-gray-700/80 */
+  transform: scale(1.05);
+}
+
+.camera-button i {
+  color: white; /* text-white */
+  font-size: 16px;
 }
 
 /* Hide the file input */
 .file-input {
   display: none;
-}
-
-/* Upload button */
-.upload-button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background-color: #1877f2;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-.upload-button:hover {
-  background-color: #166fe5;
 }
 
 .message {
