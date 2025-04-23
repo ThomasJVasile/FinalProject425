@@ -1,40 +1,64 @@
 <template>
-<v-app-bar app color="primary" dark>
-  <!-- LEFT: App title and buttons -->
-  <v-toolbar-title class="app-logo">Get Together</v-toolbar-title>
-  <v-spacer></v-spacer>
-  <v-btn text to="/homepage">Home</v-btn>
-  <v-btn text to="/create-event">Create Event</v-btn>
+  <v-app-bar app color="primary" dark>
+    <!-- App title -->
+    <v-toolbar-title class="app-logo">Get Together</v-toolbar-title>
+    <v-spacer></v-spacer>
 
-  <!-- RIGHT: Avatar + Menu (directly inside app-bar, NOT wrapped in v-container) -->
-  <v-menu v-model="menuVisible" offset-y>
-    <template #activator="{ props }">
-      <v-btn icon v-bind="props">
+    <!-- Nav buttons -->
+    <v-btn text to="/homepage">Home</v-btn>
+    <v-btn v-if="isAuthenticated" text to="/create-event">Create Event</v-btn>
+    <v-btn v-else text to="/RegisterPage">Register</v-btn>
+    <v-btn v-if="!isAuthenticated" text to="/log-in">Log In</v-btn>
 
-
-        <v-avatar v-if="avatarUrl" size="43">
-          <img :src="avatarUrl" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
-        </v-avatar>
-        <v-icon v-else>mdi-account-circle</v-icon>
+    <!-- Inbox -->
+    <v-badge
+      v-if="isAuthenticated && NotificationCount > 0"
+      :content="NotificationCount"
+      color="red"
+      overlap
+      bordered
+      offset-x="8"
+      offset-y="8"
+    >
+      <v-btn icon @click="GoToInbox">
+        <v-icon>mdi-email</v-icon>
       </v-btn>
-    </template>
-    <v-list>
-      <v-list-item>
-        <v-list-item-title>{{ userName }}</v-list-item-title>
-      </v-list-item>
-      <v-divider></v-divider>
-      <v-list-item @click="goToProfile">
-        <v-icon>mdi-account</v-icon>
-        <v-list-item-title>View Profile</v-list-item-title>
-      </v-list-item>
-      <v-list-item @click="signOut">
-        <v-icon>mdi-logout</v-icon>
-        <v-list-item-title>Sign Out</v-list-item-title>
-      </v-list-item>
-    </v-list>
-  </v-menu>
-</v-app-bar>
+    </v-badge>
 
+    <v-btn
+      v-else-if="isAuthenticated"
+      icon
+      @click="GoToInbox"
+    >
+      <v-icon>mdi-email</v-icon>
+    </v-btn>
+
+    <!-- Avatar + menu -->
+    <v-menu v-if="isAuthenticated" v-model="menuVisible" offset-y>
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props">
+          <v-avatar v-if="avatarUrl" size="43">
+            <img :src="avatarUrl" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
+          </v-avatar>
+          <v-icon v-else>mdi-account-circle</v-icon>
+        </v-btn>
+      </template>
+      <v-list>
+        <v-list-item>
+          <v-list-item-title>{{ userName }}</v-list-item-title>
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-list-item @click="goToProfile">
+          <v-icon>mdi-account</v-icon>
+          <v-list-item-title>View Profile</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="signOut">
+          <v-icon>mdi-logout</v-icon>
+          <v-list-item-title>Sign Out</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  </v-app-bar>
 </template>
 
 <script>
@@ -50,20 +74,16 @@ export default {
       avatarUrl: null,
       menuVisible: false,
       NotificationCount: 0,
+      isAuthenticated: false,
     };
   },
   methods: {
-    toggleMenu() {
-      this.menuVisible = !this.menuVisible;
-    },
-    closeMenu() {
-      this.menuVisible = false;
-    },
     async signOut() {
       try {
         await signOut(getAuth());
         this.userName = "Anonymous";
         this.avatarUrl = null;
+        this.isAuthenticated = false;
         this.$router.push('/log-in');
       } catch (error) {
         console.error("Sign out error:", error);
@@ -117,6 +137,7 @@ export default {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        this.isAuthenticated = true;
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
@@ -124,6 +145,10 @@ export default {
           this.avatarUrl = data.avatarUrl || null;
           this.GetNotificationCount();
         }
+      } else {
+        this.isAuthenticated = false;
+        this.userName = "Anonymous";
+        this.avatarUrl = null;
       }
     });
   },
