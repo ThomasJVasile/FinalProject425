@@ -258,6 +258,7 @@ export default {
             AttendanceCount: eventData.participants ? eventData.participants.length : 0,
             likes: eventData.likes || [],
             comments: eventData.comments || [],
+            ownerName: eventData.creatorName || eventData.ownerName || 'Anonymous',
             ...eventData,
           };
         });
@@ -282,12 +283,41 @@ export default {
             AttendanceCount: eventData.participants ? eventData.participants.length : 0,
             likes: eventData.likes || [],
             comments: eventData.comments || [],
+            ownerName: eventData.creatorName || eventData.ownerName || 'Anonymous',
             ...eventData,
           };
         });
       } catch (error) {
         console.error("Error fetching joined events:", error);
       }
+    },
+
+    // Add new method to handle name updates
+    async handleUserNameUpdate(event) {
+      const { firstName, lastName } = event.detail;
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      // Update names in created events
+      this.createdEvents = this.createdEvents.map(event => {
+        if (event.createdBy === getAuth().currentUser?.uid) {
+          return {
+            ...event,
+            ownerName: fullName
+          };
+        }
+        return event;
+      });
+
+      // Update names in joined events
+      this.joinedEvents = this.joinedEvents.map(event => {
+        if (event.createdBy === getAuth().currentUser?.uid) {
+          return {
+            ...event,
+            ownerName: fullName
+          };
+        }
+        return event;
+      });
     },
   },
 
@@ -304,12 +334,20 @@ export default {
           this.fetchCreatedEvents(userUid),
           this.fetchJoinedEvents(userUid)
         ]);
+
+        // Add event listener for name updates
+        window.addEventListener('userNameUpdated', this.handleUserNameUpdate);
       } else {
         console.warn("No authenticated user found.");
       }
     } catch (error) {
       console.error("Error fetching events:", error);
     }
+  },
+
+  // Add beforeUnmount lifecycle hook to clean up event listener
+  beforeUnmount() {
+    window.removeEventListener('userNameUpdated', this.handleUserNameUpdate);
   },
 };
 </script>

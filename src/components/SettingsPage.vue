@@ -205,7 +205,7 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { getAuth } from 'firebase/auth';
+import { getAuth, updateProfile } from 'firebase/auth';
 import { 
   doc, 
   getDoc, 
@@ -217,6 +217,12 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import { db, storage } from '@/firebase';
+import { 
+  collection,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 
 export default {
   name: 'SettingsPage',
@@ -293,12 +299,18 @@ export default {
       
       if (user) {
         try {
+          console.log("Starting account settings update...");
+          
           // Split display name into first and last name
           const names = accountSettings.value.displayName.trim().split(' ');
           const firstName = names[0] || '';
           const lastName = names.slice(1).join(' ') || '';
+          const fullName = `${firstName} ${lastName}`;
+          
+          console.log("New name:", fullName);
 
-          // Update both display name and split names
+          // Update both display name and split names in Firestore
+          console.log("Updating user document...");
           await updateDoc(doc(db, 'users', user.uid), {
             displayName: accountSettings.value.displayName,
             firstName: firstName,
@@ -309,18 +321,73 @@ export default {
             location: accountSettings.value.location,
           });
 
-          // Also update the auth profile
-          await user.updateProfile({
-            displayName: accountSettings.value.displayName
-          });
+          // Update the auth profile using the auth instance
+          console.log("Updating auth profile...");
+          const currentUser = getAuth().currentUser;
+          if (currentUser) {
+            await updateProfile(currentUser, {
+              displayName: accountSettings.value.displayName
+            });
+          }
 
-          alert('Account settings updated successfully!');
+          // Update all events owned by this user
+          console.log("Querying user's events...");
+          const eventsQuery = query(
+            collection(db, "events"),
+            where("createdBy", "==", user.uid)
+          );
+          const eventsSnapshot = await getDocs(eventsQuery);
+          console.log(`Found ${eventsSnapshot.size} events to update`);
           
-          // Reload settings to refresh the display
+          // Update each event with the new creator name
+          const updatePromises = eventsSnapshot.docs.map(async (eventDoc) => {
+            try {
+              console.log(`Updating event ${eventDoc.id}...`);
+              await updateDoc(doc(db, "events", eventDoc.id), {
+                creatorName: fullName,
+                creatorFirstName: firstName,
+                creatorLastName: lastName
+              });
+              console.log(`Successfully updated event ${eventDoc.id}`);
+            } catch (eventError) {
+              console.error(`Error updating event ${eventDoc.id}:`, eventError);
+              throw eventError;
+            }
+          });
+          
+          console.log("Waiting for all event updates to complete...");
+          await Promise.all(updatePromises);
+          console.log("All event updates completed");
+
+          // Force a reload of the user settings
+          console.log("Reloading user settings...");
           await loadUserSettings();
+
+          // Emit an event to notify other components of the name change
+          console.log("Dispatching name update event...");
+          window.dispatchEvent(new CustomEvent('userNameUpdated', {
+            detail: {
+              firstName,
+              lastName,
+              displayName: accountSettings.value.displayName
+            }
+          }));
+
+          // Show success notification
+          const notification = document.createElement('div');
+          notification.className = 'success-notification';
+          notification.textContent = 'Successfully updated name!';
+          document.body.appendChild(notification);
+          
+          // Remove notification after 3 seconds
+          setTimeout(() => {
+            notification.remove();
+          }, 3000);
+
         } catch (error) {
-          console.error('Error updating account settings:', error);
-          alert('Failed to update account settings. Please try again.');
+          console.error('Detailed error updating account settings:', error);
+          console.error('Error stack:', error.stack);
+          alert('Failed to update account settings. Please try again. Error: ' + error.message);
         }
       }
     };
@@ -683,5 +750,29 @@ input:checked + .slider:before {
 
 .back-arrow i {
   font-size: 1.2rem;
+}
+
+.success-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>
