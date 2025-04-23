@@ -9,8 +9,20 @@
             :src="profilePicture" 
             alt="Profile Picture" 
             class="profile-image" 
+            @error="handleImageError"
           />
-          <i class="fa fa-user user-icon" v-if="!profilePicture"></i>    
+          <svg 
+            v-else 
+            class="default-avatar" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path 
+              d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" 
+              fill="#65676b"
+            />
+          </svg>
           <label for="profile-upload" class="camera-icon">
             <i class="fa fa-camera"></i>
           </label>
@@ -19,9 +31,10 @@
             type="file" 
             accept="image/*" 
             @change="onFileChange" 
+            class="file-input"
           />
         </div>
-        <button @click="uploadProfilePicture" class="upload-button">Save</button>
+        <button v-if="selectedFile" @click="uploadProfilePicture" class="upload-button">Save</button>
       </div>
 
       <div class="basic-info">
@@ -195,6 +208,10 @@ export default {
     goToPage(pageName) {
       this.$router.push({ name: pageName });
     },
+
+    handleImageError() {
+      this.profilePicture = null;
+    },
   },
 };
 </script>
@@ -337,20 +354,33 @@ export default {
   color: #1877f2;
 }
 
-/* Preserve existing styles for profile picture and upload functionality */
+/* Profile picture circle */
 .profile-circle {
   width: 168px;
   height: 168px;
   border-radius: 50%;
-  background: #ddd;
+  background: #f0f2f5;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
+/* Profile image */
 .profile-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Default avatar styling */
+.default-avatar {
+  width: 100%;
+  height: 100%;
+  padding: 20%;
+  background: #e4e6eb;
 }
 
 .camera-icon {
@@ -364,8 +394,21 @@ export default {
   font-size: 18px;
   color: #333;
   border: 2px solid #ddd;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
+.profile-circle:hover .camera-icon {
+  opacity: 1;
+}
+
+/* Hide the file input */
+.file-input {
+  display: none;
+}
+
+/* Upload button */
 .upload-button {
   margin-top: 10px;
   padding: 8px 16px;
@@ -375,6 +418,7 @@ export default {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.3s ease;
 }
 
 .upload-button:hover {
