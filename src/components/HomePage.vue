@@ -1,7 +1,7 @@
 <template>
   <v-container class="home-page" fluid>
     <v-row>
-      <v-col cols="12" md="3">
+      <v-col cols="12" md="3" class="sidebar-col">
         <v-card class="sidebar blue-shadow" aria-label="Event filters">
           <v-card-title>Filter by Location</v-card-title>
           <v-text-field v-model="locationQuery" label="Enter city or town" solo aria-label="Enter a location to filter events"></v-text-field>
@@ -229,6 +229,11 @@ const fetchEvents = async () => {
 </script>
 
 <style scoped>
+.sidebar-col {
+  max-width: 280px;
+  min-width: 240px;
+}
+
 .home-page {
   padding: 16px;
 }
