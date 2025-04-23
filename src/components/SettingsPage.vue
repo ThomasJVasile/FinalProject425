@@ -344,6 +344,7 @@ export default {
             try {
               console.log(`Updating event ${eventDoc.id}...`);
               await updateDoc(doc(db, "events", eventDoc.id), {
+                ownerName: fullName,
                 creatorName: fullName,
                 creatorFirstName: firstName,
                 creatorLastName: lastName
