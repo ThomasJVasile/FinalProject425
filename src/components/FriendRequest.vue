@@ -271,9 +271,17 @@ export default {
       // Update friends list whenever something changes
       this.unsubscribeFriends = onSnapshot(friendshipsQuery, async (snapshot) => {
         console.log('Friendships snapshot:', snapshot.docs.map(doc => doc.data()));
-        const friendPromises = snapshot.docs.map(async (docSnapshot) => {
-          const friendId = docSnapshot.data().users.find(id => id !== currentUser.uid);
-          // Get each friend's profile info
+        // Use a Set to store unique friend IDs
+        const uniqueFriendIds = new Set();
+        snapshot.docs.forEach(doc => {
+          const friendId = doc.data().users.find(id => id !== currentUser.uid);
+          if (friendId) {
+            uniqueFriendIds.add(friendId);
+          }
+        });
+
+        // Convert Set to Array and fetch friend data
+        const friendPromises = Array.from(uniqueFriendIds).map(async (friendId) => {
           const friendDocRef = doc(db, 'users', friendId);
           const friendDoc = await getDoc(friendDocRef);
           
