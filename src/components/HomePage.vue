@@ -196,7 +196,7 @@ const fetchEvents = async () => {
       date: new Date(data.eventDate), // 🔥 Convert the string to a Date
     };
   });
-
+  console.log("EVENTS REPEAT CHECK: ", events.value )
   if (window.google) {
     loadMapWithMarkers();
   } else {

@@ -103,20 +103,13 @@
               </v-col>
 
               <!-- New Chat Form (Right Panel) -->
-                <v-col cols="3">
+              <v-col cols="3">
                 <v-card class="pa-4 blue-shadow">
-                  <v-autocomplete 
-                  v-model="UsernameSearch" 
-                  :items="friends.map(friend => friend.username)" 
-                  label="Username" 
-                  hide-no-data 
-                  hide-selected 
-                  solo 
-                  />
+                  <v-text-field v-model="NewChatRecipientUsername" label="Username" solo />
                   <v-text-field v-model="NewChatFirstMessage" label="Message"></v-text-field>
                   <v-btn block color="primary" @click="CreateNewChat()">Create New Chat</v-btn>
                 </v-card>
-                </v-col>
+              </v-col>
             </v-row>
           </v-card>
         </v-col>
@@ -298,7 +291,7 @@ export default {
   },
 
   methods: {
-    
+
     async GetFriends() {
       const currentUser = getAuth().currentUser;
       if (!currentUser) return [];
@@ -330,7 +323,7 @@ export default {
       }
 
     },
-    
+
     initiateReply(message) {
       this.messages.forEach(msg => msg.replying = false);
       message.replying = true;
@@ -503,7 +496,8 @@ export default {
         const UserDocumentReference = await addDoc(collection(db, "ChatHistoryUserPair"), {
           UserOne: SenderID,
           UserTwo: UserDocument.id,
-          MessageHistory: [FirstChatMessageReference.id]
+          MessageHistory: [FirstChatMessageReference.id],
+          SeenOffset: 0,
         });
         console.log("new message: ", UserDocumentReference);
         console.log("username: ", UserDocument.data());
