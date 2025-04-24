@@ -37,6 +37,31 @@
       </div>
     </div>
 
+          <!--/div> -- This is the closing tag of basic-info -->
+      
+      <!-- Add the friend request buttons here -->
+      <div class="profile-actions" v-if="!isOwnProfile">
+        <button 
+          class="action-button" 
+          @click="sendFriendRequest"
+          v-if="!isFriend && !friendRequestSent"
+        >
+          <i class="fas fa-user-plus"></i> Add Friend
+        </button>
+        <button 
+          class="action-button disabled" 
+          v-else-if="friendRequestSent"
+        >
+          <i class="fas fa-clock"></i> Request Sent
+        </button>
+        <button 
+          class="action-button friends" 
+          v-else
+        >
+          <i class="fas fa-user-check"></i> Friends
+        </button>
+      </div>
+
     <!-- Navigation Tabs -->
     <div class="profile-tabs">
       <button 
@@ -178,7 +203,9 @@ import {
   collection, 
   query, 
   where, 
-  getDocs 
+  getDocs, 
+  addDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 
 export default {
@@ -197,12 +224,20 @@ export default {
     });
     const userEvents = ref([]);
     const userFriends = ref([]);
+    const isFriend = ref(false);
+    const friendRequestSent = ref(false);
+    const isOwnProfile = ref(false);
 
     // Load user profile data
     const loadUserProfile = async () => {
       try {
         const userId = route.params.userId;
-        const userDoc = await getDoc(doc(db, 'users', userId));
+        const currentUser = getAuth().currentUser;
+
+        //const userDoc = await getDoc(doc(db, 'users', userId));
+
+        isOwnProfile.value = currentUser?.uid === userId;
+         const userDoc = await getDoc(doc(db, 'users', userId));
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -217,6 +252,27 @@ export default {
           };
         }
 
+        if (currentUser) {
+            // Check if they are already friends
+            const friendsQuery = query(
+              collection(db, 'friends'),
+              where('users', 'array-contains', currentUser.uid)
+            );
+            const friendsSnapshot = await getDocs(friendsQuery);
+            isFriend.value = friendsSnapshot.docs.some(doc => 
+              doc.data().users.includes(userId)
+            );
+
+            // Check if a friend request is pending
+            const requestQuery = query(
+              collection(db, 'friendRequests'),
+              where('fromUserId', '==', currentUser.uid),
+              where('toUserId', '==', userId),
+              where('status', '==', 'pending')
+            );
+          const requestSnapshot = await getDocs(requestQuery);
+          friendRequestSent.value = !requestSnapshot.empty;
+        }
         // Load user's events
         const eventsQuery = query(
           collection(db, 'events'),
@@ -255,6 +311,48 @@ export default {
       }
     };
 
+
+
+    const sendFriendRequest = async () => {
+      try {
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
+
+        const userId = route.params.userId;
+        
+        const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const currentUserData = currentUserDoc.data();
+        const senderName = currentUserData.firstName && currentUserData.lastName 
+          ? `${currentUserData.firstName} ${currentUserData.lastName}`
+          : currentUser.displayName || 'Anonymous';
+
+        await addDoc(collection(db, 'friendRequests'), {
+          fromUserId: currentUser.uid,
+          toUserId: userId,
+          status: 'pending',
+          timestamp: serverTimestamp(),
+          fromUserName: senderName,
+          toUserName: profileData.value.firstName + ' ' + profileData.value.lastName
+        });
+
+        friendRequestSent.value = true;
+        
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.success('Friend request sent!');
+        }
+      } catch (error) {
+        console.error('Error sending friend request:', error);
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.error('Failed to send friend request. Please try again.');
+        }
+      }
+    };
+
+
+
+
+
+
     // Listen for name updates
     const handleNameUpdate = (event) => {
       const { firstName, lastName } = event.detail;
@@ -277,7 +375,11 @@ export default {
       activeTab,
       profileData,
       userEvents,
-      userFriends
+      userFriends,
+      isFriend,
+      friendRequestSent,
+      isOwnProfile,
+      sendFriendRequest
     };
   }
 };
@@ -592,6 +694,49 @@ export default {
 
 .event-meta i {
   color: #1877f2;
+}
+
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-button i {
+  font-size: 16px;
+}
+
+.action-button:not(.disabled):hover {
+  opacity: 0.9;
+}
+
+.action-button.disabled {
+  background: #e4e6eb;
+  color: #65676b;
+  cursor: not-allowed;
+}
+
+.action-button:not(.disabled):not(.friends) {
+  background: #1877f2;
+  color: white;
+}
+
+.action-button.friends {
+  background: #e4e6eb;
+  color: #1a1a1a;
 }
 /* LG END - Styles section */
 </style>
