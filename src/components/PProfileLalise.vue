@@ -1,4 +1,4 @@
-<!-- // LG BEGIN - New public profile component -->
+<!-- // LG BEGIN - New public profile component, test new branch..-->
 <template>
   <div id="public-profile-page">
     <!-- Header Section with Profile Picture and Basic Info -->
