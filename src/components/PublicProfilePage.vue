@@ -1,17 +1,11 @@
 <!-- 
-  This is the public profile page that shows:
-  1. User's basic info (name, location, profile pic)
-  2. Friend request/status buttons
-  3. About section and interests
-  4. Public events they've created
-  Users can view this page and send friend requests from here
+  This file is commented out and replaced by PProfileLalise.vue
+  Original content preserved below for reference:
 -->
-
+<!--
 <template>
   <div id="public-profile-page">
-    <!-- Header Section - Shows the user's profile picture and basic info -->
     <div class="profile-header">
-      <!-- Profile Picture Section - Shows user's avatar or default icon -->
       <div class="profile-picture"> 
         <div class="profile-circle">
           <img 
@@ -24,7 +18,6 @@
         </div>
       </div>
 
-      <!-- Basic Info - Name and Location -->
       <div class="basic-info">
         <h1>{{ profileData.firstName }} {{ profileData.lastName }}</h1>
         <div class="location" v-if="profileData.location">
@@ -34,9 +27,7 @@
       </div>
     </div>
 
-    <!-- Action Buttons - Friend request options (only shown on other people's profiles) -->
     <div class="profile-actions" v-if="!isOwnProfile">
-      <!-- Add Friend Button - Shows when not friends and no pending request -->
       <button 
         class="action-button" 
         @click="sendFriendRequest"
@@ -44,14 +35,12 @@
       >
         <i class="fas fa-user-plus"></i> Add Friend
       </button>
-      <!-- Pending Request Button - Shows when request is sent but not accepted -->
       <button 
         class="action-button disabled" 
         v-else-if="friendRequestSent"
       >
         <i class="fas fa-clock"></i> Request Sent
       </button>
-      <!-- Friends Status - Shows when you're already friends -->
       <button 
         class="action-button friends" 
         v-else
@@ -60,17 +49,14 @@
       </button>
     </div>
 
-    <!-- Main Content Area - Contains about, interests, and events sections -->
     <div class="profile-content">
       <div class="profile-main">
-        <!-- About Section - User's bio -->
         <div class="content-card">
           <h2>About</h2>
           <div class="bio-text" v-if="profileData.bio">{{ profileData.bio }}</div>
           <div class="no-content" v-else>No bio added</div>
         </div>
 
-        <!-- Interests Section - User's hobbies and interests -->
         <div class="content-card">
           <h2>Interests & Hobbies</h2>
           <div class="interests-container">
@@ -86,7 +72,6 @@
           </div>
         </div>
 
-        <!-- Events Section - Public events created by the user -->
         <div class="content-card">
           <h2>Events</h2>
           <div class="events-grid" v-if="userEvents.length > 0">
@@ -107,11 +92,8 @@
 </template>
 
 <script>
-// Import Vue and routing stuff
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-
-// Import Firebase stuff we need
 import { getAuth } from 'firebase/auth';
 import { db } from '@/firebase';
 import { 
@@ -127,37 +109,31 @@ import {
 
 export default {
   created() {
-  const userId = this.$route.params.userId;
-  console.log("Viewing public profile for user:", userId);
-},
+    const userId = this.$route.params.userId;
+    console.log("Viewing public profile for user:", userId);
+  },
 
   setup() {
-    // Set up reactive data for the profile
     const route = useRoute();
-    const profileData = ref({}); // Holds user's profile info
-    const userEvents = ref([]); // List of user's public events
-    const isFriend = ref(false); // Whether you're friends with this user
-    const friendRequestSent = ref(false); // Whether you've sent them a request
-    const isOwnProfile = ref(false); // Whether this is your own profile
+    const profileData = ref({});
+    const userEvents = ref([]);
+    const isFriend = ref(false);
+    const friendRequestSent = ref(false);
+    const isOwnProfile = ref(false);
 
-    // Loads all the user's profile data
     const loadUserProfile = async () => {
       try {
         const userId = route.params.userId;
         const currentUser = getAuth().currentUser;
         
-        // Check if we're looking at our own profile
         isOwnProfile.value = currentUser?.uid === userId;
 
-        // Get the user's basic profile info
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
           profileData.value = userDoc.data();
         }
 
-        // If we're logged in, check friendship status
         if (currentUser) {
-          // See if we're already friends
           const friendsQuery = query(
             collection(db, 'friends'),
             where('users', 'array-contains', currentUser.uid)
@@ -167,7 +143,6 @@ export default {
             doc.data().users.includes(userId)
           );
 
-          // Check if we've already sent a request
           const requestQuery = query(
             collection(db, 'friendRequests'),
             where('fromUserId', '==', currentUser.uid),
@@ -178,7 +153,6 @@ export default {
           friendRequestSent.value = !requestSnapshot.empty;
         }
 
-        // Get their public events
         const eventsQuery = query(
           collection(db, 'events'),
           where('createdBy', '==', userId),
@@ -195,7 +169,6 @@ export default {
       }
     };
 
-    // Handles sending a friend request
     const sendFriendRequest = async () => {
       try {
         const currentUser = getAuth().currentUser;
@@ -203,14 +176,12 @@ export default {
 
         const userId = route.params.userId;
         
-        // Get our name to show in the request
         const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
         const currentUserData = currentUserDoc.data();
         const senderName = currentUserData.firstName && currentUserData.lastName 
           ? `${currentUserData.firstName} ${currentUserData.lastName}`
           : currentUser.displayName || 'Anonymous';
 
-        // Create the friend request in the database
         await addDoc(collection(db, 'friendRequests'), {
           fromUserId: currentUser.uid,
           toUserId: userId,
@@ -220,10 +191,8 @@ export default {
           toUserName: profileData.value.firstName + ' ' + profileData.value.lastName
         });
 
-        // Update the UI to show request is sent
         friendRequestSent.value = true;
         
-        // Show a success message if toast is available
         if (typeof window.$toast !== 'undefined') {
           window.$toast.success('Friend request sent!');
         }
@@ -235,13 +204,8 @@ export default {
       }
     };
 
-    //thoams route to user public profile page form event detail when they click on woners name
-   
-
-    // Load profile data when component mounts
     onMounted(loadUserProfile);
 
-    // Make everything available to the template
     return {
       profileData,
       userEvents,
@@ -255,7 +219,6 @@ export default {
 </script>
 
 <style scoped>
-/* Main page layout */
 #public-profile-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -263,7 +226,6 @@ export default {
   background: #f0f2f5;
 }
 
-/* Header section styling */
 .profile-header {
   background: white;
   padding: 20px;
@@ -275,14 +237,12 @@ export default {
   margin-bottom: 20px;
 }
 
-/* Action buttons container */
 .profile-actions {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-/* Profile picture circle */
 .profile-circle {
   width: 168px;
   height: 168px;
@@ -292,14 +252,12 @@ export default {
   overflow: hidden;
 }
 
-/* Profile image */
 .profile-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Events grid layout */
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -307,7 +265,6 @@ export default {
   margin-top: 16px;
 }
 
-/* Event card styling */
 .event-card {
   background: white;
   border-radius: 8px;
@@ -321,14 +278,12 @@ export default {
   transform: translateY(-2px);
 }
 
-/* Event image */
 .event-img {
   width: 100%;
   height: 120px;
   object-fit: cover;
 }
 
-/* Placeholder for missing event images */
 .event-img-placeholder {
   width: 100%;
   height: 120px;
@@ -339,7 +294,6 @@ export default {
   color: #65676b;
 }
 
-/* Event information section */
 .event-info {
   padding: 12px;
 }
@@ -360,4 +314,5 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-</style> 
+</style>
+--> 
