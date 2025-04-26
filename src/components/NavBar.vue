@@ -9,6 +9,9 @@
     <v-btn v-if="isAuthenticated" text to="/create-event">Create Event</v-btn>
     <v-btn v-else text to="/RegisterPage">Register</v-btn>
     <v-btn v-if="!isAuthenticated" text to="/log-in">Log In</v-btn>
+    <v-btn @click="toggleDarkMode" icon class="dark-mode-toggle-btn">
+      <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+    </v-btn>
 
     <!-- Inbox -->
     <v-badge
@@ -68,6 +71,10 @@ import { db } from "@/firebase";
 
 export default {
   name: "NavBar",
+  props: {
+    isDark: Boolean,
+    toggleDarkMode: Function
+  },
   data() {
     return {
       userName: "Anonymous",

@@ -1,6 +1,6 @@
 <template>
   <!-- Toggle Button -->
-  <v-container fluid class="d-flex fill-height animated-background">
+  <v-container fluid class="d-flex fill-height ">
     <!-- Sidebar -->
     <v-navigation-drawer class="blue-shadow background-color-form" v-model="drawer" :permanent="false" app width="250">
       <v-list>
@@ -57,18 +57,21 @@
               <v-col cols="6" class="fill-height d-flex flex-column">
                 <v-card class="pa-4 blue-shadow fill-height d-flex flex-column">
                   <v-row v-if="activeChat === 'enabled'" style="height: 100%;">
+
+                    <!-- Chat Message Container -->
                     <div ref="chatContainer" style="height: 600px; width:100%; overflow-y: auto;">
                       <v-list style="display: flex; flex-direction: column; min-height: 100%;">
                         <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
                           :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                          <v-card class="pa-2 px-3 mb-1" :style="{
-                            backgroundColor: message.IsMine === 1 ? '#DFFFD6' : (message.SenderID === 'specialUserID' ? '#FFD700' : '#D6E6FF'),
-                            borderRadius: message.IsMine === 1 ? '15px 15px 0 15px' : '15px 15px 15px 0',
-                            padding: '10px',
-                            maxWidth: '70%',
-                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
-                            marginLeft: message.IsMine === 1 ? 'auto' : '0'
-                          }" elevation="2">
+                          <v-card class="pa-2 px-3 mb-1"
+                            :style="{
+                              backgroundColor: message.IsMine === 1 ? '#DFFFD6' : (message.SenderID === 'specialUserID' ? '#FFD700' : '#D6E6FF'),
+                              borderRadius: message.IsMine === 1 ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                              padding: '10px',
+                              maxWidth: '70%',
+                              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+                              marginLeft: message.IsMine === 1 ? 'auto' : '0'
+                            }" elevation="2">
                             <v-card-text style="word-wrap: break-word;">{{ message.content }}</v-card-text>
                           </v-card>
                           <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;"
@@ -79,6 +82,7 @@
                         <div style="margin-top: auto;"></div>
                       </v-list>
                     </div>
+
                     <!-- Message Input & Send Button -->
                     <v-card-actions class="d-flex align-center mt-auto" style="width: 100%;">
                       <v-text-field v-model="NewChatMessage" label="Type a message..." dense outlined hide-details
@@ -194,7 +198,6 @@
                   <small>{{ eventNotification.timestamp }}</small>
                 </v-card-text>
                 <v-card-actions>
-                  <!-- <v-btn color="primary" @click="viewEventDetails(eventNotification.eventId)">View Details</v-btn> -->
                   <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
                 </v-card-actions>
               </v-card>
@@ -228,6 +231,7 @@
     </v-col>
   </v-container>
 </template>
+
 
 <script>
 import { db } from '@/firebase';
@@ -273,7 +277,7 @@ export default {
       messages: [],
       searchQuery: '',
       replyContent: '',
-      notifications: [], // Assuming this is populated somewhere
+      notifications: [], 
       eventNotifications: [],
       MessageHistory: [],
       FilteredMessageHistory: [],
@@ -897,6 +901,11 @@ export default {
   color: #424242;
 }
 
+.v-theme--dark .background-color-form {
+  background: #424242;
+  color: #ffffff;
+}
+
 /* Sidebar Buttons */
 .button-border {
   border: 1px solid #bdbdbd;
@@ -907,14 +916,29 @@ export default {
   transition: 0.2s;
 }
 
+.v-theme--dark .button-border {
+  background: #616161;
+  color: #ffffff;
+  border-color: #424242;
+}
+
 .button-border:hover {
   background: #e0e0e0;
   border-color: #9e9e9e;
 }
 
+.v-theme--dark .button-border:hover {
+  background: #757575;
+  border-color: #ffffff;
+}
+
 /* Main Content Background */
 .background-transparent {
   background: rgba(0, 0, 0, 0.05);
+}
+
+.v-theme--dark .background-transparent {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Chat Message Bubbles */
@@ -926,8 +950,16 @@ export default {
   color: #424242;
 }
 
+.v-theme--dark .v-card-text {
+  color: #e0e0e0;
+}
+
 .v-card {
   background-color: #f9f9f9 !important;
+}
+
+.v-theme--dark .v-card {
+  background-color: #333333 !important;
 }
 
 .v-card[style*="backgroundColor: #DFFFD6"] {
@@ -936,10 +968,22 @@ export default {
   color: #1b5e20;
 }
 
+.v-theme--dark .v-card[style*="backgroundColor: #DFFFD6"] {
+  /* Dark Mode User Message */
+  background-color: #388e3c !important;
+  color: #c8e6c9;
+}
+
 .v-card[style*="backgroundColor: #D6E6FF"] {
   /* Other User Message */
   background-color: #bbdefb !important;
   color: #0d47a1;
+}
+
+.v-theme--dark .v-card[style*="backgroundColor: #D6E6FF"] {
+  /* Dark Mode Other User Message */
+  background-color: #1976d2 !important;
+  color: #bbdefb;
 }
 
 /* Message Input Field */
@@ -947,6 +991,11 @@ export default {
   background: #ffffff;
   color: #424242;
   border-radius: 8px;
+}
+
+.v-theme--dark .v-text-field {
+  background: #424242;
+  color: #ffffff;
 }
 
 /* Buttons */
@@ -959,8 +1008,22 @@ export default {
   background: linear-gradient(45deg, #42a5f5, #66bb6a);
 }
 
+.v-theme--dark .v-btn {
+  background: linear-gradient(45deg, #3f51b5, #00bcd4);
+  color: #ffffff !important;
+}
+
+.v-theme--dark .v-btn:hover {
+  background: linear-gradient(45deg, #303f9f, #0097a7);
+}
+
 /* Badge Styling */
 .v-badge {
+  background-color: #f44336 !important;
+  color: #ffffff !important;
+}
+
+.v-theme--dark .v-badge {
   background-color: #f44336 !important;
   color: #ffffff !important;
 }
@@ -978,4 +1041,13 @@ export default {
 ::-webkit-scrollbar-thumb:hover {
   background: #9e9e9e;
 }
+
+.v-theme--dark ::-webkit-scrollbar-thumb {
+  background: #616161;
+}
+
+.v-theme--dark ::-webkit-scrollbar-thumb:hover {
+  background: #757575;
+}
 </style>
+

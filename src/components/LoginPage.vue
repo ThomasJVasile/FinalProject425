@@ -6,9 +6,11 @@
       </v-card-title>
 
       <v-form @submit.prevent="handleLogin">
-        <v-text-field v-model="email" label="Email" type="email" outlined dense required />
+        <v-text-field v-model="email" label="Email" type="email" outlined dense required 
+          class="v-text-field-custom" />
 
-        <v-text-field v-model="password" label="Password" type="password" outlined dense required />
+        <v-text-field v-model="password" label="Password" type="password" outlined dense required 
+          class="v-text-field-custom" />
 
         <v-btn type="submit" color="primary" block class="mt-4">Log In</v-btn>
       </v-form>
@@ -34,78 +36,59 @@
 </template>
 
 <script>
-/* Import Firebase authentication functions */
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 export default {
-  /* Define reactive data properties */
   data() {
     return {
-      email: "", // User's email input
-      password: "", // User's password input
-      errorMessage: "", // Message to display if there's a login error
-      successMessage: "", // Message to display on successful login
+      email: "",
+      password: "",
+      errorMessage: "",
+      successMessage: "",
     };
   },
   methods: {
-    /* Handle login using email and password */
     async handleLogin() {
-      const auth = getAuth(); // Initialize Firebase authentication
+      const auth = getAuth();
       try {
-
-        // Sign in using the email and password provided
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          this.email,
-          this.password
-        );
-        const user = userCredential.user; // Get user details
+        const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
+        const user = userCredential.user;
         await user.reload();
 
         if (!user.emailVerified) {
-          console.log("Please verify your email before logging in.");
           this.errorMessage = "Please verify your email to login.";
           this.successMessage = "";
-          await auth.signOut(); 
+          await auth.signOut();
           return;
         }
 
-
-        this.successMessage = `Welcome back, ${user.email}!`; // Set success message
-        this.errorMessage = ""; // Clear any existing error messages
-        console.log("Login successful:", user);
-        this.$router.push("/homepage"); // Redirect to the homepage
+        this.successMessage = `Welcome back, ${user.email}!`;
+        this.errorMessage = "";
+        this.$router.push("/homepage");
       } catch (error) {
-        console.error("Login failed:", error); // Log the error
-        // Set error message based on the error code
         this.errorMessage =
           error.code === "auth/wrong-password"
             ? "Incorrect password. Please try again."
             : "Please enter a correct password or email";
-        this.successMessage = ""; // Clear success message
+        this.successMessage = "";
       }
     },
 
-    /* Handle login using Google */
     async loginWithGoogle() {
-      const auth = getAuth(); // Initialize Firebase authentication
-      const provider = new GoogleAuthProvider(); // Set up Google provider for authentication
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
       try {
-        // Sign in using Google
         const result = await signInWithPopup(auth, provider);
-        const user = result.user; // Get user details
-        console.log("Google login successful:", user);
-        this.successMessage = `Logged in as ${user.displayName}`; // Set success message
-        this.errorMessage = ""; // Clear any existing error messages
-        this.$router.push("/homepage"); // Redirect to the homepage
+        const user = result.user;
+        this.successMessage = `Logged in as ${user.displayName}`;
+        this.errorMessage = "";
+        this.$router.push("/homepage");
       } catch (error) {
-        console.error("Google login failed:", error); // Log the error
-        this.errorMessage = "Google login failed. Please try again."; // Set error message
-        this.successMessage = ""; // Clear success message
+        this.errorMessage = "Google login failed. Please try again.";
+        this.successMessage = "";
       }
     },
 
-    /* Placeholder for login using Apple (to be implemented) */
     loginWithApple() {
       console.log("do this before demo!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     },
@@ -115,11 +98,15 @@ export default {
 
 <style scoped>
 .v-container {
-  background-color: #f5f5f5;
+  background-color: var(--v-background-base);
 }
 
 .v-card {
-  background-color: #ffffff;
+  background-color: var(--v-card-background);
+}
+
+.v-text-field-custom input {
+  color: var(--v-text-base);
 }
 
 .v-btn {
@@ -129,4 +116,32 @@ export default {
 .v-alert {
   font-size: 14px;
 }
+
+.v-divider {
+  border-color: var(--v-divider-color);
+}
+
+.v-btn {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.v-btn.primary {
+  background-color: var(--v-primary-base);
+  color: var(--v-on-primary-base);
+}
+
+.v-btn.primary:hover {
+  background-color: var(--v-primary-darken);
+}
+
+.v-btn.blue {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.v-btn.black {
+  background-color: #1e1e1e;
+  color: white;
+}
 </style>
+
