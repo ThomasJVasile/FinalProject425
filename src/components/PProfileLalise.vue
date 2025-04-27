@@ -1,4 +1,4 @@
-<!-- // LG BEGIN - New public profile component, test new branch..-->
+<!-- // LG BEGIN - New public profile component.-->
 <template>
   <div id="public-profile-page">
     <!-- Header Section with Profile Picture and Basic Info -->
@@ -46,17 +46,17 @@
           @click="sendFriendRequest"
           v-if="!isFriend && !friendRequestSent"
         >
-          <i class="fas fa-user-plus"></i> Add Friend
+          <i class="fas fa-user-plus"></i> Send Friend Request
         </button>
         <button 
           class="action-button disabled" 
-          v-else-if="friendRequestSent"
+          v-else-if="!isFriend && friendRequestSent"
         >
-          <i class="fas fa-clock"></i> Request Sent
+          <i class="fas fa-clock"></i> Friend Request Sent
         </button>
         <button 
-          class="action-button friends" 
-          v-else
+          class="friend-status" 
+          v-else-if="isFriend"
         >
           <i class="fas fa-user-check"></i> Friends
         </button>
@@ -119,31 +119,25 @@
       <div v-if="activeTab === 'friends'" class="profile-main">
         <div class="content-card">
           <h2>Friends</h2>
-          <div v-if="userFriends.length > 0" class="friends-grid">
-            <div v-for="friend in userFriends" :key="friend.id" class="friend-card">
-              <div class="friend-avatar">
+          <div v-if="userFriends.length > 0" class="friends-list">
+            <!-- Use Set to remove duplicates -->
+            <div v-for="friend in [...new Set(userFriends)]" 
+                 :key="friend.id" 
+                 class="friend-item">
+              <div class="friend-avatar-small">
                 <img 
                   v-if="friend.avatarUrl" 
                   :src="friend.avatarUrl" 
-                  :alt="`${friend.firstName} ${friend.lastName}`"
-                  class="friend-image"
+                  :alt="friend.username"
+                  class="friend-image-small"
                   @error="friend.avatarUrl = null"
                 />
-                <svg 
-                  v-else 
-                  class="default-avatar" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path 
-                    d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" 
-                    fill="#65676b"
-                  />
-                </svg>
+                <div v-else class="default-avatar-small">
+                  <i class="fas fa-user"></i>
+                </div>
               </div>
-              <div class="friend-info">
-                <h3>{{ friend.firstName }} {{ friend.lastName }}</h3>
+              <div class="friend-username">
+                @{{ friend.username || 'Anonymous' }}
               </div>
             </div>
           </div>
@@ -154,8 +148,8 @@
       <!-- Events Tab Content -->
       <div v-if="activeTab === 'events'" class="profile-main">
         <div class="content-card">
-          <h2>Created Events</h2>
-          <div v-if="userEvents.length > 0" class="events-grid">
+          <h2>Public Events</h2>
+          <div v-if="userEvents && userEvents.length > 0" class="events-grid">
             <div v-for="event in userEvents" :key="event.id" class="event-card">
               <div class="event-image-container">
                 <img 
@@ -170,21 +164,28 @@
               </div>
               <div class="event-info">
                 <h3>{{ event.eventName }}</h3>
-                <p>{{ event.eventDescription }}</p>
+                <p class="event-description">{{ event.eventDescription }}</p>
                 <div class="event-meta">
-                  <span class="event-date">
+                  <span class="event-date" v-if="event.eventDate && event.eventDate !== ''">
                     <i class="fas fa-calendar"></i>
-                    {{ new Date(event.eventDate).toLocaleDateString() }}
+                    {{ event.eventDate }}
                   </span>
-                  <span class="event-location" v-if="event.location">
+                  <span class="event-location" v-if="event.eventLocation">
                     <i class="fas fa-map-marker-alt"></i>
-                    {{ event.location }}
+                    {{ event.eventLocation }}
                   </span>
+                  <div class="event-categories" v-if="event.categories && event.categories.length > 0">
+                    <span v-for="category in event.categories" 
+                          :key="category" 
+                          class="category-tag">
+                      {{ category }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div v-else class="no-content">No events created yet</div>
+          <div v-else class="no-content">No public events available</div>
         </div>
       </div>
     </div>
@@ -192,11 +193,13 @@
 </template>
 
 <script>
+/* eslint-disable no-unused-vars */
 // LG BEGIN - Script section
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/firebase';
+import { watch } from 'vue'; 
 import { 
   doc, 
   getDoc, 
@@ -206,6 +209,8 @@ import {
   getDocs, 
   addDoc,
   serverTimestamp
+  // Commenting out unused import
+  // or
 } from 'firebase/firestore';
 
 export default {
@@ -228,16 +233,86 @@ export default {
     const friendRequestSent = ref(false);
     const isOwnProfile = ref(false);
 
+    // eslint-disable-next-line no-unused-vars
+    const loadUserFriends = async () => {
+      try {
+        const userId = route.params.userId;
+        const friendsQuery = query(
+          collection(db, 'friendships'),
+          where('users', 'array-contains', userId)
+        );
+        const friendsSnapshot = await getDocs(friendsQuery);
+
+        const friendIds = [];
+        friendsSnapshot.forEach(doc => {
+          const users = doc.data().users;
+          const friendId = users.find(uid => uid !== userId);
+          if (friendId) friendIds.push(friendId);
+        });
+
+        const friendPromises = friendIds.map(async friendId => {
+          const friendDoc = await getDoc(doc(db, 'users', friendId));
+          if (friendDoc.exists()) {
+            const friendData = friendDoc.data();
+            return {
+              id: friendId,
+              firstName: friendData.firstName || '',
+              lastName: friendData.lastName || '',
+              username: friendData.username || '',
+              avatarUrl: friendData.avatarUrl || null,
+              location: friendData.location || ''
+            };
+          }
+          return null;
+        });
+        userFriends.value = (await Promise.all(friendPromises)).filter(Boolean);
+      } catch (error) {
+        console.error('Error loading friends:', error);
+      }
+    };
+
+    // eslint-disable-next-line no-unused-vars
+    const loadUserEvents = async () => {
+      try {
+        const userId = route.params.userId;
+        console.log('Loading events for userId:', userId);
+
+        // Update query to match your database structure
+        const eventsQuery = query(
+          collection(db, 'events'),
+          where('createdBy', '==', userId),    // Using createdBy as per your DB
+          where('isRestricted', '==', false)   // Show only non-restricted events
+        );
+
+        const eventsSnapshot = await getDocs(eventsQuery);
+        console.log('Found events:', eventsSnapshot.size);
+
+        userEvents.value = eventsSnapshot.docs.map(doc => {
+          const eventData = doc.data();
+          return {
+            id: doc.id,
+            ...eventData,
+            // Format date if it exists and is not empty
+            eventDate: eventData.eventDate && eventData.eventDate !== "" 
+              ? new Date(eventData.eventDate) 
+              : null
+          };
+        });
+
+        console.log('Processed events:', userEvents.value);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      }
+    };
+
     // Load user profile data
     const loadUserProfile = async () => {
       try {
         const userId = route.params.userId;
         const currentUser = getAuth().currentUser;
 
-        //const userDoc = await getDoc(doc(db, 'users', userId));
-
         isOwnProfile.value = currentUser?.uid === userId;
-         const userDoc = await getDoc(doc(db, 'users', userId));
+        const userDoc = await getDoc(doc(db, 'users', userId));
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -253,65 +328,37 @@ export default {
         }
 
         if (currentUser) {
-            // Check if they are already friends
-            const friendsQuery = query(
-              collection(db, 'friends'),
-              where('users', 'array-contains', currentUser.uid)
-            );
-            const friendsSnapshot = await getDocs(friendsQuery);
-            isFriend.value = friendsSnapshot.docs.some(doc => 
-              doc.data().users.includes(userId)
-            );
+          // Check friendship status
+          const friendshipsQuery = query(
+            collection(db, 'friendships'),
+            where('users', 'array-contains', currentUser.uid)
+          );
+          const friendshipsSnapshot = await getDocs(friendshipsQuery);
 
-            // Check if a friend request is pending
-            const requestQuery = query(
+          // Check if they are friends
+          isFriend.value = friendshipsSnapshot.docs.some(doc => {
+            const users = doc.data().users;
+            return users.includes(userId);
+          });
+
+          // Only check for pending requests if they're not already friends
+          if (!isFriend.value) {
+            const requestsQuery = query(
               collection(db, 'friendRequests'),
               where('fromUserId', '==', currentUser.uid),
               where('toUserId', '==', userId),
               where('status', '==', 'pending')
             );
-          const requestSnapshot = await getDocs(requestQuery);
-          friendRequestSent.value = !requestSnapshot.empty;
-        }
-        // Load user's events
-        const eventsQuery = query(
-          collection(db, 'events'),
-          where('createdBy', '==', userId)
-        );
-        const eventsSnapshot = await getDocs(eventsQuery);
-        userEvents.value = eventsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
-        // Load user's friends
-        const friendsQuery = query(
-          collection(db, 'friends'),
-          where('users', 'array-contains', userId)
-        );
-        const friendsSnapshot = await getDocs(friendsQuery);
-        const friendsPromises = friendsSnapshot.docs.map(async (doc) => {
-          const friendId = doc.data().users.find(id => id !== userId);
-          const friendDoc = await getDoc(doc(db, 'users', friendId));
-          if (friendDoc.exists()) {
-            const friendData = friendDoc.data();
-            return {
-              id: friendId,
-              firstName: friendData.firstName,
-              lastName: friendData.lastName,
-              avatarUrl: friendData.avatarUrl
-            };
+            const requestsSnapshot = await getDocs(requestsQuery);
+            friendRequestSent.value = !requestsSnapshot.empty;
+          } else {
+            friendRequestSent.value = false;
           }
-          return null;
-        });
-        userFriends.value = (await Promise.all(friendsPromises)).filter(Boolean);
-
+        }
       } catch (error) {
         console.error('Error loading user profile:', error);
       }
     };
-
-
 
     const sendFriendRequest = async () => {
       try {
@@ -348,11 +395,6 @@ export default {
       }
     };
 
-
-
-
-
-
     // Listen for name updates
     const handleNameUpdate = (event) => {
       const { firstName, lastName } = event.detail;
@@ -362,8 +404,49 @@ export default {
       }
     };
 
-    onMounted(() => {
+    //fixing friendhsip 
+    watch(isFriend, (newValue) => {
+    if (newValue) {
+      // If they become friends, ensure request sent is false
+      friendRequestSent.value = false;
+      // Reload the profile data to get updated events access
       loadUserProfile();
+    }
+  });
+
+    watch(activeTab, (newTab) => {
+      if (newTab === 'events') {
+        console.log('Events tab selected, loading events...');
+        loadUserEvents();
+      }
+    });
+
+    // Add this temporary function to check event structure
+    const debugEvents = async () => {
+      try {
+        const userId = route.params.userId;
+        const eventsRef = collection(db, 'events');
+        const allEvents = await getDocs(eventsRef);
+        
+        console.log('All events:', allEvents.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })));
+        
+        console.log('Looking for events with createdBy:', userId);
+      } catch (error) {
+        console.error('Error debugging events:', error);
+      }
+    };
+
+    // Call this in onMounted temporarily
+    onMounted(() => {
+      debugEvents(); // Add this temporarily
+      loadUserProfile();
+      loadUserFriends();
+      if (activeTab.value === 'events') {
+        loadUserEvents();
+      }
       window.addEventListener('userNameUpdated', handleNameUpdate);
     });
 
@@ -379,7 +462,9 @@ export default {
       isFriend,
       friendRequestSent,
       isOwnProfile,
-      sendFriendRequest
+      sendFriendRequest,
+      loadUserFriends,   // Add this
+      loadUserEvents 
     };
   }
 };
@@ -737,6 +822,144 @@ export default {
 .action-button.friends {
   background: #e4e6eb;
   color: #1a1a1a;
+}
+
+.event-description {
+  margin: 8px 0;
+  color: #65676b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.event-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #65676b;
+}
+
+.event-date, .event-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-image-container {
+  width: 100%;
+  height: 160px;
+  background: #f0f2f5;
+  overflow: hidden;
+}
+
+.event-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #65676b;
+  font-size: 24px;
+}
+
+.friend-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #e4e6eb;
+  color: #1a1a1a;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.friend-status i {
+  color: #1877f2;
+}
+
+/* Add these new styles to your existing style section */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.friend-item:hover {
+  background-color: #f0f2f5;
+}
+
+.friend-avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 12px;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friend-image-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-avatar-small {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e4e6eb;
+  color: #65676b;
+}
+
+.default-avatar-small i {
+  font-size: 20px;
+}
+
+.friend-username {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.event-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.category-tag {
+  background-color: #e4e6eb;
+  color: #1a1a1a;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 /* LG END - Styles section */
 </style>
