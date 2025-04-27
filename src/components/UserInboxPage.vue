@@ -1,6 +1,6 @@
 <template>
   <!-- Toggle Button -->
-  <v-container fluid class="d-flex fill-height ">
+  <v-container fluid class="d-flex fill-height animated-background">
     <!-- Sidebar -->
     <v-navigation-drawer class="blue-shadow background-color-form" v-model="drawer" :permanent="false" app width="250">
       <v-list>
@@ -32,7 +32,7 @@
                   <v-list>
                     <v-list-item v-for="history in FilteredMessageHistory" :key="history.ChatID" class="pa-0 ma-0">
                       <div :key="ChatKey" class="d-flex align-center">
-                        <v-btn block color="primary" size="large" style="height: 45px;"
+                        <v-btn block color="primary" size="large" style="height: 55px; margin-top: 4px;"
                           @click="async () => { activeChat = 'enabled'; ActiveHistory = history; ActiveChatReceiver = history.OtherUserID; UpdateSeenFlagChatHistory(); ListenForNewMessages(); }">
 
                           <v-avatar v-if="history.OtherUser.avatarUrl" size="55" class="mr-3">
@@ -192,14 +192,22 @@
           <v-list>
             <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
               <v-card class="pa-3 mb-2">
+              <v-row>
+                <v-col cols="3">
+                <v-img :src="eventNotification.event.imageUrl" alt="Event Image" contain></v-img>
+                </v-col>
+                <v-col cols="9">
                 <v-card-text>
-                  <strong>Event:</strong> {{ eventNotification.eventName }}<br />
+                  <strong>Event:</strong> {{ eventNotification.event.eventName }}<br />
                   <strong>Message:</strong> {{ eventNotification.message }}<br />
                   <small>{{ eventNotification.timestamp }}</small>
                 </v-card-text>
                 <v-card-actions>
                   <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
+                  <v-btn color="primary" @click="goToEventDetail(eventNotification.event.id)">View Event</v-btn>
                 </v-card-actions>
+                </v-col>
+              </v-row>
               </v-card>
             </v-list-item>
           </v-list>
@@ -213,7 +221,10 @@
           <v-card-title class="text-h5">Event Requests</v-card-title>
           <v-list>
             <v-list-item v-for="notification in notifications" :key="notification.id">
-              <v-card class="pa-3 mb-2">
+                <v-card class="pa-3 mb-2 d-flex align-center">
+                <v-avatar v-if="notification.user?.avatarUrl" size="65" class="mr-3">
+                  <v-img :src="notification.user.avatarUrl" alt="User Avatar"></v-img>
+                </v-avatar>
                 <v-card-text>
                   {{ notification.content }}
                   <br />
@@ -223,7 +234,7 @@
                   <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
                   <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
                 </v-card-actions>
-              </v-card>
+                </v-card>
             </v-list-item>
           </v-list>
         </v-card>
@@ -277,7 +288,8 @@ export default {
       messages: [],
       searchQuery: '',
       replyContent: '',
-      notifications: [], 
+      notifications: [],
+      Events: [], 
       eventNotifications: [],
       MessageHistory: [],
       FilteredMessageHistory: [],
@@ -295,7 +307,6 @@ export default {
   },
 
   methods: {
-
     async GetFriends() {
       const currentUser = getAuth().currentUser;
       if (!currentUser) return [];
@@ -347,6 +358,10 @@ export default {
       return new Date(timestamp.seconds * 1000).toLocaleString();
     },
 
+    goToEventDetail(id) {
+      window.location.href = `/eventDetailPage/${id}`;
+    },
+
     async sendReply(parentMessage) {
       if (!this.replyContent || typeof this.replyContent !== 'string' || !this.replyContent.trim()) {
         alert("Reply cannot be empty.");
@@ -369,25 +384,45 @@ export default {
 
     async fetchEventNotifications() {
       try {
-        const currentUser = getAuth().currentUser;
-        if (!currentUser) return;
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) return;
 
-        const notificationsSnapshot = await getDocs(
-          query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
-        );
+      const notificationsSnapshot = await getDocs(
+        query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
+      );
 
-        this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
-          const data = docSnapshot.data();
-          return {
-            id: docSnapshot.id,
-            eventName: data.EventID,
-            message: data.notifications,
-            timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
-          };
-        });
-        console.log("Fetched event notifications:", this.eventNotifications);
+      this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+        id: docSnapshot.id,
+        eventID: data.eventID,
+        message: data.notifications,
+        timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
+        event: null, // Placeholder for the actual event document
+        };
+      });
+      
+      // Fetch event names from the events collection
+      const eventIDs = this.eventNotifications.map(notification => notification.eventID);
+      if (eventIDs.length > 0) {
+        const eventQuery = query(collection(db, "events"), where("__name__", "in", eventIDs));
+        const eventSnapshot = await getDocs(eventQuery);
+        const eventsMap = eventSnapshot.docs.reduce((map, doc) => {
+        map[doc.id] = { id: doc.id, ...doc.data() };
+        return map;
+        }, {});
+
+        // Add the actual event document to its corresponding notification
+        this.eventNotifications = this.eventNotifications.map(notification => ({
+        ...notification,
+        event: eventsMap[notification.eventID] || null,
+        }));
+      }
+
+      console.log("Fetched events:", this.Events);
+      console.log("Fetched event notifications:", this.eventNotifications);
       } catch (error) {
-        console.error("Error fetching event notifications:", error);
+      console.error("Error fetching event notifications:", error);
       }
     },
 
@@ -718,13 +753,9 @@ export default {
       try {
         const currentUser = getAuth().currentUser;
         if (!currentUser) return;
-
         const requestsSnapshot = await getDocs(
           query(collection(db, "RequestJoin"), where("EventOwnerUID", "==", currentUser.uid), where("status", "==", "pending"))
-
         );
-
-
         this.notifications = requestsSnapshot.docs.map(docSnapshot => {
           const requestData = docSnapshot.data();
           return {
@@ -733,8 +764,22 @@ export default {
             timestamp: requestData.timestamp ? requestData.timestamp.toDate().toLocaleString() : 'Unknown Date',
             EventID: requestData.EventID,
             UserID: requestData.RequestingUserUID,
+            user: null, // Placeholder for user document
           };
         });
+        const RequestingUserIDs = this.notifications.map(notification => notification.UserID);
+        const UserQuery = query(collection(db, "users"), where("__name__", "in", RequestingUserIDs));
+        const UserDocs = await getDocs(UserQuery);
+        const UsersMap = {};
+        UserDocs.forEach((doc) => {
+          UsersMap[doc.id] = doc.data();
+        });
+        this.notifications = this.notifications.map(notification => ({
+          ...notification,
+          user: UsersMap[notification.UserID] || null, // Attach user document to notification
+        }));
+        console.log("Fetched notifications:", this.notifications);
+
       } catch (error) {
         console.error("Error fetching event notifications:", error);
       }
@@ -858,8 +903,8 @@ export default {
   },
   mounted() {
     this.fetchMessages();
-    this.fetchNotifications();
     this.fetchEventNotifications();
+    this.fetchNotifications();
     this.GetMessageHistory();
     this.GetMyUserDocument();
     this.GetFriends();
@@ -879,6 +924,12 @@ export default {
   background: linear-gradient(120deg, #f5f5f5, #e0e0e0);
   background-size: 400% 400%;
   animation: gradientAnimation 6s ease infinite;
+}
+
+.v-theme--dark .animated-background {
+  background: linear-gradient(120deg, #333333, #424242);
+  background-size: 400% 400%;
+  animation: gradientAnimationDark 6s ease infinite;
 }
 
 @keyframes gradientAnimation {
