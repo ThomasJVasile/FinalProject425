@@ -80,7 +80,6 @@
       <!-- LG: Reordered navigation tabs -->
       <button class="tab-button" @click="goToPage('EventsPage')"><i class="fa fa-calendar"></i> Events</button>
       <button class="tab-button" @click="goToPage('FriendRequests')"><i class="fa fa-user-friends"></i> Friends</button>
-      <button class="tab-button"><i class="fa fa-image"></i> Photos</button>
       <button class="tab-button" @click="goToPage('SettingsPage')"><i class="fa fa-cog"></i> Settings</button>
 
       <!-- 
@@ -107,14 +106,7 @@
         <div class="content-card">
           <h2>Interests & Hobbies</h2>
           <div class="interests-container">
-            <ul class="interests-list" v-if="userInterests && userInterests.length > 0">
-              <li v-for="(interest, index) in userInterests" 
-                  :key="index" 
-                  class="interest-item">
-                <i class="fas fa-circle"></i>
-                {{ interest }}
-              </li>
-            </ul>
+            <p class="interests-text" v-if="userInterests">{{ userInterests }}</p>
             <div class="no-content" v-else>No interests added yet</div>
           </div>
         </div>
@@ -148,7 +140,7 @@ export default {
       selectedFile: null,   // Stores the uploaded file
       message: "",          // Displays success or error messages
       userBio: "",
-      userInterests: [],
+      userInterests: "",
       userLocation: "",
       coverPhoto: null,      // Add this line for cover photo URL
     };
@@ -177,7 +169,7 @@ export default {
             
             // New data from settings
             this.userBio = userData.bio || "";
-            this.userInterests = userData.interests || [];
+            this.userInterests = userData.interests || "";
             this.userLocation = userData.location || "";
             
             // Add this line to load cover photo
@@ -361,32 +353,16 @@ export default {
 }
 
 .interests-container {
-  width: 100%;
+  padding: 10px 0;
 }
 
-.interests-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.interest-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
+.interests-text {
   color: #1a1a1a;
+  line-height: 1.6;
+  white-space: pre-line;
   font-size: 0.95rem;
-  border-bottom: 1px solid #f0f2f5;
-}
-
-.interest-item:last-child {
-  border-bottom: none;
-}
-
-.interest-item i {
-  font-size: 6px;
-  color: #65676b;
+  margin: 0;
+  padding: 0;
 }
 
 .no-content {
