@@ -5,7 +5,13 @@
     <v-navigation-drawer class="blue-shadow background-color-form" v-model="drawer" :permanent="false" app width="250">
       <v-list>
         <v-list-item @click="activeForm = 'message'" class="button-border">Chat</v-list-item>
-        <v-list-item @click="activeForm = 'notifications'" class="button-border">Event Requests</v-list-item>
+        <v-list-item @click="activeForm = 'notifications'" class="button-border"
+          style="position: relative; padding-right: 30px;">
+          Event Requests
+          <v-badge v-if="EventRequestCount > 0" :content="EventRequestCount" color="red" size="medium"
+            style="position: absolute; right: 10%; top: 50%; bottom: 50%; transform: translateY(-50%);">
+          </v-badge>
+        </v-list-item>
         <v-list-item @click="activeForm = 'event-notifications'" class="button-border">Event Notifications</v-list-item>
         <v-list-item @click="activeForm = 'inbox'" class="button-border">Inbox</v-list-item>
         <v-list-item @click="activeForm = 'invites'" class="button-border">Invitations</v-list-item>
@@ -63,15 +69,14 @@
                       <v-list style="display: flex; flex-direction: column; min-height: 100%;">
                         <v-list-item v-for="message in ActiveHistory.messages" :key="message.id"
                           :class="{ 'd-flex justify-end': message.IsMine === 1, 'd-flex justify-start': message.IsMine === 0 }">
-                          <v-card class="pa-2 px-3 mb-1"
-                            :style="{
-                              backgroundColor: message.IsMine === 1 ? '#DFFFD6' : (message.SenderID === 'specialUserID' ? '#FFD700' : '#D6E6FF'),
-                              borderRadius: message.IsMine === 1 ? '15px 15px 0 15px' : '15px 15px 15px 0',
-                              padding: '10px',
-                              maxWidth: '70%',
-                              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
-                              marginLeft: message.IsMine === 1 ? 'auto' : '0'
-                            }" elevation="2">
+                          <v-card class="pa-2 px-3 mb-1" :style="{
+                            backgroundColor: message.IsMine === 1 ? '#DFFFD6' : (message.SenderID === 'specialUserID' ? '#FFD700' : '#D6E6FF'),
+                            borderRadius: message.IsMine === 1 ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                            padding: '10px',
+                            maxWidth: '70%',
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+                            marginLeft: message.IsMine === 1 ? 'auto' : '0'
+                          }" elevation="2">
                             <v-card-text style="word-wrap: break-word;">{{ message.content }}</v-card-text>
                           </v-card>
                           <div class="text-caption text-grey-darken-1 mt-1" style="font-size: 12px;"
@@ -101,7 +106,7 @@
                     </v-card-actions>
                   </v-row>
                   <v-row v-else style="height: 100%; justify-content: center; align-items: center;">
-                    <v-img :src="require('@/assets/placeholder.png')" alt="No Active Chat" contain></v-img>
+                    <v-img :src="require('@/assets/night.png')" alt="No Active Chat" contain></v-img>
                   </v-row>
                 </v-card>
               </v-col>
@@ -192,22 +197,22 @@
           <v-list>
             <v-list-item v-for="eventNotification in eventNotifications" :key="eventNotification.id">
               <v-card class="pa-3 mb-2">
-              <v-row>
-                <v-col cols="3">
-                <v-img :src="eventNotification.event.imageUrl" alt="Event Image" contain></v-img>
-                </v-col>
-                <v-col cols="9">
-                <v-card-text>
-                  <strong>Event:</strong> {{ eventNotification.event.eventName }}<br />
-                  <strong>Message:</strong> {{ eventNotification.message }}<br />
-                  <small>{{ eventNotification.timestamp }}</small>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
-                  <v-btn color="primary" @click="goToEventDetail(eventNotification.event.id)">View Event</v-btn>
-                </v-card-actions>
-                </v-col>
-              </v-row>
+                <v-row>
+                  <v-col cols="3">
+                    <v-img :src="eventNotification.event.imageUrl" alt="Event Image" contain></v-img>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-card-text>
+                      <strong>Event:</strong> {{ eventNotification.event.eventName }}<br />
+                      <strong>Message:</strong> {{ eventNotification.message }}<br />
+                      <small>{{ eventNotification.timestamp }}</small>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn color="error" @click="dismissNotification(eventNotification.id)">Dismiss</v-btn>
+                      <v-btn color="primary" @click="goToEventDetail(eventNotification.event.id)">View Event</v-btn>
+                    </v-card-actions>
+                  </v-col>
+                </v-row>
               </v-card>
             </v-list-item>
           </v-list>
@@ -221,10 +226,13 @@
           <v-card-title class="text-h5">Event Requests</v-card-title>
           <v-list>
             <v-list-item v-for="notification in notifications" :key="notification.id">
-                <v-card class="pa-3 mb-2 d-flex align-center">
-                <v-avatar v-if="notification.user?.avatarUrl" size="65" class="mr-3">
-                  <v-img :src="notification.user.avatarUrl" alt="User Avatar"></v-img>
-                </v-avatar>
+              <v-card class="pa-3 mb-2 d-flex align-center">
+                <router-link :to="`/profile/${notification.UserID}`" style="text-decoration: none;">
+                  <v-avatar v-if="notification.user?.avatarUrl" size="65" class="mr-3 hoverable-avatar"
+                    style="cursor: pointer;">
+                    <v-img :src="notification.user.avatarUrl" alt="User Avatar"></v-img>
+                  </v-avatar>
+                </router-link>
                 <v-card-text>
                   {{ notification.content }}
                   <br />
@@ -234,7 +242,7 @@
                   <v-btn color="success" @click="acceptRequest(notification)">Accept</v-btn>
                   <v-btn color="error" @click="rejectRequest(notification)">Reject</v-btn>
                 </v-card-actions>
-                </v-card>
+              </v-card>
             </v-list-item>
           </v-list>
         </v-card>
@@ -289,10 +297,12 @@ export default {
       searchQuery: '',
       replyContent: '',
       notifications: [],
-      Events: [], 
+      Events: [],
       eventNotifications: [],
       MessageHistory: [],
       FilteredMessageHistory: [],
+
+      EventRequestCount: 0,
     };
   },
 
@@ -337,6 +347,18 @@ export default {
         console.log("No friends found.");
       }
 
+    },
+
+    async ListenForNewEventRequests() {
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) return;
+
+      const EventRequestReference = collection(db, "RequestJoin");
+      const EventRequestQuery = query(EventRequestReference, where("EventOwnerUID", "==", currentUser.uid), where("status", "==", "pending"));
+      onSnapshot(EventRequestQuery, () => {
+        console.log("Event request changed!");
+        this.fetchNotifications(); // Call fetchNotifications whenever a change is detected
+      });
     },
 
     initiateReply(message) {
@@ -384,45 +406,45 @@ export default {
 
     async fetchEventNotifications() {
       try {
-      const currentUser = getAuth().currentUser;
-      if (!currentUser) return;
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
 
-      const notificationsSnapshot = await getDocs(
-        query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
-      );
+        const notificationsSnapshot = await getDocs(
+          query(collection(db, "EventNotification"), where("recipientUID", "==", currentUser.uid))
+        );
 
-      this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
-        const data = docSnapshot.data();
-        return {
-        id: docSnapshot.id,
-        eventID: data.eventID,
-        message: data.notifications,
-        timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
-        event: null, // Placeholder for the actual event document
-        };
-      });
-      
-      // Fetch event names from the events collection
-      const eventIDs = this.eventNotifications.map(notification => notification.eventID);
-      if (eventIDs.length > 0) {
-        const eventQuery = query(collection(db, "events"), where("__name__", "in", eventIDs));
-        const eventSnapshot = await getDocs(eventQuery);
-        const eventsMap = eventSnapshot.docs.reduce((map, doc) => {
-        map[doc.id] = { id: doc.id, ...doc.data() };
-        return map;
-        }, {});
+        this.eventNotifications = notificationsSnapshot.docs.map(docSnapshot => {
+          const data = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            eventID: data.eventID,
+            message: data.notifications,
+            timestamp: data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Unknown Date',
+            event: null, // Placeholder for the actual event document
+          };
+        });
 
-        // Add the actual event document to its corresponding notification
-        this.eventNotifications = this.eventNotifications.map(notification => ({
-        ...notification,
-        event: eventsMap[notification.eventID] || null,
-        }));
-      }
+        // Fetch event names from the events collection
+        const eventIDs = this.eventNotifications.map(notification => notification.eventID);
+        if (eventIDs.length > 0) {
+          const eventQuery = query(collection(db, "events"), where("__name__", "in", eventIDs));
+          const eventSnapshot = await getDocs(eventQuery);
+          const eventsMap = eventSnapshot.docs.reduce((map, doc) => {
+            map[doc.id] = { id: doc.id, ...doc.data() };
+            return map;
+          }, {});
 
-      console.log("Fetched events:", this.Events);
-      console.log("Fetched event notifications:", this.eventNotifications);
+          // Add the actual event document to its corresponding notification
+          this.eventNotifications = this.eventNotifications.map(notification => ({
+            ...notification,
+            event: eventsMap[notification.eventID] || null,
+          }));
+        }
+
+        console.log("Fetched events:", this.Events);
+        console.log("Fetched event notifications:", this.eventNotifications);
       } catch (error) {
-      console.error("Error fetching event notifications:", error);
+        console.error("Error fetching event notifications:", error);
       }
     },
 
@@ -779,7 +801,7 @@ export default {
           user: UsersMap[notification.UserID] || null, // Attach user document to notification
         }));
         console.log("Fetched notifications:", this.notifications);
-
+        this.EventRequestCount = this.notifications.length; // Update the event request count
       } catch (error) {
         console.error("Error fetching event notifications:", error);
       }
@@ -903,6 +925,7 @@ export default {
   },
   mounted() {
     this.fetchMessages();
+    this.ListenForNewEventRequests();
     this.fetchEventNotifications();
     this.fetchNotifications();
     this.GetMessageHistory();
@@ -990,6 +1013,16 @@ export default {
 
 .v-theme--dark .background-transparent {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.hoverable-avatar {
+  transition: all 0.3s ease;
+}
+
+.hoverable-avatar:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* adds a nice shadow */
+  transform: scale(1.05); /* slightly enlarges the avatar */
+  cursor: pointer; /* makes sure the pointer shows */
 }
 
 /* Chat Message Bubbles */
@@ -1101,4 +1134,3 @@ export default {
   background: #757575;
 }
 </style>
-

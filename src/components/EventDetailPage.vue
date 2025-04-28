@@ -14,10 +14,8 @@
             <img :src="ownerAvatar" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
           </v-avatar>
           <!-- <p>{{ ownerName }}</p> -->
-          <router-link
-            :to="`/profile/${event.createdBy}`"
-            style="text-decoration: none; color: #1976d2; font-weight: bold;"
-          >
+          <router-link :to="`/profile/${event.createdBy}`"
+            style="text-decoration: none; color: #1976d2; font-weight: bold;">
             {{ ownerName }}
           </router-link>
 
@@ -36,7 +34,7 @@
           <p>No image available for this event.</p>
         </v-col>
 
-        <v-col cols="12" class="text-center">
+        <v-col cols="12" class="text-center" v-if="!isOwner">
           <!-- Check if the event is restricted, display "Request to Join" if restricted is 1 -->
           <v-btn v-if="event.isRestricted === true" color="primary" @click="requestToJoin">Request to Join</v-btn>
           <!-- Otherwise, display "Join" button -->
@@ -60,39 +58,31 @@
         </v-col>
 
         <v-col cols="12" class="text-center mt-4">
-  <h3>Comments</h3>
+          <h3>Comments</h3>
 
-  <v-textarea
-    v-model="newComment"
-    label="Write a comment..."
-    auto-grow
-    outlined
-    class="mb-2"
-  ></v-textarea>
+          <v-textarea v-model="newComment" label="Write a comment..." auto-grow outlined class="mb-2"></v-textarea>
 
-  <v-btn color="primary" @click="submitComment">Post Comment</v-btn>
+          <v-btn color="primary" @click="submitComment">Post Comment</v-btn>
 
-  <v-divider class="my-4"></v-divider>
+          <v-divider class="my-4"></v-divider>
 
-  <div v-if="comments.length === 0">
-    <p>No comments yet. Be the first to ask something!</p>
-  </div>
+          <div v-if="comments.length === 0">
+            <p>No comments yet. Be the first to ask something!</p>
+          </div>
 
-  <v-list two-line v-else>
-    <v-list-item v-for="(comment, index) in comments" :key="index">
-      <v-list-item-content>
-        <!-- <v-list-item-title>{{ comment.username }}</v-list-item-title> -->
-        <router-link
-          :to="`/profile/${comment.uid}`"
-          style="text-decoration: none; color: #1976d2; font-weight: bold;"
-        >
-          {{ comment.username }}
-        </router-link>
-        <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
-      </v-list-item-content>
-    </v-list-item>
-  </v-list>
-</v-col>
+          <v-list two-line v-else>
+            <v-list-item v-for="(comment, index) in comments" :key="index">
+              <v-list-item-content>
+                <!-- <v-list-item-title>{{ comment.username }}</v-list-item-title> -->
+                <router-link :to="`/profile/${comment.uid}`"
+                  style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                  {{ comment.username }}
+                </router-link>
+                <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-col>
 
 
 
@@ -193,47 +183,47 @@ export default {
   },
   methods: {
     async submitComment() {
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    this.message = "You must be logged in to post a comment.";
-    this.hideMessageAfterDelay();
-    return;
-  }
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        this.message = "You must be logged in to post a comment.";
+        this.hideMessageAfterDelay();
+        return;
+      }
 
-  if (!this.newComment.trim()) return;
+      if (!this.newComment.trim()) return;
 
-  try {
-    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-    const username = userDoc.exists() ? userDoc.data().username : "Anonymous";
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        const username = userDoc.exists() ? userDoc.data().username : "Anonymous";
 
-    const eventId = this.$route.params.id;
-    const commentRef = doc(collection(db, "events", eventId, "comments"));
+        const eventId = this.$route.params.id;
+        const commentRef = doc(collection(db, "events", eventId, "comments"));
 
-    await setDoc(commentRef, {
-      uid: currentUser.uid,
-      username,
-      text: this.newComment.trim(),
-      timestamp: new Date(),
-    });
+        await setDoc(commentRef, {
+          uid: currentUser.uid,
+          username,
+          text: this.newComment.trim(),
+          timestamp: new Date(),
+        });
 
-    this.newComment = "";
-    this.fetchComments(); // reload comments after posting
-  } catch (error) {
-    console.error("Error posting comment:", error);
-  }
-},
+        this.newComment = "";
+        this.fetchComments(); // reload comments after posting
+      } catch (error) {
+        console.error("Error posting comment:", error);
+      }
+    },
 
-async fetchComments() {
-  const eventId = this.$route.params.id;
-  const commentsSnapshot = await getDocs(collection(db, "events", eventId, "comments"));
+    async fetchComments() {
+      const eventId = this.$route.params.id;
+      const commentsSnapshot = await getDocs(collection(db, "events", eventId, "comments"));
 
-  this.comments = commentsSnapshot.docs
-    .map((doc) => doc.data())
-    .sort((a, b) => b.timestamp - a.timestamp); // newest first
-},
+      this.comments = commentsSnapshot.docs
+        .map((doc) => doc.data())
+        .sort((a, b) => b.timestamp - a.timestamp); // newest first
+    },
 
-//comments ^^^
+    //comments ^^^
 
 
 
@@ -393,19 +383,19 @@ async fetchComments() {
 
 /* demo to make it look bigger  */
 .event-container {
-  max-width: 1000px; 
+  max-width: 1000px;
   margin: auto;
   padding: 20px;
 }
 
 .v-card {
-  width: 100%; 
-  max-width: 900px; 
+  width: 100%;
+  max-width: 900px;
 }
 
 .avatar-img {
   object-fit: cover;
-  width: 80px !important; 
+  width: 80px !important;
   height: 80px !important;
   border-radius: 50%;
   margin-bottom: 10px;
