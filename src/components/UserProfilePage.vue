@@ -1,5 +1,30 @@
 <template>
   <div id="profile-page">
+    <!-- Add Cover Photo Section -->
+    <div class="cover-photo-container">
+      <img 
+        v-if="coverPhoto" 
+        :src="coverPhoto" 
+        alt="Cover Photo" 
+        class="cover-photo"
+        @error="coverPhoto = null"
+      />
+      <div v-else class="cover-photo-placeholder">
+        <div class="gradient-background"></div>
+      </div>
+      
+      <label class="cover-photo-button" title="Update cover photo">
+        <i class="fa fa-camera"></i>
+        Edit Cover Photo
+        <input 
+          type="file" 
+          accept="image/*" 
+          @change="handleCoverPhotoSelect" 
+          class="file-input"
+        />
+      </label>
+    </div>
+
     <!-- Header Section with Profile Picture and Basic Info -->
     <div class="profile-header">
       <div class="profile-picture"> 
@@ -125,6 +150,7 @@ export default {
       userBio: "",
       userInterests: [],
       userLocation: "",
+      coverPhoto: null,      // Add this line for cover photo URL
     };
   },
 
@@ -153,6 +179,9 @@ export default {
             this.userBio = userData.bio || "";
             this.userInterests = userData.interests || [];
             this.userLocation = userData.location || "";
+            
+            // Add this line to load cover photo
+            this.coverPhoto = userData.coverPhotoUrl || null;
           } else {
             this.profilePicture = currentUser.photoURL || "placeholder-profile.png"; 
           }
@@ -206,6 +235,34 @@ export default {
 
     handleImageError() {
       this.profilePicture = null;
+    },
+
+    async handleCoverPhotoSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        // Upload file to Firebase Storage
+        const coverPhotoRef = storageRef(
+          storage,
+          `user-covers/${this.user.uid}_${file.name}`
+        );
+
+        const snapshot = await uploadBytes(coverPhotoRef, file);
+        const coverPhotoUrl = await getDownloadURL(snapshot.ref);
+
+        // Update Firestore with new cover photo URL
+        await updateDoc(doc(db, "users", this.user.uid), {
+          coverPhotoUrl: coverPhotoUrl,
+        });
+
+        // Update local state
+        this.coverPhoto = coverPhotoUrl;
+        this.message = "Cover photo updated successfully!";
+      } catch (error) {
+        console.error("Error uploading cover photo:", error);
+        this.message = "Failed to upload cover photo. Please try again.";
+      }
     },
   },
 };
@@ -426,5 +483,85 @@ export default {
   color: #65676b;
   font-size: 0.9rem;
   margin: 4px 0;
+}
+
+/* Add these new styles to your existing <style> section */
+.cover-photo-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  margin-bottom: -60px;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.cover-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-photo-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.gradient-background {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #1a73e8, #4285f4, #34a853);
+}
+
+.cover-photo-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.cover-photo-button:hover {
+  background: white;
+  transform: scale(1.02);
+}
+
+.cover-photo-button input[type="file"] {
+  display: none;
+}
+
+/* Update your existing profile-header class */
+.profile-header {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Update profile picture positioning */
+.profile-picture {
+  margin-top: -40px;
+  flex-shrink: 0;
+}
+
+.profile-circle {
+  border: 4px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

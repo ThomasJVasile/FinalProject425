@@ -1,6 +1,35 @@
 <!-- // LG BEGIN - New public profile component.-->
 <template>
   <div id="public-profile-page">
+    <!-- Add Cover Photo Section -->
+    <div class="cover-photo-container">
+      <img 
+        v-if="profileData.coverPhotoUrl" 
+        :src="profileData.coverPhotoUrl" 
+        alt="Cover Photo" 
+        class="cover-photo"
+        @error="profileData.coverPhotoUrl = null"
+      />
+      <div v-else class="cover-photo-placeholder">
+        <div class="gradient-background"></div>
+      </div>
+      
+      <!-- Only show edit button if it's the user's own profile -->
+      <div v-if="isOwnProfile" class="cover-photo-edit">
+        <label for="cover-photo-upload" class="edit-button">
+          <i class="fas fa-camera"></i>
+          Edit Cover Photo
+        </label>
+        <input 
+          type="file" 
+          id="cover-photo-upload" 
+          accept="image/*"
+          @change="handleCoverPhotoUpload"
+          style="display: none;"
+        />
+      </div>
+    </div>
+
     <!-- Header Section with Profile Picture and Basic Info -->
     <div class="profile-header">
       <div class="profile-picture"> 
@@ -120,8 +149,7 @@
         <div class="content-card">
           <h2>Friends</h2>
           <div v-if="userFriends.length > 0" class="friends-list">
-            <!-- Use Set to remove duplicates -->
-            <div v-for="friend in [...new Set(userFriends)]" 
+            <div v-for="friend in userFriends" 
                  :key="friend.id" 
                  class="friend-item">
               <div class="friend-avatar-small">
@@ -195,11 +223,10 @@
 <script>
 /* eslint-disable no-unused-vars */
 // LG BEGIN - Script section
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '@/firebase';
-import { watch } from 'vue'; 
 import { 
   doc, 
   getDoc, 
@@ -208,10 +235,12 @@ import {
   where, 
   getDocs, 
   addDoc,
-  serverTimestamp
-  // Commenting out unused import
-  // or
+  serverTimestamp,
+  updateDoc,
+  onSnapshot
 } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/firebase';
 
 export default {
   name: 'PProfileLalise',
@@ -225,13 +254,16 @@ export default {
       bio: '',
       interests: [],
       location: '',
-      avatarUrl: null
+      avatarUrl: null,
+      coverPhotoUrl: null
     });
     const userEvents = ref([]);
     const userFriends = ref([]);
     const isFriend = ref(false);
     const friendRequestSent = ref(false);
     const isOwnProfile = ref(false);
+
+    let unsubscribeFriendship = null;
 
     // eslint-disable-next-line no-unused-vars
     const loadUserFriends = async () => {
@@ -243,14 +275,16 @@ export default {
         );
         const friendsSnapshot = await getDocs(friendsQuery);
 
-        const friendIds = [];
+        // Use Set for unique friend IDs
+        const friendIds = new Set();
         friendsSnapshot.forEach(doc => {
           const users = doc.data().users;
           const friendId = users.find(uid => uid !== userId);
-          if (friendId) friendIds.push(friendId);
+          if (friendId) friendIds.add(friendId);
         });
 
-        const friendPromises = friendIds.map(async friendId => {
+        // Convert Set to Array for mapping
+        const friendPromises = Array.from(friendIds).map(async friendId => {
           const friendDoc = await getDoc(doc(db, 'users', friendId));
           if (friendDoc.exists()) {
             const friendData = friendDoc.data();
@@ -311,7 +345,10 @@ export default {
         const userId = route.params.userId;
         const currentUser = getAuth().currentUser;
 
+        // Set isOwnProfile
         isOwnProfile.value = currentUser?.uid === userId;
+
+        // Load user profile data
         const userDoc = await getDoc(doc(db, 'users', userId));
         
         if (userDoc.exists()) {
@@ -323,40 +360,54 @@ export default {
             bio: userData.bio || '',
             interests: userData.interests || [],
             location: userData.location || '',
-            avatarUrl: userData.avatarUrl || null
+            avatarUrl: userData.avatarUrl || null,
+            coverPhotoUrl: userData.coverPhotoUrl || null
           };
         }
 
-        if (currentUser) {
-          // Check friendship status
-          const friendshipsQuery = query(
+        // Check friendship status if not own profile
+        if (currentUser && !isOwnProfile.value) {
+          // First, check direct friendship in friendships collection
+          const friendshipQuery = query(
             collection(db, 'friendships'),
             where('users', 'array-contains', currentUser.uid)
           );
-          const friendshipsSnapshot = await getDocs(friendshipsQuery);
-
-          // Check if they are friends
-          isFriend.value = friendshipsSnapshot.docs.some(doc => {
+          
+          const friendshipSnapshot = await getDocs(friendshipQuery);
+          
+          // Check if they are friends by looking for a document that contains both users
+          isFriend.value = friendshipSnapshot.docs.some(doc => {
             const users = doc.data().users;
-            return users.includes(userId);
+            return users.includes(userId) && users.includes(currentUser.uid);
           });
 
           // Only check for pending requests if they're not already friends
           if (!isFriend.value) {
-            const requestsQuery = query(
+            // Check for pending friend requests
+            const requestQuery = query(
               collection(db, 'friendRequests'),
               where('fromUserId', '==', currentUser.uid),
               where('toUserId', '==', userId),
               where('status', '==', 'pending')
             );
-            const requestsSnapshot = await getDocs(requestsQuery);
-            friendRequestSent.value = !requestsSnapshot.empty;
+            
+            const requestSnapshot = await getDocs(requestQuery);
+            friendRequestSent.value = !requestSnapshot.empty;
           } else {
+            // Reset friend request sent status if they are friends
             friendRequestSent.value = false;
           }
+        } else {
+          // Reset states if it's own profile or no user is logged in
+          isFriend.value = false;
+          friendRequestSent.value = false;
         }
+
       } catch (error) {
         console.error('Error loading user profile:', error);
+        // Reset states on error
+        isFriend.value = false;
+        friendRequestSent.value = false;
       }
     };
 
@@ -447,12 +498,112 @@ export default {
       if (activeTab.value === 'events') {
         loadUserEvents();
       }
+      // Setup friendship listener
+      unsubscribeFriendship = setupFriendshipListener();
       window.addEventListener('userNameUpdated', handleNameUpdate);
     });
 
     onUnmounted(() => {
       window.removeEventListener('userNameUpdated', handleNameUpdate);
+      // Cleanup friendship listener
+      if (unsubscribeFriendship) {
+        unsubscribeFriendship();
+      }
     });
+
+    // Add auth state change listener
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loadUserProfile();
+        unsubscribeFriendship = setupFriendshipListener();
+      } else {
+        if (unsubscribeFriendship) {
+          unsubscribeFriendship();
+        }
+        isFriend.value = false;
+        friendRequestSent.value = false;
+      }
+    });
+
+    const handleCoverPhotoUpload = async (event) => {
+      try {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          if (typeof window.$toast !== 'undefined') {
+            window.$toast.error('Please upload a valid image file (JPEG, PNG, or WebP)');
+          }
+          return;
+        }
+
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          if (typeof window.$toast !== 'undefined') {
+            window.$toast.error('Image size should be less than 5MB');
+          }
+          return;
+        }
+
+        const userId = getAuth().currentUser.uid;
+        const coverPhotoRef = storageRef(
+          storage,
+          `cover-photos/${userId}_${Date.now()}_${file.name}`
+        );
+
+        // Upload file
+        await uploadBytes(coverPhotoRef, file);
+        const downloadURL = await getDownloadURL(coverPhotoRef);
+
+        // Update Firestore
+        await updateDoc(doc(db, 'users', userId), {
+          coverPhotoUrl: downloadURL
+        });
+
+        // Update local state
+        profileData.value.coverPhotoUrl = downloadURL;
+
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.success('Cover photo updated successfully');
+        }
+      } catch (error) {
+        console.error('Error uploading cover photo:', error);
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.error('Failed to update cover photo');
+        }
+      }
+    };
+
+    const setupFriendshipListener = () => {
+      const currentUser = getAuth().currentUser;
+      const userId = route.params.userId;
+      
+      if (!currentUser || isOwnProfile.value) return;
+
+      // Listen to friendships collection
+      const friendshipQuery = query(
+        collection(db, 'friendships'),
+        where('users', 'array-contains', currentUser.uid)
+      );
+
+      const unsubscribe = onSnapshot(friendshipQuery, (snapshot) => {
+        isFriend.value = snapshot.docs.some(doc => {
+          const users = doc.data().users;
+          return users.includes(userId) && users.includes(currentUser.uid);
+        });
+
+        // If they are friends, ensure friend request sent is false
+        if (isFriend.value) {
+          friendRequestSent.value = false;
+        }
+      });
+
+      // Return unsubscribe function
+      return unsubscribe;
+    };
 
     return {
       activeTab,
@@ -464,7 +615,9 @@ export default {
       isOwnProfile,
       sendFriendRequest,
       loadUserFriends,   // Add this
-      loadUserEvents 
+      loadUserEvents,
+      handleCoverPhotoUpload,
+      setupFriendshipListener
     };
   }
 };
@@ -480,7 +633,65 @@ export default {
   background: #f0f2f5;
 }
 
+.cover-photo-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  margin-bottom: -80px; /* Overlap with profile section */
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.cover-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-photo-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.gradient-background {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #1a73e8, #4285f4, #34a853);
+}
+
+.cover-photo-edit {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2;
+}
+
+.edit-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background: white;
+}
+
+.edit-button i {
+  font-size: 16px;
+}
+
 .profile-header {
+  position: relative;
+  z-index: 1;
+  margin-top: -20px; /* Adjust based on your design */
+  margin-left: 20px;
+  margin-right: 20px;
   background: white;
   padding: 20px;
   border-radius: 8px;
@@ -492,7 +703,12 @@ export default {
 }
 
 .profile-picture {
-  flex-shrink: 0;
+  position: relative;
+  margin-top: -40px; /* Pull up into cover photo area */
+  border: 4px solid white;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .profile-circle {
