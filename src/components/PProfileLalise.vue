@@ -75,7 +75,7 @@
           @click="sendFriendRequest"
           v-if="!isFriend && !friendRequestSent"
         >
-          <i class="fas fa-user-plus"></i> Send Friend Request
+          <i class="fas fa-user-plus"></i> Add Friend
         </button>
         <button 
           class="action-button disabled" 
@@ -131,14 +131,7 @@
         <div class="content-card">
           <h2>Interests & Hobbies</h2>
           <div class="interests-container">
-            <ul class="interests-list" v-if="profileData.interests && profileData.interests.length > 0">
-              <li v-for="(interest, index) in profileData.interests" 
-                  :key="index" 
-                  class="interest-item">
-                <i class="fas fa-circle"></i>
-                {{ interest }}
-              </li>
-            </ul>
+            <p class="interests-text" v-if="profileData.interests">{{ profileData.interests }}</p>
             <div class="no-content" v-else>No interests added yet</div>
           </div>
         </div>
@@ -252,7 +245,7 @@ export default {
       lastName: '',
       username: '',
       bio: '',
-      interests: [],
+      interests: '',
       location: '',
       avatarUrl: null,
       coverPhotoUrl: null
@@ -358,7 +351,7 @@ export default {
             lastName: userData.lastName || '',
             username: userData.username || '',
             bio: userData.bio || '',
-            interests: userData.interests || [],
+            interests: userData.interests || '',
             location: userData.location || '',
             avatarUrl: userData.avatarUrl || null,
             coverPhotoUrl: userData.coverPhotoUrl || null
@@ -766,41 +759,77 @@ export default {
 
 .profile-tabs {
   background: white;
-  padding: 10px 20px;
+  padding: 0 20px;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
+  position: relative;
 }
 
 .tab-button {
-  padding: 10px 20px;
+  padding: 15px 25px;
   border: none;
   background: none;
   color: #65676b;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #1877f2;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  border-radius: 3px 3px 0 0;
 }
 
 .tab-button:hover {
-  background: #f0f2f5;
+  color: #1877f2;
+  background-color: rgba(24, 119, 242, 0.05);
+}
+
+.tab-button:hover::after {
+  transform: scaleX(0.8);
 }
 
 .tab-button.active {
   color: #1877f2;
-  background: #e6f0ff;
+  background-color: rgba(24, 119, 242, 0.1);
+}
+
+.tab-button.active::after {
+  transform: scaleX(1);
 }
 
 .tab-button i {
-  margin-right: 8px;
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
 }
 
+.tab-button:hover i {
+  transform: scale(1.1);
+}
+
+.tab-button.active i {
+  transform: scale(1.1);
+}
+
+/* Add this to ensure proper spacing with the content below */
 .profile-content {
-  max-width: 800px;
-  margin: 0 auto;
+  margin-top: 30px;
 }
 
 .profile-main {
