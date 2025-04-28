@@ -64,6 +64,25 @@
           <span>{{ profileData.location }}</span>
         </div>
       </div>
+
+      <div class="social-links">
+        <a 
+          v-if="profileData.instagramLink" 
+          :href="profileData.instagramLink" 
+          target="_blank" 
+          class="social-link"
+        >
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a 
+          v-if="profileData.tiktokLink" 
+          :href="profileData.tiktokLink" 
+          target="_blank" 
+          class="social-link"
+        >
+          <i class="fab fa-tiktok"></i>
+        </a>
+      </div>
     </div>
 
           <!--/div> -- This is the closing tag of basic-info -->
@@ -248,7 +267,9 @@ export default {
       interests: '',
       location: '',
       avatarUrl: null,
-      coverPhotoUrl: null
+      coverPhotoUrl: null,
+      instagramLink: '',
+      tiktokLink: ''
     });
     const userEvents = ref([]);
     const userFriends = ref([]);
@@ -354,7 +375,9 @@ export default {
             interests: userData.interests || '',
             location: userData.location || '',
             avatarUrl: userData.avatarUrl || null,
-            coverPhotoUrl: userData.coverPhotoUrl || null
+            coverPhotoUrl: userData.coverPhotoUrl || null,
+            instagramLink: userData.instagramLink || '',
+            tiktokLink: userData.tiktokLink || ''
           };
         }
 
@@ -1205,6 +1228,45 @@ export default {
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
+}
+
+.social-links {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.social-link:hover {
+  transform: scale(1.1);
+  background-color: #fff;
+}
+
+.social-link i {
+  font-size: 1.5rem;
+}
+
+.social-link i.fa-instagram {
+  background: -webkit-linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.social-link i.fa-tiktok {
+  color: #000;
 }
 /* LG END - Styles section */
 </style>
