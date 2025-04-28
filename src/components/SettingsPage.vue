@@ -44,8 +44,10 @@
             <input 
               type="email" 
               v-model="accountSettings.email" 
-              placeholder="Enter your email"
+              disabled
+              class="disabled-input"
             />
+            <span class="helper-text">Email cannot be changed</span>
           </div>
 
           <div class="form-group">
@@ -83,26 +85,6 @@
         <h2>Profile Settings</h2>
         <form @submit.prevent="updateProfileSettings">
           <div class="form-group">
-            <label>Profile Picture</label>
-            <div class="profile-picture-section">
-              <img 
-                v-if="profileSettings.pictureUrl" 
-                :src="profileSettings.pictureUrl" 
-                class="profile-preview"
-              />
-              <div v-else class="profile-placeholder">
-                No picture selected
-              </div>
-              <input 
-                type="file" 
-                @change="handleProfilePicture" 
-                accept="image/*"
-                ref="profilePicInput"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
             <label>Bio</label>
             <textarea 
               v-model="profileSettings.bio"
@@ -114,24 +96,39 @@
           </div>
 
           <div class="form-group">
-            <label>Interests</label>
-            <div class="interests-container">
+            <label>Hobbies & Interests</label>
+            <textarea 
+              v-model="profileSettings.interests"
+              placeholder="Share your hobbies and interests..."
+              rows="4"
+              class="interests-textarea"
+            ></textarea>
+          </div>
+
+          <!-- New Social Media Section -->
+          <div class="form-group social-media-section">
+            <h3>Social Media Links</h3>
+            
+            <div class="social-input">
+              <label>
+                <i class="fab fa-instagram"></i> Instagram
+              </label>
               <input 
-                type="text" 
-                v-model="newInterest"
-                @keyup.enter="addInterest"
-                placeholder="Add an interest and press Enter"
+                type="url" 
+                v-model="profileSettings.instagramLink"
+                placeholder="https://instagram.com/yourusername"
               />
-              <div class="interests-tags">
-                <span 
-                  v-for="(interest, index) in profileSettings.interests" 
-                  :key="index"
-                  class="interest-tag"
-                >
-                  {{ interest }}
-                  <button @click.prevent="removeInterest(index)" class="remove-tag">×</button>
-                </span>
-              </div>
+            </div>
+
+            <div class="social-input">
+              <label>
+                <i class="fab fa-tiktok"></i> TikTok
+              </label>
+              <input 
+                type="url" 
+                v-model="profileSettings.tiktokLink"
+                placeholder="https://tiktok.com/@yourusername"
+              />
             </div>
           </div>
 
@@ -211,12 +208,7 @@ import {
   getDoc, 
   updateDoc,
 } from 'firebase/firestore';
-import { 
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-} from 'firebase/storage';
-import { db, storage } from '@/firebase';
+import { db } from '../firebase';
 import { 
   collection,
   getDocs,
@@ -227,7 +219,9 @@ import {
 export default {
   name: 'SettingsPage',
   setup() {
-    const activeTab = ref('account');
+    const toastMessage = ref('');
+    const showToast = ref(false);
+    const activeTab = ref('profile');
     const newInterest = ref('');
 
     const accountSettings = ref({
@@ -239,9 +233,10 @@ export default {
     });
 
     const profileSettings = ref({
-      pictureUrl: '',
       bio: '',
-      interests: [],
+      interests: '',
+      instagramLink: '',
+      tiktokLink: ''
     });
 
     const privacySettings = ref({
@@ -275,9 +270,10 @@ export default {
             };
 
             profileSettings.value = {
-              pictureUrl: userData.pictureUrl || '',
               bio: userData.bio || '',
-              interests: userData.interests || [],
+              interests: userData.interests || '',
+              instagramLink: userData.instagramLink || '',
+              tiktokLink: userData.tiktokLink || '',
             };
 
             privacySettings.value = {
@@ -393,61 +389,33 @@ export default {
       }
     };
 
-    const handleProfilePicture = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const auth = getAuth();
-      const user = auth.currentUser;
-      
-      if (user) {
-        try {
-          const imageRef = storageRef(storage, `profile-pictures/${user.uid}`);
-          await uploadBytes(imageRef, file);
-          const downloadUrl = await getDownloadURL(imageRef);
-          
-          profileSettings.value.pictureUrl = downloadUrl;
-          await updateDoc(doc(db, 'users', user.uid), {
-            pictureUrl: downloadUrl,
-          });
-        } catch (error) {
-          console.error('Error uploading profile picture:', error);
-          alert('Failed to upload profile picture. Please try again.');
-        }
-      }
-    };
-
     const updateProfileSettings = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
       
       if (user) {
         try {
-          // Create a reference to the user's document
-          const userRef = doc(db, 'users', user.uid);
-          
-          // Get current user data first
-          const userDoc = await getDoc(userRef);
-          const currentData = userDoc.exists() ? userDoc.data() : {};
-
-          // Create an array that combines existing and new interests
-          const updatedInterests = [...new Set([...(currentData.interests || []), ...profileSettings.value.interests])];
-
-          // Update the document with new data, preserving existing fields
-          await updateDoc(userRef, {
-            ...currentData,
+          await updateDoc(doc(db, 'users', user.uid), {
             bio: profileSettings.value.bio,
-            interests: updatedInterests,
-            pictureUrl: profileSettings.value.pictureUrl,
+            interests: profileSettings.value.interests,
+            instagramLink: profileSettings.value.instagramLink,
+            tiktokLink: profileSettings.value.tiktokLink
           });
 
-          alert('Profile settings updated successfully!');
+          toastMessage.value = 'Profile settings updated successfully!';
+          showToast.value = true;
           
-          // Force a reload of the user settings
-          await loadUserSettings();
+          setTimeout(() => {
+            showToast.value = false;
+          }, 3000);
+
         } catch (error) {
           console.error('Error updating profile settings:', error);
-          alert('Failed to update profile settings. Please try again.');
+          toastMessage.value = 'Failed to update profile settings. Please try again.';
+          showToast.value = true;
+          setTimeout(() => {
+            showToast.value = false;
+          }, 3000);
         }
       }
     };
@@ -492,10 +460,11 @@ export default {
       profileSettings,
       privacySettings,
       newInterest,
+      toastMessage,
+      showToast,
       updateAccountSettings,
       updateProfileSettings,
       updatePrivacySettings,
-      handleProfilePicture,
       addInterest,
       removeInterest,
     };
@@ -595,29 +564,10 @@ textarea:focus {
   background: #0056b3;
 }
 
-.profile-picture-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.profile-preview {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
+.profile-picture-section,
+.profile-preview,
 .profile-placeholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
+  /* Remove these style blocks */
 }
 
 .character-count {
@@ -775,5 +725,55 @@ input:checked + .slider:before {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+.disabled-input {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.helper-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.social-media-section {
+  margin-top: 2rem;
+}
+
+.social-media-section h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.social-input {
+  margin-bottom: 1rem;
+}
+
+.social-input label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.social-input i {
+  font-size: 1.2rem;
+}
+
+.social-input input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.social-input input:focus {
+  border-color: #4a90e2;
+  outline: none;
 }
 </style>
