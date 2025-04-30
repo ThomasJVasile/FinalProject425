@@ -1,21 +1,21 @@
 <template>
   <v-container class="home-page" fluid>
     <v-row>
-      <v-col cols="12" md="3" class="sidebar-col">
-        <v-card class="sidebar blue-shadow" aria-label="Event filters">
-          <v-card-title>Filter by Location</v-card-title>
-          <v-text-field v-model="locationQuery" label="Enter city or town" solo aria-label="Enter a location to filter events"></v-text-field>
-          <v-card-title>Categories</v-card-title>
-          <v-list aria-label="Category filters"></v-list>
-          <v-list>
-            <v-list-item v-for="category in categories" :key="category">
-              <v-checkbox :label="category" v-model="selectedCategories" :value="category" aria-labelledby="category"/>
-            </v-list-item>
-          </v-list>
-        </v-card>
-      </v-col>
+     
+<!-- <div class="category-filter-row px-4 py-2 d-flex flex-wrap" style="gap: 12px;">
+  <v-checkbox
+    v-for="category in categories"
+    :key="category"
+    v-model="selectedCategories"
+    :label="category"
+    :value="category"
+    density="compact"
+    hide-details
+  />
+</div> -->
+      <v-col cols="12" >
 
-      <v-col cols="12" md="9">
+
         <v-card class="content blue-shadow">
           <!-- <v-card-title>
             <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
@@ -38,6 +38,42 @@
               </v-col>
             </v-row>
           </v-card-title>
+
+          <!-- Horizontal category checkboxes -->
+<!-- <div class="category-filter-row px-4 py-2 d-flex flex-wrap" style="gap: 12px;">
+  <v-checkbox
+    v-for="category in categories"
+    :key="category"
+    v-model="selectedCategories"
+    :label="category"
+    :value="category"
+    density="compact"
+    hide-details
+  />
+</div> -->
+
+
+<v-row
+  class="px-4 py-2"
+  align="center"
+  justify="space-between"
+>
+  <v-col
+    v-for="category in categories"
+    :key="category"
+    cols="auto"
+    class="d-flex align-center"
+  >
+    <v-checkbox
+      v-model="selectedCategories"
+      :label="category"
+      :value="category"
+      density="compact"
+      hide-details
+    />
+  </v-col>
+</v-row>
+
 
 
           <v-btn-toggle v-model="dateFilter" class="mb-4" mandatory>
