@@ -17,9 +17,28 @@
 
       <v-col cols="12" md="9">
         <v-card class="content blue-shadow">
-          <v-card-title>
+          <!-- <v-card-title>
             <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
+          </v-card-title> -->
+          <v-card-title>
+            <v-row class="w-100" no-gutters>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="searchQuery"
+                  label="Search for events or users"
+                  solo
+                ></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="locationQuery"
+                  label="Search by city"
+                  solo
+                ></v-text-field>
+              </v-col>
+            </v-row>
           </v-card-title>
+
 
           <v-btn-toggle v-model="dateFilter" class="mb-4" mandatory>
             <v-btn value="today">Today</v-btn>
@@ -39,22 +58,6 @@
                 v-for="(event, index) in categoryGroup"
                 :key="index"
               >
-
-                <!-- <v-card class="mx-2 modern-card" max-width="220" @click="goToEventDetail(event.id)">
-                  <v-img :src="event.imageUrl || ''" height="140px" class="rounded-t"></v-img>
-                  <v-card-title class="text-wrap font-weight-bold text-primary">
-                    {{ event.eventName }}
-                  </v-card-title>
-                  <v-card-subtitle class="text-caption">
-                    <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
-                  </v-card-subtitle>
-                  <v-card-text class="text-caption">
-                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString() }}</div>
-                    <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
-                    <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
-                  </v-card-text>
-                </v-card> -->
-
                 
                 <v-card class="mx-2 modern-card" max-width="220" max-height="320" @click="goToEventDetail(event.id)">
                   <v-img 
@@ -70,7 +73,7 @@
                     <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
                   </v-card-subtitle>
                   <v-card-text class="text-caption">
-                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString?.() || 'No Date' }}</div>
+                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString?.()  }}</div>
                     <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
                     <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
                   </v-card-text>
