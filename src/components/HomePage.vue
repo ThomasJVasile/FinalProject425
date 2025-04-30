@@ -39,14 +39,43 @@
                 v-for="(event, index) in categoryGroup"
                 :key="index"
               >
-                <v-card class="mx-2" max-width="200" @click="goToEventDetail(event.id)">
-                  <v-img :src="event.imageUrl || ''" height="125px"></v-img>
-                  <v-card-title class="text-wrap">{{ event.eventName }}</v-card-title>
-                  <v-card-subtitle>Owner: {{ event.ownerName || 'Unknown' }}</v-card-subtitle>
-                  <v-card-text>
-                    People attending: {{ event.participants?.length || 0 }}
+
+                <!-- <v-card class="mx-2 modern-card" max-width="220" @click="goToEventDetail(event.id)">
+                  <v-img :src="event.imageUrl || ''" height="140px" class="rounded-t"></v-img>
+                  <v-card-title class="text-wrap font-weight-bold text-primary">
+                    {{ event.eventName }}
+                  </v-card-title>
+                  <v-card-subtitle class="text-caption">
+                    <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
+                  </v-card-subtitle>
+                  <v-card-text class="text-caption">
+                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString() }}</div>
+                    <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
+                    <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
+                  </v-card-text>
+                </v-card> -->
+
+                
+                <v-card class="mx-2 modern-card" max-width="220" max-height="320" @click="goToEventDetail(event.id)">
+                  <v-img 
+                    :src="event.imageUrl || ''" 
+                    height="140px" 
+                    class="rounded-t-lg"
+                    cover
+                  />
+                  <v-card-title class="text-wrap font-weight-bold text-primary">
+                    {{ event.eventName }}
+                  </v-card-title>
+                  <v-card-subtitle class="text-caption">
+                    <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
+                  </v-card-subtitle>
+                  <v-card-text class="text-caption">
+                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString?.() || 'No Date' }}</div>
+                    <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
+                    <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
                   </v-card-text>
                 </v-card>
+
               </v-slide-item>
             </v-slide-group>
           </div>
@@ -252,4 +281,20 @@ const fetchEvents = async () => {
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
+
+.modern-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  margin-bottom: 8px; /* small buffer to avoid clipping idk if it is too big */
+}
+
+.modern-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.rounded-t {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
 </style>
