@@ -31,50 +31,6 @@
       <v-card-text class="text-center mt-4">
         New here? <v-btn to="/RegisterPage" text>Create an account</v-btn>
       </v-card-text>
-
-      <v-dialog v-model="showForgotPasswordDialog" max-width="400px">
-        <v-card>
-          <v-card-title>Reset Password</v-card-title>
-          <v-card-text>
-            <p class="mb-4">Enter your email address and we'll send you a link to reset your password.</p>
-            <v-form @submit.prevent="handlePasswordReset">
-              <v-text-field
-                v-model="resetEmail"
-                label="Email"
-                type="email"
-                outlined
-                dense
-                required
-              />
-              <v-alert
-                v-if="resetMessage"
-                :type="resetStatus"
-                class="mt-3"
-                dismissible
-              >
-                {{ resetMessage }}
-              </v-alert>
-            </v-form>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              color="grey"
-              text
-              @click="showForgotPasswordDialog = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="primary"
-              :loading="isResetting"
-              @click="handlePasswordReset"
-            >
-              Send Reset Link
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
     </v-card>
   </v-container>
 </template>
@@ -136,49 +92,6 @@ export default {
     loginWithApple() {
       console.log("do this before demo!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     },
-
-    async handlePasswordReset() {
-      if (!this.resetEmail) {
-        this.resetMessage = "Please enter your email address";
-        this.resetStatus = "error";
-        return;
-      }
-
-      this.isResetting = true;
-      const auth = getAuth();
-
-      try {
-        await sendPasswordResetEmail(auth, this.resetEmail);
-        this.resetMessage = "Password reset email sent! Please check your inbox.";
-        this.resetStatus = "success";
-        
-        setTimeout(() => {
-          this.showForgotPasswordDialog = false;
-          this.resetMessage = "";
-          this.resetEmail = "";
-        }, 3000);
-
-      } catch (error) {
-        console.error("Password reset failed:", error);
-        this.resetStatus = "error";
-        
-        switch (error.code) {
-          case 'auth/user-not-found':
-            this.resetMessage = "No account found with this email address.";
-            break;
-          case 'auth/invalid-email':
-            this.resetMessage = "Please enter a valid email address.";
-            break;
-          case 'auth/too-many-requests':
-            this.resetMessage = "Too many attempts. Please try again later.";
-            break;
-          default:
-            this.resetMessage = "Failed to send reset email. Please try again.";
-        }
-      } finally {
-        this.isResetting = false;
-      }
-    }
   },
 };
 </script>
