@@ -109,7 +109,10 @@
                     <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
                   </v-card-subtitle>
                   <v-card-text class="text-caption">
-                    <div><i class="fas fa-calendar"></i> {{ event.date.toDateString?.()  }}</div>
+                    <div>
+  <i class="fas fa-calendar"></i>
+  {{ event.date instanceof Date && !isNaN(event.date) ? event.date.toDateString() : "TBA" }}
+</div>
                     <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
                     <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
                   </v-card-text>
