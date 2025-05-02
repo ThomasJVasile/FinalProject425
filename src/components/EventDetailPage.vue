@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <v-container class="d-flex justify-center">
     <v-card v-if="event" class="main box" max-width="500">
       <v-card-title class="text-center">
@@ -13,7 +13,7 @@
           <v-avatar v-if="ownerAvatar" size="50">
             <img :src="ownerAvatar" alt="Avatar" style="object-fit: cover; width: 100%; height: 100%;" />
           </v-avatar>
-          <!-- <p>{{ ownerName }}</p> -->
+          
           <router-link :to="`/profile/${event.createdBy}`"
             style="text-decoration: none; color: #1976d2; font-weight: bold;">
             {{ ownerName }}
@@ -35,9 +35,9 @@
         </v-col>
 
         <v-col cols="12" class="text-center" v-if="!isOwner">
-          <!-- Check if the event is restricted, display "Request to Join" if restricted is 1 -->
+         
           <v-btn v-if="event.isRestricted === true" color="primary" @click="requestToJoin">Request to Join</v-btn>
-          <!-- Otherwise, display "Join" button -->
+         
           <v-btn v-else color="primary" @click="JoinEvent">Join</v-btn>
         </v-col>
 
@@ -54,7 +54,7 @@
             style="height: 300px; width: 100%;">
             <Marker v-if="markerOptions" :options="markerOptions" />
           </google-map>
-          <!-- <Marker v-if="markerOptions" :options="markerOptions" /> -->
+         
         </v-col>
 
         <v-col cols="12" class="text-center mt-4">
@@ -73,7 +73,7 @@
           <v-list two-line v-else>
             <v-list-item v-for="(comment, index) in comments" :key="index">
               <v-list-item-content>
-                <!-- <v-list-item-title>{{ comment.username }}</v-list-item-title> -->
+                
                 <router-link :to="`/profile/${comment.uid}`"
                   style="text-decoration: none; color: #1976d2; font-weight: bold;">
                   {{ comment.username }}
@@ -96,7 +96,163 @@
       </v-card-title>
     </v-card>
   </v-container>
+</template> -->
+
+<!-- that was the old code before demo -->
+
+
+<!-- this is secodn attempt -->
+
+<!-- 
+<template>
+  <div>
+    <v-container v-if="event" class="event-container d-flex justify-center">
+      <v-row class="pa-6" style="width: 100%; max-width: 1200px;">
+       
+        <v-col cols="12" md="8">
+          <v-card class="pa-4 mb-4" outlined>
+            <v-img :src="eventImageUrl || ''" class="event-image mb-4" cover height="300px" />
+            <h1 class="text-h5 font-weight-bold mb-2">{{ event.eventName }}</h1>
+            <p><strong>Date:</strong> {{ event.eventDate }}</p>
+            <p><strong>Location:</strong> {{ event.eventLocation }}</p>
+            <p><strong>Description:</strong></p>
+            <p>{{ event.eventDescription }}</p>
+            <p><strong>Owner:</strong>
+              <router-link :to="`/profile/${event.createdBy}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                {{ ownerName }}
+              </router-link>
+            </p>
+            <v-avatar v-if="ownerAvatar" size="50" class="mt-2">
+              <img :src="ownerAvatar" alt="Avatar" class="avatar-img" />
+            </v-avatar>
+          </v-card>
+        </v-col>
+
+       
+        <v-col cols="12" md="4">
+          <v-card class="pa-4 mb-4" outlined>
+            <v-btn v-if="!isOwner" color="primary" block class="mb-3" @click="event.isRestricted ? requestToJoin() : JoinEvent()">
+              {{ event.isRestricted ? 'Request to Join' : 'Join' }}
+            </v-btn>
+
+            <v-alert v-if="message" type="success" class="mb-3">{{ message }}</v-alert>
+
+            <v-btn v-if="isOwner" color="red" block class="mb-3" @click="deleteEvent">Delete Event</v-btn>
+
+            <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15" class="map-container">
+              <Marker v-if="markerOptions" :options="markerOptions" />
+            </google-map>
+          </v-card>
+
+       
+          <v-card class="pa-4" outlined>
+            <h3 class="mb-3">Comments</h3>
+            <v-textarea v-model="newComment" label="Write a comment..." auto-grow outlined class="mb-2" />
+            <v-btn color="primary" block class="mb-4" @click="submitComment">Post Comment</v-btn>
+
+            <div v-if="comments.length === 0" class="text-caption text-center mb-2">No comments yet. Be the first to ask something!</div>
+            <v-list two-line v-else>
+              <v-list-item v-for="(comment, index) in comments" :key="index">
+                <v-list-item-content>
+                  <router-link :to="`/profile/${comment.uid}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                    {{ comment.username }}
+                  </router-link>
+                  <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <v-container v-else class="d-flex justify-center align-center" style="height: 80vh;">
+      <v-card class="pa-6" outlined>
+        <v-card-title class="text-center">Loading... Please wait</v-card-title>
+      </v-card>
+    </v-container>
+  </div>
+</template> -->
+
+
+<template>
+  <div>
+    <v-container v-if="event" class="event-container d-flex justify-center">
+      <v-row class="pa-6" style="width: 100%; max-width: 1200px;">
+        <!-- Left Side -->
+        <v-col cols="12" md="8">
+          <v-card class="pa-4 mb-4" outlined>
+            <div class="d-flex align-center mb-3">
+              <v-avatar v-if="ownerAvatar" size="50" class="mr-3">
+                <img :src="ownerAvatar" alt="Avatar" class="avatar-img" />
+              </v-avatar>
+              <div>
+                <p class="mb-0"><strong>Owner:</strong>
+                  <router-link :to="`/profile/${event.createdBy}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                    {{ ownerName }}
+                  </router-link>
+                </p>
+              </div>
+            </div>
+
+            <h1 class="text-h5 font-weight-bold mb-2">{{ event.eventName }}</h1>
+            <p class="mb-4">{{ event.eventDescription }}</p>
+            <v-img :src="eventImageUrl || ''" class="event-image mb-4" cover height="300px" />
+            <p><strong>Date:</strong> {{ event.eventDate }}</p>
+            <p><strong>Location:</strong> {{ event.eventLocation }}</p>
+          </v-card>
+        </v-col>
+
+        <!-- Right Side -->
+        <v-col cols="12" md="4">
+          <v-card class="pa-4 mb-4" outlined>
+            <v-btn v-if="!isOwner" color="primary" block class="mb-3" @click="event.isRestricted ? requestToJoin() : JoinEvent()">
+              {{ event.isRestricted ? 'Request to Join' : 'Join' }}
+            </v-btn>
+
+            <v-alert v-if="message" type="success" class="mb-3">{{ message }}</v-alert>
+
+            <v-btn v-if="isOwner" color="red" block class="mb-3" @click="deleteEvent">Delete Event</v-btn>
+
+            <google-map :center="{ lat: event.latitude, lng: event.longitude }" :zoom="15" class="map-container">
+              <Marker v-if="markerOptions" :options="markerOptions" />
+            </google-map>
+          </v-card>
+
+          <!-- Comments Section -->
+          <v-card class="pa-4" outlined>
+            <h3 class="mb-3">Comments</h3>
+            <v-textarea v-model="newComment" label="Write a comment..." auto-grow outlined class="mb-2" />
+            <v-btn color="primary" block class="mb-4" @click="submitComment">Post Comment</v-btn>
+
+            <div v-if="comments.length === 0" class="text-caption text-center mb-2">No comments yet. Be the first to ask something!</div>
+            <v-list two-line v-else>
+              <v-list-item v-for="(comment, index) in comments" :key="index">
+                <v-list-item-content>
+                  <router-link :to="`/profile/${comment.uid}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                    {{ comment.username }}
+                  </router-link>
+                  <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <v-container v-else class="d-flex justify-center align-center" style="height: 80vh;">
+      <v-card class="pa-6" outlined>
+        <v-card-title class="text-center">Loading... Please wait</v-card-title>
+      </v-card>
+    </v-container>
+  </div>
 </template>
+
+<!-- Leave <script> and <style> untouched -->
+
+
+
 
 <script>
 import { db } from "@/firebase";
