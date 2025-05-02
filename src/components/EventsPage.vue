@@ -116,7 +116,7 @@
 
             
             <div v-if="activeTab === 'created'" class="event-actions">
-              <v-btn
+              <!-- <v-btn
                 color="primary"
                 small
                 @click="openEditDialog(event)"
@@ -124,7 +124,17 @@
               >
                 <i class="fas fa-edit"></i>
                 Edit
+              </v-btn> -->
+              <v-btn
+                color="primary"
+                small
+                @click.stop="openEditDialog(event)"
+                class="edit-button"
+              >
+                <i class="fas fa-edit"></i>
+                Edit
               </v-btn>
+
             </div>
           </div>
         </div>
