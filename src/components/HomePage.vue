@@ -317,6 +317,12 @@ const fetchEvents = async () => {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
+::v-deep(.v-slide-group__prev, .v-slide-group__next) {
+  background-color: transparent !important;
+  color: #888 !important; /* or white if your background is dark */
+  box-shadow: none !important;
+}
+
 
 
 .v-slide-item {
@@ -432,6 +438,38 @@ h3 {
 .v-text-field input {
   background-color: #fafafa;
   border-radius: 8px;
+}
+
+
+@media (max-width: 768px) {
+  .fixed-card {
+    width: 90vw;
+    height: auto;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+
+  .v-slide-group__content {
+    padding-left: 8px;
+  }
+
+  .v-card-title, .v-card-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .v-text-field {
+    font-size: 0.9rem;
+  }
+
+  .v-row {
+    flex-direction: column;
+  }
+
+  .v-col {
+    width: 100%;
+  }
 }
 
 </style>
