@@ -440,7 +440,7 @@ h3 {
   border-radius: 8px;
 }
 
-
+/* 
 @media (max-width: 768px) {
   .fixed-card {
     width: 90vw;
@@ -472,4 +472,4 @@ h3 {
   }
 }
 
-</style>
+</style> */
