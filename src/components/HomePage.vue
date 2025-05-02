@@ -1,101 +1,4 @@
-<!-- <template>
-  <v-container class="home-page" fluid>
-    <v-row>
-     
-      <v-col cols="12" >
 
-        <v-card class="content blue-shadow">
-
-          <v-card-title>
-            <v-row class="w-100" no-gutters>
-              <v-col cols="6">
-                <v-text-field
-                  v-model="searchQuery"
-                  label="Search for events or users"
-                  solo
-                ></v-text-field>
-              </v-col>
-              <v-col cols="6">
-                <v-text-field
-                  v-model="locationQuery"
-                  label="Search by city"
-                  solo
-                ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-card-title>
-
-
-<v-row
-  class="px-4 py-2"
-  align="center"
-  justify="space-between"
->
-  <v-col
-    v-for="category in categories"
-    :key="category"
-    cols="auto"
-    class="d-flex align-center"
-  >
-    <v-checkbox
-      v-model="selectedCategories"
-      :label="category"
-      :value="category"
-      density="compact"
-      hide-details
-    />
-  </v-col>
-</v-row>
-
-          <v-btn-toggle v-model="dateFilter" class="mb-4" mandatory>
-            <v-btn value="today">Today</v-btn>
-            <v-btn value="thisWeek">This Week</v-btn>
-            <v-btn value="nextWeek">Next Week</v-btn>
-          </v-btn-toggle>
-
-          <div class="map-container">
-            <div id="map" style="height: 400px; width: 100%;"></div>
-          </div>
-
-          <div v-for="(categoryGroup, categoryName) in groupedEvents" :key="categoryName">
-            <h3>{{ categoryName }}</h3>
-            <v-slide-group show-arrows>
-              <v-slide-item
-                v-for="(event, index) in categoryGroup"
-                :key="index"
-              >
-                
-                <v-card class="mx-2 modern-card" max-width="220" max-height="320" @click="goToEventDetail(event.id)">
-                  <v-img 
-                    :src="event.imageUrl || ''" 
-                    height="140px" 
-                    class="rounded-t-lg"
-                    cover
-                  />
-                  <v-card-title class="text-wrap font-weight-bold text-primary">
-                    {{ event.eventName }}
-                  </v-card-title>
-                  <v-card-subtitle class="text-caption">
-                    <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
-                  </v-card-subtitle>
-                  <v-card-text class="text-caption">
-                    <div>
-                      <i class="fas fa-calendar"></i>
-                      {{ event.date instanceof Date && !isNaN(event.date) ? event.date.toDateString() : "TBA" }}
-                    </div>
-                    <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
-                    <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
-                  </v-card-text>
-                </v-card>
-
-              </v-slide-item>
-            </v-slide-group>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
-</template> -->
 
 <template>
   <v-container class="home-page" fluid>
@@ -122,6 +25,7 @@
                 <v-text-field
                   v-model="locationQuery"
                   label="Search by city"
+                  prepend-inner-icon="mdi-map-marker"
                   solo
                 ></v-text-field>
               </v-col>
@@ -407,6 +311,25 @@ const fetchEvents = async () => {
 
 
 <style scoped>
+.v-slide-group {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+
+.v-slide-item {
+  overflow: visible !important;
+  position: relative;
+  z-index: 0;
+}
+
+.v-slide-group__content {
+  gap: 16px;
+}
+
+
 .sidebar-col {
   max-width: 280px;
   min-width: 240px;
@@ -450,10 +373,17 @@ const fetchEvents = async () => {
   cursor: pointer;
   margin-bottom: 8px;
 }
-.modern-card:hover {
+/* .modern-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+} */
+.modern-card:hover {
+  transform: scale(1.10);
+  z-index: 10;
+  position: relative;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
+
 
 
 .fixed-card {
