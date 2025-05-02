@@ -440,8 +440,8 @@ h3 {
   border-radius: 8px;
 }
 
-/* 
-@media (max-width: 768px) {
+
+/* @media (max-width: 768px) {
   .fixed-card {
     width: 90vw;
     height: auto;
