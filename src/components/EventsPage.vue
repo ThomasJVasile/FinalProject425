@@ -106,6 +106,19 @@
                 </button>
               </div>
             </div>
+
+            <!-- Add this right after the event-reactions div in your template -->
+            <div v-if="activeTab === 'created'" class="event-actions">
+              <v-btn
+                color="primary"
+                small
+                @click="openEditDialog(event)"
+                class="edit-button"
+              >
+                <i class="fas fa-edit"></i>
+                Edit
+              </v-btn>
+            </div>
           </div>
         </div>
         <!-- No Events Message - Shows when you haven't created/joined any events -->
@@ -115,6 +128,68 @@
         </div>
       </div>
     </main>
+
+    <!-- Edit Event Dialog -->
+    <v-dialog v-model="editDialog" max-width="600px">
+      <v-card v-if="selectedEvent">
+        <v-card-title>
+          <span class="text-h5">Edit Event</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-form @submit.prevent="saveEventChanges">
+            <v-text-field
+              v-model="editedEvent.eventName"
+              label="Event Name"
+              required
+            ></v-text-field>
+
+            <v-textarea
+              v-model="editedEvent.eventDescription"
+              label="Description"
+              required
+            ></v-textarea>
+
+            <v-text-field
+              v-model="editedEvent.eventLocation"
+              label="Location"
+              required
+            ></v-text-field>
+
+            <v-text-field
+              v-model="editedEvent.eventDate"
+              label="Date"
+              type="date"
+              required
+            ></v-text-field>
+
+            <v-select
+              v-model="editedEvent.categories"
+              :items="categories"
+              label="Categories"
+              multiple
+              chips
+            ></v-select>
+
+            <v-switch
+              v-model="editedEvent.isRestricted"
+              label="Restricted Event"
+              color="primary"
+            ></v-switch>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" variant="text" @click="editDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn color="success" variant="text" @click="saveEventChanges">
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -134,6 +209,20 @@ export default {
       activeTab: 'created', // Which tab is selected (created/joined)
       activeCommentEvent: null, // Which event's comments are showing
       newComment: "", // Text for a new comment
+      editDialog: false,
+      selectedEvent: null,
+      editedEvent: {},
+      categories: [
+        "Cars",
+        "Sports",
+        "Writing",
+        "Learning",
+        "Games",
+        "Jobs",
+        "Parties",
+        "Crafts",
+        "Dogs",
+      ],
     };
   },
 
@@ -318,6 +407,45 @@ export default {
         }
         return event;
       });
+    },
+
+    // Opens the edit dialog for an event
+    openEditDialog(event) {
+      this.selectedEvent = event;
+      this.editedEvent = { ...event };
+      this.editDialog = true;
+    },
+
+    // Saves the changes made to an event
+    async saveEventChanges() {
+      try {
+        const eventRef = doc(db, "events", this.selectedEvent.id);
+        await updateDoc(eventRef, {
+          eventName: this.editedEvent.eventName,
+          eventDescription: this.editedEvent.eventDescription,
+          eventLocation: this.editedEvent.eventLocation,
+          eventDate: this.editedEvent.eventDate,
+          categories: this.editedEvent.categories,
+          isRestricted: this.editedEvent.isRestricted,
+          lastUpdated: new Date(),
+        });
+
+        // Update the local state
+        const index = this.createdEvents.findIndex(e => e.id === this.selectedEvent.id);
+        if (index !== -1) {
+          this.createdEvents[index] = { 
+            ...this.createdEvents[index], 
+            ...this.editedEvent 
+          };
+        }
+
+        this.editDialog = false;
+        // Show success message
+        alert('Event updated successfully!');
+      } catch (error) {
+        console.error("Error updating event:", error);
+        alert('Failed to update event. Please try again.');
+      }
     },
   },
 
@@ -642,5 +770,32 @@ export default {
 
 .user-link:hover {
   text-decoration: underline;
+}
+
+/* Event actions styling */
+.event-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.edit-button {
+  margin-left: auto;
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  .v-dialog {
+    margin: 16px;
+  }
+  
+  .event-actions {
+    flex-direction: column;
+  }
+  
+  .edit-button {
+    width: 100%;
+    margin-top: 8px;
+  }
 }
 </style>
