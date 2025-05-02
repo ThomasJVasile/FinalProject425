@@ -12,6 +12,15 @@
         <v-text-field v-model="password" label="Password" type="password" outlined dense required 
           class="v-text-field-custom" />
 
+        <v-btn
+          text
+          class="forgot-password-link"
+          @click="showForgotPasswordDialog = true"
+          style="text-transform:none; font-size: 14px; margin-bottom: 8px;"
+        >
+          Forgot Password?
+        </v-btn>
+
         <v-btn type="submit" color="primary" block class="mt-4">Log In</v-btn>
       </v-form>
 
@@ -32,6 +41,33 @@
         New here? <v-btn to="/RegisterPage" text>Create an account</v-btn>
       </v-card-text>
     </v-card>
+
+    <v-dialog v-model="showForgotPasswordDialog" max-width="400">
+      <v-card>
+        <v-card-title>Reset Password</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="forgotPasswordEmail"
+            label="Enter your email"
+            type="email"
+            required
+          />
+          <v-alert
+            v-if="forgotPasswordMessage"
+            :type="forgotPasswordSuccess ? 'success' : 'error'"
+            class="mt-2"
+            dense
+          >
+            {{ forgotPasswordMessage }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="showForgotPasswordDialog = false">Cancel</v-btn>
+          <v-btn color="primary" @click="sendPasswordReset">Send Link</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -45,6 +81,10 @@ export default {
       password: "",
       errorMessage: "",
       successMessage: "",
+      showForgotPasswordDialog: false,
+      forgotPasswordEmail: "",
+      forgotPasswordMessage: "",
+      forgotPasswordSuccess: false,
     };
   },
   methods: {
@@ -91,6 +131,28 @@ export default {
 
     loginWithApple() {
       console.log("do this before demo!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    },
+
+    async sendPasswordReset() {
+      this.forgotPasswordMessage = "";
+      this.forgotPasswordSuccess = false;
+      if (!this.forgotPasswordEmail) {
+        this.forgotPasswordMessage = "Please enter your email address.";
+        return;
+      }
+      try {
+        const { getAuth, sendPasswordResetEmail } = await import("firebase/auth");
+        const auth = getAuth();
+        await sendPasswordResetEmail(auth, this.forgotPasswordEmail);
+        this.forgotPasswordMessage = "Password reset link sent! Check your email.";
+        this.forgotPasswordSuccess = true;
+      } catch (error) {
+        this.forgotPasswordMessage =
+          error.code === "auth/user-not-found"
+            ? "No user found with this email."
+            : "Failed to send reset email. Please try again.";
+        this.forgotPasswordSuccess = false;
+      }
     },
   },
 };
@@ -142,6 +204,23 @@ export default {
 .v-btn.black {
   background-color: #1e1e1e;
   color: white;
+}
+
+.forgot-password-link {
+  min-width: 0;
+  padding: 0;
+  margin-left: 0;
+  color: #1976d2 !important;
+}
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+.v-dialog .v-card {
+  background: #fff !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  padding: 16px 0;
 }
 </style>
  -->
