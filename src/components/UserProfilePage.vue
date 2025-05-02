@@ -127,7 +127,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { db, storage } from "@/firebase"; 
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 
 export default {
   data() {
@@ -143,6 +143,7 @@ export default {
       userInterests: "",
       userLocation: "",
       coverPhoto: null,      // Add this line for cover photo URL
+      userDocUnsubscribe: null, // <-- add this to store the unsubscribe function
     };
   },
 
@@ -154,36 +155,44 @@ export default {
       if (currentUser) {
         this.user = currentUser;
 
-        try {
-          // Fetch user details from Firestore
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        // Clean up previous listener if any
+        if (this.userDocUnsubscribe) {
+          this.userDocUnsubscribe();
+        }
+
+        // Set up real-time listener for user document
+        const userDocRef = doc(db, "users", currentUser.uid);
+        this.userDocUnsubscribe = onSnapshot(userDocRef, (userDoc) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             this.profilePicture =
               userData.avatarUrl || currentUser.photoURL || "placeholder-profile.png";
-            
-            // Extract Firestore name fields
             this.firstName = userData.firstName || "";
             this.lastName = userData.lastName || "";
             this.username = userData.username || "";
-            
-            // New data from settings
             this.userBio = userData.bio || "";
             this.userInterests = userData.interests || "";
             this.userLocation = userData.location || "";
-            
-            // Add this line to load cover photo
             this.coverPhoto = userData.coverPhotoUrl || null;
           } else {
-            this.profilePicture = currentUser.photoURL || "placeholder-profile.png"; 
+            this.profilePicture = currentUser.photoURL || "placeholder-profile.png";
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
+        });
       } else {
-        this.user = {}; 
+        this.user = {};
+        if (this.userDocUnsubscribe) {
+          this.userDocUnsubscribe();
+          this.userDocUnsubscribe = null;
+        }
       }
     });
+  },
+
+  beforeUnmount() {
+    // Clean up the Firestore listener
+    if (this.userDocUnsubscribe) {
+      this.userDocUnsubscribe();
+    }
   },
 
   methods: {
