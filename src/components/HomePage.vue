@@ -1,25 +1,11 @@
-<template>
+<!-- <template>
   <v-container class="home-page" fluid>
     <v-row>
      
-<!-- <div class="category-filter-row px-4 py-2 d-flex flex-wrap" style="gap: 12px;">
-  <v-checkbox
-    v-for="category in categories"
-    :key="category"
-    v-model="selectedCategories"
-    :label="category"
-    :value="category"
-    density="compact"
-    hide-details
-  />
-</div> -->
       <v-col cols="12" >
 
-
         <v-card class="content blue-shadow">
-          <!-- <v-card-title>
-            <v-text-field v-model="searchQuery" label="Search for events" solo></v-text-field>
-          </v-card-title> -->
+
           <v-card-title>
             <v-row class="w-100" no-gutters>
               <v-col cols="6">
@@ -38,19 +24,6 @@
               </v-col>
             </v-row>
           </v-card-title>
-
-          <!-- Horizontal category checkboxes -->
-<!-- <div class="category-filter-row px-4 py-2 d-flex flex-wrap" style="gap: 12px;">
-  <v-checkbox
-    v-for="category in categories"
-    :key="category"
-    v-model="selectedCategories"
-    :label="category"
-    :value="category"
-    density="compact"
-    hide-details
-  />
-</div> -->
 
 
 <v-row
@@ -74,8 +47,6 @@
   </v-col>
 </v-row>
 
-
-
           <v-btn-toggle v-model="dateFilter" class="mb-4" mandatory>
             <v-btn value="today">Today</v-btn>
             <v-btn value="thisWeek">This Week</v-btn>
@@ -86,7 +57,6 @@
             <div id="map" style="height: 400px; width: 100%;"></div>
           </div>
 
-         
           <div v-for="(categoryGroup, categoryName) in groupedEvents" :key="categoryName">
             <h3>{{ categoryName }}</h3>
             <v-slide-group show-arrows>
@@ -110,14 +80,107 @@
                   </v-card-subtitle>
                   <v-card-text class="text-caption">
                     <div>
-  <i class="fas fa-calendar"></i>
-  {{ event.date instanceof Date && !isNaN(event.date) ? event.date.toDateString() : "TBA" }}
-</div>
+                      <i class="fas fa-calendar"></i>
+                      {{ event.date instanceof Date && !isNaN(event.date) ? event.date.toDateString() : "TBA" }}
+                    </div>
                     <div v-if="event.eventLocation"><i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}</div>
                     <div><i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending</div>
                   </v-card-text>
                 </v-card>
 
+              </v-slide-item>
+            </v-slide-group>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template> -->
+
+<template>
+  <v-container class="home-page" fluid>
+    <v-row>
+      <v-col cols="12">
+        <v-card class="content blue-shadow">
+          <v-card-title>
+            <v-row class="w-100" no-gutters>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="searchQuery"
+                  label="Search for events or users"
+                  solo
+                ></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="locationQuery"
+                  label="Search by city"
+                  solo
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-title>
+
+          <v-row class="px-4 py-2" align="center" justify="space-between">
+            <v-col
+              v-for="category in categories"
+              :key="category"
+              cols="auto"
+              class="d-flex align-center"
+            >
+              <v-checkbox
+                v-model="selectedCategories"
+                :label="category"
+                :value="category"
+                density="compact"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+
+          <v-btn-toggle v-model="dateFilter" class="mb-4" mandatory>
+            <v-btn value="today">Today</v-btn>
+            <v-btn value="thisWeek">This Week</v-btn>
+            <v-btn value="nextWeek">Next Week</v-btn>
+          </v-btn-toggle>
+
+          <div class="map-container">
+            <div id="map" style="height: 400px; width: 100%"></div>
+          </div>
+
+          <div v-for="(categoryGroup, categoryName) in groupedEvents" :key="categoryName">
+            <h3>{{ categoryName }}</h3>
+            <v-slide-group show-arrows>
+              <v-slide-item
+                v-for="(event, index) in categoryGroup"
+                :key="index"
+              >
+                <v-card class="mx-2 modern-card fixed-card" @click="goToEventDetail(event.id)">
+                  <v-img
+                    :src="event.imageUrl || ''"
+                    height="140px"
+                    class="rounded-t-lg"
+                    cover
+                  />
+                  <v-card-title class="text-wrap font-weight-bold text-primary truncate">
+                    {{ event.eventName }}
+                  </v-card-title>
+                  <v-card-subtitle class="text-caption truncate">
+                    <i class="fas fa-user"></i> {{ event.ownerName || 'Unknown' }}
+                  </v-card-subtitle>
+                  <v-card-text class="text-caption">
+                    <div>
+                      <i class="fas fa-calendar"></i>
+                      {{ event.date instanceof Date && !isNaN(event.date) ? event.date.toDateString() : "TBA" }}
+                    </div>
+                    <div v-if="event.eventLocation" class="truncate">
+                      <i class="fas fa-map-marker-alt"></i> {{ event.eventLocation }}
+                    </div>
+                    <div>
+                      <i class="fas fa-users"></i> {{ event.participants?.length || 0 }} attending
+                    </div>
+                  </v-card-text>
+                </v-card>
               </v-slide-item>
             </v-slide-group>
           </div>
@@ -212,10 +275,6 @@ const groupedEvents = computed(() => {
   return groups;
 });
 
-
-
-
-
     const goToEventDetail = (id) => {
       window.location.href = `/eventDetailPage/${id}`;
     };
@@ -238,10 +297,6 @@ const groupedEvents = computed(() => {
           map,
           title: event.eventName,
         });
-
-        // const infoWindow = new google.maps.InfoWindow({
-        //   content: `<strong>${event.eventName}</strong>`
-        // });
 
         const infoWindow = new google.maps.InfoWindow({
           content: `<strong><a href="/eventDetailPage/${event.id}" style="text-decoration: none; color: #2b78e4;">${event.eventName}</a></strong>`
@@ -275,7 +330,6 @@ const fetchEvents = async () => {
   }
 };
 
-
     onMounted(fetchEvents);
     
     watch([groupedEvents], () => {
@@ -299,6 +353,8 @@ const fetchEvents = async () => {
 };
 </script>
 
+
+<!-- 
 <style scoped>
 .sidebar-col {
   max-width: 280px;
@@ -339,4 +395,62 @@ const fetchEvents = async () => {
   border-top-right-radius: 8px;
 }
 
+</style> -->
+
+
+
+<style scoped>
+.sidebar-col {
+  max-width: 280px;
+  min-width: 240px;
+}
+
+.home-page {
+  padding: 16px;
+}
+.sidebar {
+  padding: 16px;
+}
+.content {
+  padding: 16px;
+}
+.blue-shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 255, 0.2);
+}
+.map-container {
+  margin-bottom: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.modern-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.fixed-card {
+  width: 220px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.modern-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.rounded-t {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
 </style>
