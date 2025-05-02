@@ -1,17 +1,17 @@
-<!--This is a page to display what the user have created and joined -->
+
 <template>
   <div class="events-page">
-    <!-- Back Arrow - Takes you back to your profile -->
+    
     <div class="back-arrow" @click="$router.push('/UserProfilePage')">
       <i class="fas fa-arrow-left"></i>
       <span>Back to Profile</span>
     </div>
 
     <main class="content">
-      <!-- Title -->
+      
       <h1>My Events</h1>
 
-      <!-- Event Type Tabs - Switch between events you created and joined -->
+      
       <div class="event-tabs">
         <button 
           :class="['tab-button', { active: activeTab === 'created' }]"
@@ -27,7 +27,7 @@
         </button>
       </div>
 
-      <!-- Search Bar - Find specific events by name or description -->
+      
       <input
         type="text"
         v-model="searchQuery"
@@ -35,14 +35,20 @@
         class="search-bar"
       />
 
-      <!-- List of Events - Shows all your events with details and interactions -->
+    
       <div class="event-list">
+        <!-- <div
+          v-for="event in filteredEvents"
+          :key="event.id"
+          class="event-card"
+        > -->
         <div
           v-for="event in filteredEvents"
           :key="event.id"
           class="event-card"
+          @click="$router.push(`/eventDetailPage/${event.id}`)"
         >
-          <!-- Event Image - Shows event picture if available -->
+       
           <img
             v-if="event.imageUrl"
             :src="event.imageUrl"
@@ -51,7 +57,7 @@
           />
           <div v-else class="event-img-placeholder">No Image</div>
           
-          <!-- Event Details - Name, creator, description, and attendance -->
+          
           <div class="event-info">
             <h2>{{ event.eventName }}</h2>
             <div class="event-creator">
@@ -108,7 +114,7 @@
             </div>
             -->
 
-            <!-- Keep the edit button -->
+            
             <div v-if="activeTab === 'created'" class="event-actions">
               <v-btn
                 color="primary"
@@ -228,13 +234,13 @@ export default {
     };
   },
 
-  // Computed properties - filter and organize our events
+
   computed: {
     // Gets the right list of events based on which tab you're on
     currentEvents() {
       return this.activeTab === 'created' ? this.createdEvents : this.joinedEvents;
     },
-    // Filters events based on what you're searching for
+   
     filteredEvents() {
       const query = this.searchQuery.toLowerCase();
       return this.currentEvents.filter(
