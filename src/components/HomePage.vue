@@ -431,8 +431,8 @@ const fetchEvents = async () => {
 }
 
 .fixed-card {
-  width: 220px;
-  height: 320px;
+  width: 240px;
+  height: 340px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -452,5 +452,14 @@ const fetchEvents = async () => {
 .rounded-t {
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+}
+
+h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
 }
 </style>
