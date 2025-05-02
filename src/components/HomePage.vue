@@ -105,11 +105,18 @@
           <v-card-title>
             <v-row class="w-100" no-gutters>
               <v-col cols="6">
-                <v-text-field
+                <!-- <v-text-field
                   v-model="searchQuery"
                   label="Search for events or users"
                   solo
+                ></v-text-field> -->
+                <v-text-field
+                  v-model="searchQuery"
+                  label=" Search for events or users"
+                  prepend-inner-icon="mdi-magnify"
+                  solo
                 ></v-text-field>
+
               </v-col>
               <v-col cols="6">
                 <v-text-field
@@ -424,11 +431,30 @@ const fetchEvents = async () => {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-.modern-card {
+/* .modern-card {
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
   margin-bottom: 8px;
 }
+
+.modern-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+} */
+
+.modern-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.modern-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
 
 .fixed-card {
   width: 240px;
@@ -445,10 +471,7 @@ const fetchEvents = async () => {
   max-width: 100%;
 }
 
-.modern-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+
 .rounded-t {
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -462,4 +485,23 @@ h3 {
   border-bottom: 1px solid #ddd;
   padding-bottom: 4px;
 }
+
+.v-btn-toggle .v-btn {
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+#map {
+  height: 400px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.v-text-field input {
+  background-color: #fafafa;
+  border-radius: 8px;
+}
+
 </style>
