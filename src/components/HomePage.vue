@@ -440,36 +440,3 @@ h3 {
   border-radius: 8px;
 }
 
-
-/* @media (max-width: 768px) {
-  .fixed-card {
-    width: 90vw;
-    height: auto;
-  }
-
-  h3 {
-    font-size: 1.2rem;
-  }
-
-  .v-slide-group__content {
-    padding-left: 8px;
-  }
-
-  .v-card-title, .v-card-subtitle {
-    font-size: 0.9rem;
-  }
-
-  .v-text-field {
-    font-size: 0.9rem;
-  }
-
-  .v-row {
-    flex-direction: column;
-  }
-
-  .v-col {
-    width: 100%;
-  }
-}
-
-</style> */
