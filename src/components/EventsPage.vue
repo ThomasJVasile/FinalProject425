@@ -224,6 +224,7 @@ export default {
         "Crafts",
         "Dogs",
       ],
+      authUnsubscribe: null,
     };
   },
 
@@ -358,33 +359,29 @@ export default {
     },
   },
 
-  // When the component is created, fetch all events
-  async created() {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
+  mounted() {
+    const auth = getAuth();
+    this.authUnsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userUid = user.uid;
-        // Load both created and joined events at the same time
         await Promise.all([
           this.fetchCreatedEvents(userUid),
           this.fetchJoinedEvents(userUid)
         ]);
-
-        // Add event listener for name updates
         window.addEventListener('userNameUpdated', this.handleUserNameUpdate);
       } else {
-        console.warn("No authenticated user found.");
+        // Optionally clear events if user logs out
+        this.createdEvents = [];
+        this.joinedEvents = [];
       }
-    } catch (error) {
-      console.error("Error fetching events:", error);
-    }
+    });
   },
 
-  // Add beforeUnmount lifecycle hook to clean up event listener
   beforeUnmount() {
     window.removeEventListener('userNameUpdated', this.handleUserNameUpdate);
+    if (this.authUnsubscribe) {
+      this.authUnsubscribe();
+    }
   },
 };
 </script>
