@@ -22,8 +22,13 @@
             <h1 class="text-h5 font-weight-bold mb-2">{{ event.eventName }}</h1>
             <p class="mb-4">{{ event.eventDescription }}</p>
             <v-img :src="eventImageUrl || ''" class="event-image mb-4" cover height="300px" />
-            <p>{{ event.eventDate }}</p>
-            <p>{{ event.eventLocation }}</p>
+            <!-- <p>{{ event.eventDate }}</p>
+            <p>{{ event.eventLocation }}</p> -->
+            <div class="event-meta">
+              <span>📅 {{ event.eventDate }}</span>
+              <span>📍 {{ event.eventLocation }}</span>
+            </div>
+
           </v-card>
         </v-col>
 
@@ -52,12 +57,21 @@
             <div v-if="comments.length === 0" class="text-caption text-center mb-2">No comments yet. Be the first to ask something!</div>
             <v-list two-line v-else>
               <v-list-item v-for="(comment, index) in comments" :key="index">
-                <v-list-item-content>
+                <!-- <v-list-item-content>
                   <router-link :to="`/profile/${comment.uid}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
                     {{ comment.username }}
                   </router-link>
                   <v-list-item-subtitle>{{ comment.text }}</v-list-item-subtitle>
+                </v-list-item-content> -->
+
+                <v-list-item-content>
+                  <p>
+                    <router-link :to="`/profile/${comment.uid}`" style="text-decoration: none; color: #1976d2; font-weight: bold;">
+                      {{ comment.username }}
+                    </router-link>: {{ comment.text }}
+                  </p>
                 </v-list-item-content>
+
               </v-list-item>
             </v-list>
           </v-card>
@@ -398,4 +412,14 @@ export default {
   width: 100%;
   height: 100%;
 }
+
+.event-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 16px;
+  color: #555;
+  margin-top: 8px;
+}
+
 </style>
