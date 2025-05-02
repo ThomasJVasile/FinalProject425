@@ -193,31 +193,44 @@ export default {
       if (!file) return;
 
       try {
+        // Create a local URL for immediate display
+        const localUrl = URL.createObjectURL(file);
+        this.profilePicture = localUrl;
+
         // Upload file to Firebase Storage
         const avatarRef = storageRef(
           storage,
-          `user-avatars/${this.user.uid}_${file.name}`
+          `user-avatars/${this.user.uid}_${Date.now()}_${file.name}`
         );
 
         const snapshot = await uploadBytes(avatarRef, file);
         const avatarUrl = await getDownloadURL(snapshot.ref);
 
-        // Update Firestore with new profile picture URL
+        // Update Firestore
         await updateDoc(doc(db, "users", this.user.uid), {
           avatarUrl: avatarUrl,
         });
 
         // Update Firebase Auth user profile
-        await this.user.updateProfile({
-          photoURL: avatarUrl,
-        });
+        if (this.user) {
+          await this.user.updateProfile({
+            photoURL: avatarUrl,
+          });
+        }
 
-        // Update local state
+        // Update local state with the Firebase URL
         this.profilePicture = avatarUrl;
-        this.message = "Profile picture updated successfully!";
+
+        // Revoke the local URL to free up memory
+        URL.revokeObjectURL(localUrl);
+
       } catch (error) {
         console.error("Error uploading profile picture:", error);
-        this.message = "Failed to upload profile picture. Please try again.";
+        // Revert to previous profile picture if there was one
+        const userDoc = await getDoc(doc(db, "users", this.user.uid));
+        if (userDoc.exists()) {
+          this.profilePicture = userDoc.data().avatarUrl || null;
+        }
       }
     },
 

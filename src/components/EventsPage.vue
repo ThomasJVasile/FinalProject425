@@ -106,6 +106,13 @@
                 </button>
               </div>
             </div>
+
+            <!-- Add edit button for events you created -->
+            <div class="event-actions" v-if="activeTab === 'created'">
+              <button class="edit-btn" @click="openEditModal(event)">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+            </div>
           </div>
         </div>
         <!-- No Events Message - Shows when you haven't created/joined any events -->
@@ -115,6 +122,54 @@
         </div>
       </div>
     </main>
+
+    <!-- Add this edit modal at the bottom of your template -->
+    <v-dialog v-model="showEditModal" max-width="600px">
+      <v-card v-if="editingEvent">
+        <v-card-title>Edit Event</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="saveEventChanges">
+            <v-text-field
+              v-model="editingEvent.eventName"
+              label="Event Title"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="editingEvent.eventDate"
+              label="Event Date"
+              type="date"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="editingEvent.eventLocation"
+              label="Event Location"
+              required
+            ></v-text-field>
+            <v-textarea
+              v-model="editingEvent.eventDescription"
+              label="Event Description"
+              required
+            ></v-textarea>
+            <v-select
+              v-model="editingEvent.categories"
+              :items="eventCategories"
+              label="Categories"
+              multiple
+            ></v-select>
+            <v-switch
+              v-model="editingEvent.isRestricted"
+              label="Restricted Event"
+              color="primary"
+            ></v-switch>
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" text @click="showEditModal = false">Cancel</v-btn>
+          <v-btn color="primary" @click="saveEventChanges">Save Changes</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -134,6 +189,19 @@ export default {
       activeTab: 'created', // Which tab is selected (created/joined)
       activeCommentEvent: null, // Which event's comments are showing
       newComment: "", // Text for a new comment
+      showEditModal: false,
+      editingEvent: null,
+      eventCategories: [
+        "Cars",
+        "Sports",
+        "Writing",
+        "Learning",
+        "Games",
+        "Jobs",
+        "Parties",
+        "Crafts",
+        "Dogs",
+      ],
     };
   },
 
@@ -319,6 +387,51 @@ export default {
         return event;
       });
     },
+
+    openEditModal(event) {
+      // Create a deep copy of the event to prevent direct mutation
+      this.editingEvent = JSON.parse(JSON.stringify(event));
+      this.showEditModal = true;
+    },
+
+    async saveEventChanges() {
+      try {
+        if (!this.editingEvent) return;
+
+        const eventRef = doc(db, "events", this.editingEvent.id);
+        
+        // Update the event in Firestore
+        await updateDoc(eventRef, {
+          eventName: this.editingEvent.eventName,
+          eventDate: this.editingEvent.eventDate,
+          eventLocation: this.editingEvent.eventLocation,
+          eventDescription: this.editingEvent.eventDescription,
+          categories: this.editingEvent.categories,
+          isRestricted: this.editingEvent.isRestricted,
+          lastUpdated: serverTimestamp()
+        });
+
+        // Update the local state
+        const index = this.createdEvents.findIndex(e => e.id === this.editingEvent.id);
+        if (index !== -1) {
+          this.createdEvents[index] = {
+            ...this.createdEvents[index],
+            ...this.editingEvent
+          };
+        }
+
+        // Close the modal and show success message
+        this.showEditModal = false;
+        this.editingEvent = null;
+        
+        // You can add a toast or alert here to show success
+        alert('Event updated successfully!');
+        
+      } catch (error) {
+        console.error('Error updating event:', error);
+        alert('Failed to update event. Please try again.');
+      }
+    }
   },
 
   // When the component is created, fetch all events
@@ -642,5 +755,33 @@ export default {
 
 .user-link:hover {
   text-decoration: underline;
+}
+
+/* Event actions styling */
+.event-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.edit-btn {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.edit-btn:hover {
+  background: #1565c0;
+}
+
+.edit-btn i {
+  font-size: 0.9rem;
 }
 </style>

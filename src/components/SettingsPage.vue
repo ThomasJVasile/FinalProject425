@@ -118,7 +118,7 @@
                 v-model="profileSettings.instagramLink"
                 placeholder="https://instagram.com/yourusername"
               />
-            </div>
+              </div>
 
             <div class="social-input">
               <label>

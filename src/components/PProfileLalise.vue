@@ -108,6 +108,13 @@
         >
           <i class="fas fa-user-check"></i> Friends
         </button>
+        
+        <button 
+          class="report-btn"
+          @click="showReportModal = true"
+        >
+          <i class="fas fa-flag"></i>
+        </button>
       </div>
 
     <!-- Navigation Tabs -->
@@ -229,6 +236,39 @@
         </div>
       </div>
     </div>
+
+    <!-- Report Modal -->
+    <v-dialog v-model="showReportModal" max-width="500px">
+      <v-card>
+        <v-card-title>Report Profile</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="submitReport">
+            <v-select
+              v-model="reportReason"
+              :items="reportReasons"
+              label="Reason for reporting"
+              required
+            ></v-select>
+            <v-textarea
+              v-model="reportDescription"
+              label="Additional details (optional)"
+              rows="3"
+            ></v-textarea>
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" text @click="showReportModal = false">Cancel</v-btn>
+          <v-btn 
+            color="primary" 
+            :loading="isSubmittingReport"
+            @click="submitReport"
+          >
+            Submit Report
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -276,6 +316,17 @@ export default {
     const isFriend = ref(false);
     const friendRequestSent = ref(false);
     const isOwnProfile = ref(false);
+    const showReportModal = ref(false);
+    const reportReason = ref('');
+    const reportDescription = ref('');
+    const isSubmittingReport = ref(false);
+    const reportReasons = [
+      'Inappropriate content',
+      'Harassment',
+      'Spam',
+      'Fake profile',
+      'Other'
+    ];
 
     let unsubscribeFriendship = null;
 
@@ -621,6 +672,49 @@ export default {
       return unsubscribe;
     };
 
+    const submitReport = async () => {
+      if (!reportReason.value) {
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.error('Please select a reason for reporting');
+        }
+        return;
+      }
+
+      try {
+        isSubmittingReport.value = true;
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) return;
+
+        const userId = route.params.userId;
+        
+        await addDoc(collection(db, 'reports'), {
+          reportedUserId: userId,
+          reportedByUserId: currentUser.uid,
+          reason: reportReason.value,
+          description: reportDescription.value,
+          timestamp: serverTimestamp(),
+          status: 'pending',
+          reportedUserName: `${profileData.value.firstName} ${profileData.value.lastName}`,
+          reportedByName: currentUser.displayName || 'Anonymous'
+        });
+
+        showReportModal.value = false;
+        reportReason.value = '';
+        reportDescription.value = '';
+
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.success('Report submitted successfully');
+        }
+      } catch (error) {
+        console.error('Error submitting report:', error);
+        if (typeof window.$toast !== 'undefined') {
+          window.$toast.error('Failed to submit report. Please try again.');
+        }
+      } finally {
+        isSubmittingReport.value = false;
+      }
+    };
+
     return {
       activeTab,
       profileData,
@@ -633,7 +727,13 @@ export default {
       loadUserFriends,   // Add this
       loadUserEvents,
       handleCoverPhotoUpload,
-      setupFriendshipListener
+      setupFriendshipListener,
+      showReportModal,
+      reportReason,
+      reportDescription,
+      isSubmittingReport,
+      reportReasons,
+      submitReport
     };
   }
 };
@@ -1267,6 +1367,25 @@ export default {
 
 .social-link i.fa-tiktok {
   color: #000;
+}
+
+.report-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.report-btn:hover {
+  background: #f0f2f5;
+  color: #dc3545;
+}
+
+.report-btn i {
+  font-size: 1.1rem;
 }
 /* LG END - Styles section */
 </style>
