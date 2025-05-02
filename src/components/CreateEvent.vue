@@ -1,10 +1,4 @@
-import { moderateImage } from "@/utils/imageModeration";
-import { moderateContent } from "@/utils/contentModeration";
-
-import { moderateImage } from "./utils/imageModeration";
-import { moderateContent } from "./utils/contentModeration";
-
-
+<!-- 
 <template>
   <v-container fluid class="d-flex justify-center align-center" style="height: 100vh;">
     <v-card class="pa-5 wider-card" outlined>
@@ -25,7 +19,7 @@ import { moderateContent } from "./utils/contentModeration";
         <v-textarea v-model="eventDescription" label="Event Description" placeholder="Write a brief description..."
           outlined dense required />
         <v-file-input v-model="eventImage" label="Event Image" accept="image/*" outlined dense @change="onFileChange" />
-        <!-- Restriction Switch -->
+        
         <v-switch v-model="isRestricted" label="Restricted Event" :color="isRestricted ? 'red' : 'green'"
           class="mt-2" />
 
@@ -36,7 +30,97 @@ import { moderateContent } from "./utils/contentModeration";
       <p v-if="message" class="message text-center mt-3">{{ message }}</p>
     </v-card>
   </v-container>
+</template> -->
+
+<template>
+  <v-container fluid class="d-flex justify-center align-center" style="height: 100vh; background-color: #f7f9fc;">
+    <v-card class="pa-6 wider-card blue-shadow rounded-xl" elevation="6">
+      <v-card-title class="text-center">
+        <v-icon class="mr-2">mdi-calendar-plus</v-icon>
+        <span class="text-h6 font-weight-bold">Create a New Event</span>
+      </v-card-title>
+
+      <v-form @submit.prevent="createEvent" v-if="isAuthenticated">
+        <v-text-field
+          v-model="eventTitle"
+          label="Event Title"
+          placeholder="Enter event title"
+          outlined
+          dense
+          prepend-icon="mdi-format-title"
+          class="mt-3"
+          required
+        />
+
+        <v-text-field
+          v-model="eventDate"
+          label="Event Date"
+          type="date"
+          outlined
+          dense
+          prepend-icon="mdi-calendar"
+          required
+        />
+
+        <v-text-field
+          v-model="eventLocation"
+          label="Event Location"
+          placeholder="Enter address"
+          outlined
+          dense
+          prepend-icon="mdi-map-marker"
+          required
+        />
+
+        <v-select
+          v-model="selectedCategories"
+          :items="eventCategories"
+          label="Select Categories"
+          outlined
+          dense
+          multiple
+          prepend-icon="mdi-tag-multiple"
+          class="mt-2"
+          required
+        ></v-select>
+
+        <v-textarea
+          v-model="eventDescription"
+          label="Event Description"
+          placeholder="Briefly describe the event..."
+          outlined
+          dense
+          prepend-icon="mdi-text"
+          required
+        />
+
+        <v-file-input
+          v-model="eventImage"
+          label="Upload Event Image"
+          accept="image/*"
+          outlined
+          dense
+          prepend-icon="mdi-image"
+          @change="onFileChange"
+        />
+
+        <v-switch
+          v-model="isRestricted"
+          label="Restricted Event"
+          :color="isRestricted ? 'red' : 'green'"
+          class="mt-2"
+          inset
+        />
+
+        <v-btn type="submit" color="primary" block class="mt-5">Create Event</v-btn>
+      </v-form>
+
+      <p v-else class="auth-message text-center mt-3">You must be logged in to create an event.</p>
+      <p v-if="message" class="message text-center mt-3">{{ message }}</p>
+    </v-card>
+  </v-container>
 </template>
+
 
 <script>
 import { db, storage } from "@/firebase";
@@ -226,5 +310,7 @@ export default {
 
 .wider-card {
   max-width: 650px !important;
+  width: 100% !important;
 }
+
 </style>
