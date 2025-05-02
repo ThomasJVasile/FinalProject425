@@ -274,7 +274,9 @@ export default {
       try {
         const eventsQuery = query(
           collection(db, "events"),
-          where("participants", "array-contains", userUid)
+          // where("participants", "array-contains", userUid)
+          where("UserIDs", "array-contains", userUid)
+
         );
         const querySnapshot = await getDocs(eventsQuery);
         
